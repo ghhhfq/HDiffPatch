@@ -14,7 +14,13 @@
          location = "group:hsync_server.xcodeproj">
       </FileRef>
       <FileRef
+         location = "group:hsync_client_http.xcodeproj">
+      </FileRef>
+      <FileRef
          location = "group:hsync_client_test.xcodeproj">
+      </FileRef>
+      <FileRef
+         location = "group:libHSyncClient.xcodeproj">
       </FileRef>
    </Group>
    <Group

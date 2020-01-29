@@ -1,5 +1,5 @@
-//  hsync_client_test.cpp
-//  hsync_client_test: client demo for sync patch
+//  hsync_client.cpp
+//  hsync_client: client for sync patch
 //  Created by housisong on 2019-09-18.
 /*
  The MIT License (MIT)
@@ -50,17 +50,16 @@
 #if (_IS_NEED_DOWNLOAD_EMULATION)
 //simple file demo
 #   include "client_download_test.h"
-bool openNewSyncDataByUrl(ISyncPatchListener* listener,const char* newSyncDataFile){
+static inline bool openNewSyncDataByUrl(ISyncPatchListener* listener,const char* newSyncDataFile){
     return downloadEmulation_open_by_file(listener,newSyncDataFile);
 }
-bool closeNewSyncData(ISyncPatchListener* listener){
+static inline bool closeNewSyncData(ISyncPatchListener* listener){
     return downloadEmulation_close(listener);
 }
-#else
-//http or https?
-bool downloadFileFromUrl(const char* file_url,const hpatch_TStreamOutput* out_stream);
+#else //download by http/https ?
 bool openNewSyncDataByUrl(ISyncPatchListener* listener,const char* newSyncDataFile_url);
 bool closeNewSyncData(ISyncPatchListener* listener);
+bool downloadNewSyncInfoFromUrl(const char* newSyncInfoFile_url,const hpatch_TStreamOutput* out_stream);
 #endif
 
 #ifndef _IS_NEED_DEFAULT_CompressPlugin
@@ -90,21 +89,22 @@ static void printUsage(){
     printf("test sync patch: [options] oldPath newSyncInfoFile newSyncDataFile_test outNewPath\n"
 #else
     printf("http sync patch: [options] oldPath newSyncInfoFile newSyncDataFile_url outNewPath\n"
+           "http download: -L#newSyncInfoFile_url newSyncInfoFile\n"
 #endif
 #if (_IS_NEED_DIR_DIFF_PATCH)
            "  oldPath can be file or directory(folder),\n"
 #endif
            "  if oldPath is empty input parameter \"\" )\n"
            "options:\n"
+#if (_IS_NEED_DOWNLOAD_EMULATION)
+#else
+           "  -L#newSyncInfoFile_url"
+           "      http download newSyncInfoFile_url to newSyncInfoFile befor sync patch;\n"
+#endif
 #if (_IS_USED_MULTITHREAD)
            "  -p-parallelThreadNumber\n"
            "    if parallelThreadNumber>1 then open multi-thread Parallel mode;\n"
            "    DEFAULT -p-4; requires more memory!\n"
-#endif
-#if (_IS_NEED_DOWNLOAD_EMULATION)
-#else
-           "  -L#newSyncInfoFile_url"
-           "      http download newSyncInfoFile from newSyncInfoFile_url befor patch;\n"
 #endif
            "  -C-checksumSets\n"
            "      set Checksum data for patch, DEFAULT -C-sync;\n"
@@ -299,15 +299,11 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     hpatch_BOOL isOutputVersion=_kNULL_VALUE;
     hpatch_BOOL isOldPathInputEmpty=_kNULL_VALUE;
     TSyncPatchChecksumSet checksumSet={false,true};//checksumSet DEFAULT
+    const char* newSyncInfoFile_url=0;
 //_IS_NEED_DIR_DIFF_PATCH
     size_t                      kMaxOpenFileNumber=_kNULL_SIZE; //only used in oldPath is dir
     std::vector<std::string>    ignoreOldPathList;
 //
-
-#if (_IS_NEED_DOWNLOAD_EMULATION)
-#else
-    const char* newSyncInfoFile_url=0;
-#endif
     std::vector<const char *> arg_values;
     for (int i=1; i<argc; ++i) {
         const char* op=argv[i];
@@ -419,11 +415,13 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
             return kSyncClient_ok; //ok
     }
 
-    _options_check(arg_values.size()==4,"input count");
-    const char* oldPath             =arg_values[0];
-    const char* newSyncInfoFile     =arg_values[1]; // .hsyni
-    const char* newSyncDataFile_url =arg_values[2]; // .hsynd
-    const char* outNewPath          =arg_values[3];
+    const bool isOnlyDownload=(newSyncInfoFile_url!=0) && (arg_values.size()==1);
+    _options_check((arg_values.size()==4)||isOnlyDownload,"input count");
+    const char* oldPath             =isOnlyDownload?            0:arg_values[0];
+    const char* newSyncInfoFile     =isOnlyDownload?arg_values[0]:arg_values[1]; // .hsyni
+    const char* newSyncDataFile_url =isOnlyDownload?            0:arg_values[2]; // .hsynd
+    const char* outNewPath          =isOnlyDownload?            0:arg_values[3];
+    double time0=clock_s();
 #if (_IS_NEED_DOWNLOAD_EMULATION)
 #else
     if (newSyncInfoFile_url){
@@ -432,9 +430,11 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
                           "%s already exists, overwrite",newSyncInfoFile);
         int result=downloadNewSyncInfoFile(newSyncInfoFile_url,newSyncInfoFile);
         _return_check(result==kSyncClient_ok,result,"download from url:%s",newSyncInfoFile_url);
+        if (isOnlyDownload)
+            return result;
+        //else continue sync patch
     }
 #endif
-    double time0=clock_s();
     
     const bool isSamePath=hpatch_getIsSamePath(oldPath,outNewPath)!=0;
     hpatch_TPathType   outNewPathType;
@@ -712,7 +712,7 @@ int downloadNewSyncInfoFile(const char* newSyncInfoFile_url,const char* outNewSy
     hpatch_TFileStreamOutput_init(&out_stream);
     if (!hpatch_TFileStreamOutput_open(&out_stream,outNewSyncInfoFile,(hpatch_StreamPos_t)(-1)))
         return kSyncClient_newSyncInfoFileCreateError;
-    if (downloadFileFromUrl(newSyncInfoFile_url,&out_stream.base))
+    if (downloadNewSyncInfoFromUrl(newSyncInfoFile_url,&out_stream.base))
         out_stream.base.streamSize=out_stream.out_length;
     else
         result=kSyncClient_newSyncInfoFileDownloadError;
