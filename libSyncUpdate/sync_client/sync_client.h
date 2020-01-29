@@ -32,11 +32,16 @@
 #include "sync_info_client.h"
 
 typedef struct TNeedSyncInfo{
+    uint32_t           blockCount;
     uint32_t           syncBlockCount;
     hpatch_StreamPos_t syncDataSize;
 } TNeedSyncInfo;
 
 typedef struct ISyncPatchListener:public ISyncInfoListener{
+    void*                  syncImport;
+    //syncInfo can null
+    void (*syncInfo)       (ISyncPatchListener* listener,const TNewDataSyncInfo* newSyncInfo,
+                            const TNeedSyncInfo* needSyncInfo);
     //needSyncMsg can null
     void (*needSyncMsg)    (ISyncPatchListener* listener,const TNeedSyncInfo* needSyncInfo);
     //needSyncDataMsg can null; called befor all readSyncData called;
@@ -48,9 +53,9 @@ typedef struct ISyncPatchListener:public ISyncInfoListener{
 } ISyncPatchListener;
 
 int sync_patch(ISyncPatchListener* listener,const hpatch_TStreamOutput* out_newStream,
-               const hpatch_TStreamInput* oldStream,const TNewDataSyncInfo* newSyncInfo,int threadNum=0);
+               const hpatch_TStreamInput* oldStream,const TNewDataSyncInfo* newSyncInfo,int threadNum=1);
 
 int sync_patch_file2file(ISyncPatchListener* listener,const char* outNewFile,const char* oldFile,
-                         const char* newSyncInfoFile,int threadNum=0);
+                         const char* newSyncInfoFile,int threadNum=1);
 
 #endif // sync_client_h

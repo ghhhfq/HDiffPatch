@@ -36,7 +36,10 @@ typedef enum TSyncClient_resultType{
     kSyncClient_memError,
     kSyncClient_tempFileError,
     kSyncClient_newPathTypeError,
+    kSyncClient_overwriteNewSyncInfoFileError,
     kSyncClient_overwriteNewPathError,
+    kSyncClient_deleteFileError,
+    kSyncClient_renameFileError,
     kSyncClient_newSyncInfoTypeError,
     kSyncClient_noStrongChecksumPluginError,
     kSyncClient_strongChecksumByteSizeError,
@@ -48,6 +51,9 @@ typedef enum TSyncClient_resultType{
     kSyncClient_oldPathTypeError,
     kSyncClient_oldFileOpenError,
     kSyncClient_oldFileCloseError,
+    kSyncClient_newSyncInfoFileCreateError,
+    kSyncClient_newSyncInfoFileCloseError,
+    kSyncClient_newSyncInfoFileDownloadError,
     kSyncClient_newFileCreateError,
     kSyncClient_newFileCloseError,
     kSyncClient_matchNewDataInOldError,
@@ -62,7 +68,10 @@ typedef enum TSyncClient_resultType{
     
 //_IS_NEED_DIR_DIFF_PATCH
     kSyncClient_oldDirFilesError=50,
-
+    kSyncClient_newDirOpenError,
+    kSyncClient_newDirCloseError,
+    kSyncClient_newDirPatchBeginError,
+    kSyncClient_newDirPatchFinishError,
 } TNewDataSyncInfo_resultType;
     
 typedef struct TSyncPatchChecksumSet{
@@ -71,7 +80,7 @@ typedef struct TSyncPatchChecksumSet{
 } TSyncPatchChecksumSet;
 
 typedef struct ISyncInfoListener{
-    void*                 import;
+    void*                 infoImport;
     TSyncPatchChecksumSet checksumSet;
     hpatch_TDecompress* (*findDecompressPlugin)(ISyncInfoListener* listener,const char* compressType);
     hpatch_TChecksum*   (*findChecksumPlugin)  (ISyncInfoListener* listener,const char* strongChecksumType);
@@ -82,5 +91,9 @@ int  TNewDataSyncInfo_open_by_file(TNewDataSyncInfo* self,const char* newSyncInf
 int  TNewDataSyncInfo_open        (TNewDataSyncInfo* self,const hpatch_TStreamInput* newSyncInfo,
                                    ISyncInfoListener* listener);
 void TNewDataSyncInfo_close       (TNewDataSyncInfo* self);
+
+int  checkNewSyncInfoType_by_file(const char* newSyncInfoFile,hpatch_BOOL* out_newIsDir);
+int  checkNewSyncInfoType(const hpatch_TStreamInput* newSyncInfo,hpatch_BOOL* out_newIsDir);
+
 
 #endif // sync_info_client_h

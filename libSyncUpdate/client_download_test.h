@@ -1,9 +1,9 @@
-// dir_patch_types.h
-// dir patch
-//
+//  client_download_test.h
+//  sync_client
+//  Created by housisong on 2019-09-23.
 /*
  The MIT License (MIT)
- Copyright (c) 2018-2019 HouSisong
+ Copyright (c) 2019-2019 HouSisong
  
  Permission is hereby granted, free of charge, to any person
  obtaining a copy of this software and associated documentation
@@ -26,30 +26,21 @@
  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef DirPatch_dir_patch_types_h
-#define DirPatch_dir_patch_types_h
-#include "../../libHDiffPatch/HPatch/patch_types.h"
-
-#ifndef _IS_NEED_DIR_DIFF_PATCH
-#   define _IS_NEED_DIR_DIFF_PATCH  1
+#ifndef client_download_test_h
+#define client_download_test_h
+#include "sync_client/sync_client.h"
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#if (_IS_NEED_DIR_DIFF_PATCH)
-#   define kMaxOpenFileNumber_limit_min          4
-#   define kMaxOpenFileNumber_default_min        8 //must >= limit_min
-#   define kMaxOpenFileNumber_default_diff      48
-#   define kMaxOpenFileNumber_default_patch     24
+//downloadEmulation for patch test:
+//  when need to download part of newSyncData, emulation read it from local data;
+bool downloadEmulation_open_by_file(ISyncPatchListener* out_emulation,const char* newSyncDataPath);
+bool downloadEmulation_open(ISyncPatchListener* out_emulation,const hpatch_TStreamInput* newSyncData);
+bool downloadEmulation_close(ISyncPatchListener* emulation);
+
+#ifdef __cplusplus
+}
 #endif
-
-#ifdef _WIN32
-static const char kPatch_dirSeparator = '\\';
-#else
-static const char kPatch_dirSeparator = '/';
-#endif
-static const char kPatch_dirSeparator_saved = '/';
-
-static hpatch_inline  //align upper
-hpatch_StreamPos_t toAlignRangeSize(hpatch_StreamPos_t rangeSize,size_t kAlignSize)
-        { return (rangeSize+kAlignSize-1)/kAlignSize*kAlignSize; }
-
-#endif //DirPatch_dir_patch_types_h
+        
+#endif // client_download_test_h

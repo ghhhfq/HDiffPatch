@@ -36,8 +36,8 @@
 #include "_atosize.h"
 #include "file_for_patch.h"
 
-#include "dirDiffPatch/dir_patch/dir_patch.h"
 #if (_IS_NEED_DIR_DIFF_PATCH)
+#include "dirDiffPatch/dir_patch/dir_patch.h"
 #include "hpatch_dir_listener.h"
 #endif
 
@@ -86,12 +86,13 @@
 #endif
 #if (_IS_NEED_ALL_ChecksumPlugin)
 //===== select needs checksum plugins or change to your plugin=====
-#   define _ChecksumPlugin_adler32  // ~  29 bit effective
-#   define _ChecksumPlugin_adler64  // ?  36 bit effective
+#   define _ChecksumPlugin_adler32  // ?  29 bit effective
+#   define _ChecksumPlugin_adler64  // ?  30 bit effective
 #   define _ChecksumPlugin_fadler32 // ~  32 bit effective
-#   define _ChecksumPlugin_fadler128// ? 126 bit effective
+#   define _ChecksumPlugin_fadler128// ?  81 bit effective
 #   define _ChecksumPlugin_md5      // ? 128 bit effective
 #endif
+
 
 #include "checksum_plugin_demo.h"
 #endif
@@ -109,7 +110,7 @@ static void printUsage(){
            "\"./\")\n"
 #   endif
 #endif
-           "  ( if oldPath is empty input parameter \"\" )\n"
+           "  if oldPath is empty input parameter \"\"\n"
            "memory options:\n"
            "  -m  oldPath all loaded into Memory;\n"
            "      requires (oldFileSize+ 4*decompress stream size)+O(1) bytes of memory.\n"
@@ -834,7 +835,6 @@ int hpatch_dir(const char* oldPath,const char* diffFileName,const char* outNewPa
         hpatch_BOOL  rt;
         hpatch_TPathType    oldType;
         if (0==strcmp(oldPath,"")){ // isOldPathInputEmpty
-            assert(!isLoadOldAll);
             oldType=kPathType_file; //as empty file
         }else{
             check(hpatch_getPathStat(oldPath,&oldType,0),HPATCH_PATHTYPE_ERROR,"get oldPath type");
@@ -901,7 +901,7 @@ int hpatch_dir(const char* oldPath,const char* diffFileName,const char* outNewPa
                 printf("hpatchz run with checksum plugin: \"%s\" (need checksum %d)\n",
                        dirDiffInfo->checksumType,wantChecksumCount);
                 if (!TDirPatcher_checksum(&dirPatcher,checksumSet)){
-                    check(!dirPatcher.isDiffDataChecksumError,
+                    check(!TDirPatcher_isDiffDataChecksumError(&dirPatcher),
                           DIRPATCH_CHECKSUM_DIFFDATA_ERROR,"diffFile checksum");
                     check(hpatch_FALSE,DIRPATCH_CHECKSUMSET_ERROR,"diffFile set checksum");
                 }
@@ -939,11 +939,11 @@ int hpatch_dir(const char* oldPath,const char* diffFileName,const char* outNewPa
     }
     //patch
     if(!TDirPatcher_patch(&dirPatcher,newStream,oldStream,temp_cache,temp_cache+temp_cache_size)){
-        check(!dirPatcher.isOldRefDataChecksumError,
+        check(!TDirPatcher_isOldRefDataChecksumError(&dirPatcher),
               DIRPATCH_CHECKSUM_OLDDATA_ERROR,"oldFile checksum");
-        check(!dirPatcher.isCopyDataChecksumError,
+        check(!TDirPatcher_isCopyDataChecksumError(&dirPatcher),
               DIRPATCH_CHECKSUM_COPYDATA_ERROR,"copyOldFile checksum");
-        check(!dirPatcher.isNewRefDataChecksumError,
+        check(!TDirPatcher_isNewRefDataChecksumError(&dirPatcher),
               DIRPATCH_CHECKSUM_NEWDATA_ERROR,"newFile checksum");
         check(hpatch_FALSE,DIRPATCH_PATCH_ERROR,"dir patch run");
     }
@@ -1126,6 +1126,17 @@ clear:
     return result;
 }
 
+static hpatch_BOOL _getIsCompressedDiffFile(const char* diffFileName){
+    hpatch_TFileStreamInput diffData;
+    hpatch_compressedDiffInfo diffInfo;
+    hpatch_BOOL result=hpatch_TRUE;
+    hpatch_TFileStreamInput_init(&diffData);
+    if (!hpatch_TFileStreamInput_open(&diffData,diffFileName)) return hpatch_FALSE;
+    result=getCompressedDiffInfo(&diffInfo,&diffData.base);
+    if (!hpatch_TFileStreamInput_close(&diffData)) return hpatch_FALSE;
+    return result;
+}
+
 int createSfx(const char* selfExecuteFileName,const char* diffFileName,const char* out_sfxFileName){
     int     result=HPATCH_SUCCESS;
     int     _isInClear=hpatch_FALSE;
@@ -1136,7 +1147,7 @@ int createSfx(const char* selfExecuteFileName,const char* diffFileName,const cha
             isDiffFile=getIsDirDiffFile(diffFileName);
 #endif
         if (!isDiffFile)
-            isDiffFile=getIsCompressedDiffFile(diffFileName);
+            isDiffFile=_getIsCompressedDiffFile(diffFileName);
         check(isDiffFile,HPATCH_CREATE_SFX_DIFFFILETYPE_ERROR,
               "createSfx() input diffFile is unsupported type");
     }

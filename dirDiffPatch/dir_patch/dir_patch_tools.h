@@ -1,9 +1,9 @@
-//  client_download_emulation.h
-//  sync_client
-//  Created by housisong on 2019-09-23.
+// dir_patch_tools.h
+// hdiffz dir patch
+//
 /*
  The MIT License (MIT)
- Copyright (c) 2019-2019 HouSisong
+ Copyright (c) 2018-2019 HouSisong
  
  Permission is hereby granted, free of charge, to any person
  obtaining a copy of this software and associated documentation
@@ -26,21 +26,28 @@
  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef client_download_emulation_h
-#define client_download_emulation_h
-#include "sync_client/sync_client.h"
+#ifndef DirPatch_dir_patch_tools_h
+#define DirPatch_dir_patch_tools_h
+#include "dir_patch_types.h"
+#if (_IS_NEED_DIR_DIFF_PATCH)
+#include "../../libHDiffPatch/HPatch/patch_private.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
+    void formatDirTagForLoad(char* utf8_path,char* utf8_pathEnd);
+    hpatch_BOOL clipCStrsTo(const char* cstrs,const char* cstrsEnd,
+                            const char** out_cstrList,size_t cstrCount);
+    hpatch_BOOL readListTo(TStreamCacheClip* sclip,hpatch_StreamPos_t* out_list,size_t count);
+    hpatch_BOOL readIncListTo(TStreamCacheClip* sclip,size_t* out_list,
+                              size_t count,size_t check_endValue);
+    
+    //return path end pos
+    char* setPath(char* out_path,char* out_pathBufEnd,const char* fileName);
+    char* setDirPath(char* out_path,char* out_pathBufEnd,const char* dirName);
 
-//downloadEmulation for patch test:
-//  when need to download part of newSyncData, emulation read it from local data;
-bool downloadEmulation_open_by_file(ISyncPatchListener* out_emulation,const char* newSyncDataPath);
-bool downloadEmulation_open(ISyncPatchListener* out_emulation,const hpatch_TStreamInput* newSyncData);
-bool downloadEmulation_close(ISyncPatchListener* emulation);
-
+    
 #ifdef __cplusplus
 }
 #endif
-        
-#endif // client_download_emulation_h
+#endif
+#endif //DirPatch_dir_patch_tools_h

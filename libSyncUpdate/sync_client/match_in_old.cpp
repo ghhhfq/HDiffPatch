@@ -132,11 +132,8 @@ struct TOldDataCache_base {
     inline const TByte* calcPartStrongChecksum(){
         return _calcPartStrongChecksum(m_cur,m_kMatchBlockSize);
     }
-    inline const TByte* calcLastPartStrongChecksum(size_t lastNewNodeSize){
-        return _calcPartStrongChecksum(m_cache.data_end()-lastNewNodeSize,lastNewNodeSize);
-    }
     inline hpatch_StreamPos_t curOldPos()const{
-        return m_cur-m_cache.data();
+        return m_readedPos-(m_cache.data_end()-m_cur);
     }
 protected:
     const hpatch_TStreamInput* m_oldStream;
@@ -212,7 +209,7 @@ static void matchRange(hpatch_StreamPos_t* out_newDataPoss,const TByte* partChec
                 if ((cur==kBlockType_needSync)||(cur>oldData.curOldPos()))
 #endif
                     out_newDataPoss[newBlockIndex]=oldData.curOldPos();
-                break;
+                break;//other by samePairList
             }
         }
         ++range_begin;
@@ -294,8 +291,7 @@ static void tm_matchNewDataInOld(_TMatchDatas& matchDatas,int threadNum){
     {
         uint32_t curPair=0;
         for (uint32_t i=0; i<kBlockCount; ++i){
-            if ((curPair<newSyncInfo->samePairCount)
-                &&(i==newSyncInfo->samePairList[curPair].curIndex)){
+            if ((curPair<newSyncInfo->samePairCount)&&(i==newSyncInfo->samePairList[curPair].curIndex)){
                 ++curPair;
             }else{
                 sorted_newIndexs[sortedBlockCount++]=i;

@@ -29,18 +29,16 @@
 #ifndef dir_sync_server_h
 #define dir_sync_server_h
 #include "sync_server.h"
-#include "../../dirDiffPatch/dir_patch/dir_patch.h"
+#include "../../dirDiffPatch/dir_patch/dir_patch_types.h"
 #if (_IS_NEED_DIR_DIFF_PATCH)
-#include "../../dirDiffPatch/dir_diff/dir_diff.h"
+#include "../../dirDiffPatch/dir_diff/dir_manifest.h"
 
 struct IDirSyncListener{
     virtual ~IDirSyncListener(){}
     virtual bool isExecuteFile(const std::string& fileName) { return false; }
-    virtual void syncPathList(const std::vector<std::string>& pathList){}
-    virtual void syncRefInfo(size_t pathCount,hpatch_StreamPos_t refFileSize,
+    virtual void syncRefInfo(const char* rootDirPath,size_t pathCount,hpatch_StreamPos_t refFileSize,
                              uint32_t kMatchBlockSize,bool isMatchBlockSizeWarning){}
     virtual void externData(std::vector<unsigned char>& out_externData){}
-    virtual void externDataPosInSyncInfoStream(hpatch_StreamPos_t externDataPos,size_t externDataSize){}
 };
 
 void create_dir_sync_data(IDirSyncListener*         listener,

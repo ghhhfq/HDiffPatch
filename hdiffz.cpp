@@ -63,7 +63,7 @@
 #   define _CompressPlugin_zlib  // memroy requires less
 #   define _CompressPlugin_bz2
 #   define _CompressPlugin_lzma  // better compresser
-#   define _CompressPlugin_lzma2 // muti-thread compresser
+#   define _CompressPlugin_lzma2 // better compresser / muti-thread compresser
 #endif
 #if (_IS_NEED_ALL_CompressPlugin)
 //===== select needs decompress plugins or change to your plugin=====
@@ -92,12 +92,13 @@
 #endif
 #if (_IS_NEED_ALL_ChecksumPlugin)
 //===== select needs checksum plugins or change to your plugin=====
-#   define _ChecksumPlugin_adler32  // ~  29 bit effective
-#   define _ChecksumPlugin_adler64  // ?  36 bit effective
+#   define _ChecksumPlugin_adler32  // ?  29 bit effective
+#   define _ChecksumPlugin_adler64  // ?  30 bit effective
 #   define _ChecksumPlugin_fadler32 // ~  32 bit effective
-#   define _ChecksumPlugin_fadler128// ? 126 bit effective
+#   define _ChecksumPlugin_fadler128// ?  81 bit effective
 #   define _ChecksumPlugin_md5      // ? 128 bit effective
 #endif
+
 
 #include "checksum_plugin_demo.h"
 #endif
@@ -319,6 +320,16 @@ int main(int argc,char* argv[]){
 #   endif
 #endif
 
+
+static hpatch_BOOL _getIsCompressedDiffFile(const char* diffFileName){
+    hpatch_TFileStreamInput diffData;
+    hpatch_TFileStreamInput_init(&diffData);
+    if (!hpatch_TFileStreamInput_open(&diffData,diffFileName)) return hpatch_FALSE;
+    hpatch_compressedDiffInfo diffInfo;
+    hpatch_BOOL result=getCompressedDiffInfo(&diffInfo,&diffData.base);
+    if (!hpatch_TFileStreamInput_close(&diffData)) return hpatch_FALSE;
+    return result;
+}
 
 static void _trySetDecompress(hpatch_TDecompress** out_decompressPlugin,const char* compressType,
                             hpatch_TDecompress* testDecompressPlugin){
@@ -632,7 +643,7 @@ int hdiff_cmd_line(int argc, const char * argv[]){
             } break;
 #if (_IS_USED_MULTITHREAD)
             case 'p':{
-                _options_check((threadNum==_THREAD_NUMBER_NULL)&&((op[2]=='-')),"-p-?");
+                _options_check((threadNum==_THREAD_NUMBER_NULL)&&(op[2]=='-'),"-p-?");
                 const char* pnum=op+3;
                 _options_check(a_to_size(pnum,strlen(pnum),&threadNum),"-p-?");
                 _options_check(threadNum>=_THREAD_NUMBER_MIN,"-p-?");
@@ -881,7 +892,7 @@ int hdiff_cmd_line(int argc, const char * argv[]){
 #endif
         const char* diffFileName   =arg_values[0];
         const char* outDiffFileName=arg_values[1];
-        hpatch_BOOL isDiffFile=getIsCompressedDiffFile(diffFileName);
+        hpatch_BOOL isDiffFile=_getIsCompressedDiffFile(diffFileName);
 #if (_IS_NEED_DIR_DIFF_PATCH)
         isDiffFile=isDiffFile || getIsDirDiffFile(diffFileName);
 #endif

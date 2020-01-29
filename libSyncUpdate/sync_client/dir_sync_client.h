@@ -31,40 +31,26 @@
 #include "sync_client.h"
 #include "../../dirDiffPatch/dir_patch/dir_patch_types.h"
 #if (_IS_NEED_DIR_DIFF_PATCH)
-#include "../../dirDiffPatch/dir_patch/dir_patch.h"
-#include "../../dirDiffPatch/dir_diff/dir_diff.h"
+#include "../../dirDiffPatch/dir_diff/dir_manifest.h"
+#include "../../dirDiffPatch/dir_patch/new_dir_output.h"
 
 //sync patch oldDir to newFile
 //  use get_manifest(dir) to get TManifest
 int sync_patch_dir2file(ISyncPatchListener* listener,const char* outNewFile,const TManifest& oldManifest,
-                        const char* newSyncInfoFile,size_t kMaxOpenFileNumber,int threadNum=0);
+                        const char* newSyncInfoFile,size_t kMaxOpenFileNumber,int threadNum=1);
 
-//int  get_isNewDirSyncInfo(const char* newDirSyncInfoFile,hpatch_BOOL* out_newIsDir);
-//int  get_isNewDirSyncInfo(const hpatch_TStreamInput* newDirSyncInfo,hpatch_BOOL* out_newIsDir);
-
-typedef struct TNewDirSyncInfo{
-    hpatch_BOOL             newPathIsDir;
-    TNewDataSyncInfo        baseSyncInfo;
-    hpatch_StreamPos_t      externDataOffset;
-    hpatch_StreamPos_t      externDataSize;
-    //todo:
-} TNewDirSyncInfo;
-
-struct IDirSyncPatchListener:public ISyncPatchListener,IDirPatchListener {
+struct IDirSyncPatchListener:public ISyncPatchListener{
+    void*       patchImport;
+    hpatch_BOOL (*patchBegin) (struct IDirSyncPatchListener* listener,
+                               const TNewDataSyncInfo* newSyncInfo,TNewDirOutput* newDirOutput);
+    hpatch_BOOL (*patchFinish)(struct IDirSyncPatchListener* listener,hpatch_BOOL isPatchSuccess,
+                               const TNewDataSyncInfo* newSyncInfo,TNewDirOutput* newDirOutput);
 };
 
-hpatch_inline static void
-     TNewDirSyncInfo_init        (TNewDirSyncInfo* self) { memset(self,0,sizeof(*self)); }
-int  TNewDirSyncInfo_open_by_file(TNewDirSyncInfo* self,const char* newDirSyncInfoFile,
-                                  IDirSyncPatchListener* listener);
-int  TNewDirSyncInfo_open        (TNewDirSyncInfo* self,const hpatch_TStreamInput* newDirSyncInfo,
-                                  IDirSyncPatchListener* listener);
-void TNewDirSyncInfo_close       (TNewDirSyncInfo* self);
-
-
-//sync patch oldPatch(file or dir) to newDir
-int  sync_patch_2dir(IDirSyncPatchListener* listener,const char* outNewDir,const TManifest& oldManifest,
-                     TNewDirSyncInfo* newDirSyncInfo,size_t kMaxOpenFileNumber,int threadNum=0);
+//sync patch oldPatch to newDir
+int sync_patch_fileOrDir2dir(IDirPatchListener* patchListener,IDirSyncPatchListener* syncListener,
+                             const char* outNewDir,const TManifest& oldManifest,
+                             const char* newSyncInfoFile,size_t kMaxOpenFileNumber,int threadNum=1);
 
 #endif
 #endif // dir_sync_client_h
