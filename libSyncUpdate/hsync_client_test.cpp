@@ -98,8 +98,8 @@ static void printUsage(){
            "options:\n"
 #if (_IS_NEED_DOWNLOAD_EMULATION)
 #else
-           "  -L#newSyncInfoFile_url"
-           "      http download newSyncInfoFile_url to newSyncInfoFile befor sync patch;\n"
+           "  -L#newSyncInfoFile_url\n"
+           "    http download newSyncInfoFile from newSyncInfoFile_url befor sync patch;\n"
 #endif
 #if (_IS_USED_MULTITHREAD)
            "  -p-parallelThreadNumber\n"
