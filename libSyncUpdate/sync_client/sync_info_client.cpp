@@ -27,6 +27,7 @@
  OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "sync_info_client.h"
+#include "sync_client_type_private.h"
 #include "../../file_for_patch.h"
 #include "../../libHDiffPatch/HPatch/patch_private.h"
 #if (_IS_NEED_DIR_DIFF_PATCH)

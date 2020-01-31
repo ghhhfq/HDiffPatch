@@ -29,7 +29,10 @@
 #ifndef DirPatch_dir_patch_types_h
 #define DirPatch_dir_patch_types_h
 #include "../../libHDiffPatch/HPatch/patch_types.h"
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+    
 #ifndef _IS_NEED_DIR_DIFF_PATCH
 #   define _IS_NEED_DIR_DIFF_PATCH  1
 #endif
@@ -52,4 +55,7 @@ static hpatch_inline  //align upper
 hpatch_StreamPos_t toAlignRangeSize(hpatch_StreamPos_t rangeSize,size_t kAlignSize)
         { return (rangeSize+kAlignSize-1)/kAlignSize*kAlignSize; }
 
+#ifdef __cplusplus
+}
+#endif
 #endif //DirPatch_dir_patch_types_h

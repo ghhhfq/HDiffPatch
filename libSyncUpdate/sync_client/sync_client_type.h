@@ -30,8 +30,10 @@
 #define sync_client_type_h
 #include "../../libHDiffPatch/HPatch/patch_types.h"
 #include "../../libHDiffPatch/HPatch/checksum_plugin.h"
-#include "../../libHDiffPatch/HDiff/private_diff/limit_mem_diff/adler_roll.h"
 #include "../../dirDiffPatch/dir_patch/dir_patch_types.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 hpatch_inline static
 hpatch_StreamPos_t getSyncBlockCount(hpatch_StreamPos_t newDataSize,uint32_t kMatchBlockSize){
@@ -53,10 +55,10 @@ typedef struct TNewDataSyncInfo{
     uint32_t                samePairCount;
     uint8_t                 isDirSyncInfo;
     uint8_t                 is32Bit_rollHash;
-    hpatch_StreamPos_t      newDataSize;
-    hpatch_StreamPos_t      newSyncDataSize;
-    hpatch_StreamPos_t      newSyncInfoSize;
-    unsigned char*          infoPartChecksum; //this info data's strongChecksum
+    hpatch_StreamPos_t      newDataSize;      // newData version size;
+    hpatch_StreamPos_t      newSyncDataSize;  // .hsyncd size ,saved newData or complessed newData
+    hpatch_StreamPos_t      newSyncInfoSize;  // .hsynci size ,saved newData's info
+    unsigned char*          infoPartChecksum; // this info data's strongChecksum
     TSameNewBlockPair*      samePairList;
     uint32_t*               savedSizes;
     void*                   rollHashs;
@@ -75,78 +77,30 @@ typedef struct TNewDataSyncInfo{
     void*                   _import;
 } TNewDataSyncInfo;
 
+struct TNeedSyncInfos;
+typedef void (*TSync_getBlockInfoByIndex)(const struct TNeedSyncInfos* needSyncInfos,uint32_t blockIndex,
+                                          hpatch_BOOL* out_isNeedSync,uint32_t* out_dataSize);
+typedef struct TNeedSyncInfos{
+    const TNewDataSyncInfo*     newSyncInfo;  // opened .hsynci
+    uint32_t                    blockCount;
+    uint32_t                    needSyncBlockCount;
+    hpatch_StreamPos_t          needSyncSumSize;
+    TSync_getBlockInfoByIndex   getBlockInfoByIndex;
+    void*                       needSyncInfosImport; //private
+} TNeedSyncInfos;
 
-namespace sync_private{
-    
-hpatch_inline static void
-TNewDataSyncInfo_init(TNewDataSyncInfo* self) { memset(self,0,sizeof(*self)); }
-    
-hpatch_inline static
-hpatch_StreamPos_t TNewDataSyncInfo_blockCount(const TNewDataSyncInfo* self){
-        return getSyncBlockCount(self->newDataSize,self->kMatchBlockSize); }
+typedef struct IReadSyncDataListener{
+    void*       readSyncDataImport;
+    //readSyncDataBegin can null
+    hpatch_BOOL (*readSyncDataBegin)(IReadSyncDataListener* listener,const TNeedSyncInfos* needSyncInfo);
+    //download data
+    bool        (*readSyncData)     (IReadSyncDataListener* listener,hpatch_StreamPos_t posInNewSyncData,
+                                     uint32_t syncDataSize,unsigned char* out_syncDataBuf);
+    //readSyncDataEnd can null
+    void        (*readSyncDataEnd)  (IReadSyncDataListener* listener);
+} IReadSyncDataListener;
 
-hpatch_inline static
-uint32_t TNewDataSyncInfo_newDataBlockSize(const TNewDataSyncInfo* self,uint32_t blockIndex){
-    uint32_t blockCount=(uint32_t)TNewDataSyncInfo_blockCount(self);
-    if (blockIndex+1!=blockCount)
-        return self->kMatchBlockSize;
-    else
-        return (uint32_t)(self->newDataSize-self->kMatchBlockSize*blockIndex);
+#ifdef __cplusplus
 }
-hpatch_inline static
-uint32_t TNewDataSyncInfo_syncBlockSize(const TNewDataSyncInfo* self,uint32_t blockIndex){
-    if (self->savedSizes)
-        return self->savedSizes[blockIndex];
-    else
-        return self->kMatchBlockSize;
-}
-    
-inline static uint64_t roll_hash_start(uint64_t*,const adler_data_t* pdata,size_t n){
-                                        return fast_adler64_start(pdata,n); }
-inline static uint32_t roll_hash_start(uint32_t*,const adler_data_t* pdata,size_t n){
-                                        return fast_adler32_start(pdata,n); }
-inline static uint64_t roll_hash_roll(uint64_t adler,size_t blockSize,
-                                      adler_data_t out_data,adler_data_t in_data){
-                                        return fast_adler64_roll(adler,blockSize,out_data,in_data); }
-inline static uint32_t roll_hash_roll(uint32_t adler,size_t blockSize,
-                                      adler_data_t out_data,adler_data_t in_data){
-                                        return fast_adler32_roll(adler,blockSize,out_data,in_data); }
-    
-#define kPartStrongChecksumByteSize       8
-    
-hpatch_inline static
-void toSyncPartChecksum(unsigned char* out_partChecksum,
-                        const unsigned char* checksum,size_t checksumByteSize){
-    assert((checksumByteSize>=kPartStrongChecksumByteSize)
-           &&(checksumByteSize%kPartStrongChecksumByteSize==0));
-    assert(sizeof(hpatch_uint64_t)==kPartStrongChecksumByteSize);
-    const unsigned char* checksum_end=checksum+checksumByteSize;
-    hpatch_uint64_t v; memcpy(&v,checksum,kPartStrongChecksumByteSize);
-    checksum+=kPartStrongChecksumByteSize;
-    while (checksum!=checksum_end) {
-        hpatch_uint64_t c; memcpy(&c,checksum,kPartStrongChecksumByteSize);
-        checksum+=kPartStrongChecksumByteSize;
-        v^=c;
-    }
-    memcpy(out_partChecksum,&v,kPartStrongChecksumByteSize);
-}
-
-hpatch_inline static unsigned int upper_ilog2(long double v){
-    unsigned int bit=0;
-    long double p=1;
-    while (p<v){ ++bit; p*=2; }
-    return bit;
-}
-    
-hpatch_inline static
-unsigned int getBetterCacheBlockTableBit(uint32_t blockCount){
-    const int kMinBit = 8;
-    const int kMaxBit = 23;
-    int result=(int)upper_ilog2((1<<kMinBit)+blockCount)-2;
-    result=(result<kMinBit)?kMinBit:result;
-    result=(result>kMaxBit)?kMaxBit:result;
-    return result;
-}
-
-} //namespace sync_private
+#endif
 #endif //sync_client_type_h

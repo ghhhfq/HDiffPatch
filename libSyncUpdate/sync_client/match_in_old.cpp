@@ -29,8 +29,8 @@
 #include "match_in_old.h"
 #include "string.h" //memmove
 #include <algorithm> //sort, equal_range lower_bound
+#include "sync_client_type_private.h"
 #include "../../libHDiffPatch/HDiff/private_diff/mem_buf.h"
-#include "../../libHDiffPatch/HDiff/private_diff/limit_mem_diff/adler_roll.h"
 #include "../../libHDiffPatch/HDiff/private_diff/limit_mem_diff/bloom_filter.h"
 #include "mt_by_queue.h"
 using namespace hdiff_private;
@@ -193,22 +193,22 @@ inline static size_t getBackZeroLen(hpatch_StreamPos_t newDataSize,uint32_t kMat
     return len;
 }
 
-static void matchRange(hpatch_StreamPos_t* out_newDataPoss,const TByte* partChecksums,TOldDataCache_base& oldData,
+static void matchRange(hpatch_StreamPos_t* out_newBlockDataInOldPoss,const TByte* partChecksums,TOldDataCache_base& oldData,
                        const uint32_t* range_begin,const uint32_t* range_end,void* _mt=0){
     const TByte* oldPartStrongChecksum=0;
     do {
         uint32_t newBlockIndex=*range_begin;
-        if (out_newDataPoss[newBlockIndex]==kBlockType_needSync){
+        if (out_newBlockDataInOldPoss[newBlockIndex]==kBlockType_needSync){
             if (oldPartStrongChecksum==0)
                 oldPartStrongChecksum=oldData.calcPartStrongChecksum();
             const TByte* newPairStrongChecksum=partChecksums+newBlockIndex*(size_t)kPartStrongChecksumByteSize;
             if (0==memcmp(oldPartStrongChecksum,newPairStrongChecksum,kPartStrongChecksumByteSize)){
 #if (_IS_USED_MULTITHREAD)
                 TMt_by_queue::TAutoLocker _autoLocker((TMt_by_queue*)_mt);
-                hpatch_StreamPos_t cur=out_newDataPoss[newBlockIndex];
+                hpatch_StreamPos_t cur=out_newBlockDataInOldPoss[newBlockIndex];
                 if ((cur==kBlockType_needSync)||(cur>oldData.curOldPos()))
 #endif
-                    out_newDataPoss[newBlockIndex]=oldData.curOldPos();
+                    out_newBlockDataInOldPoss[newBlockIndex]=oldData.curOldPos();
                 break;//other by samePairList
             }
         }
@@ -218,7 +218,7 @@ static void matchRange(hpatch_StreamPos_t* out_newDataPoss,const TByte* partChec
 
 
 struct _TMatchDatas{
-    hpatch_StreamPos_t*         out_newDataPoss;
+    hpatch_StreamPos_t*         out_newBlockDataInOldPoss;
     const TNewDataSyncInfo*     newSyncInfo;
     const hpatch_TStreamInput*  oldStream;
     hpatch_TChecksum*           strongChecksumPlugin;
@@ -247,7 +247,7 @@ static void _rollMatch(_TMatchDatas& rd,hpatch_StreamPos_t oldRollBegin,
         range=std::equal_range(rd.sorted_newIndexs+ti_pos[0],
                                rd.sorted_newIndexs+ti_pos[1],digest_value,icomp);
         if (range.first!=range.second){
-            matchRange(rd.out_newDataPoss,rd.newSyncInfo->partChecksums,
+            matchRange(rd.out_newBlockDataInOldPoss,rd.newSyncInfo->partChecksums,
                        oldData,range.first,range.second,_mt);
         }
             
@@ -340,23 +340,23 @@ static void tm_matchNewDataInOld(_TMatchDatas& matchDatas,int threadNum){
     }
 }
     
-static void matchInOldBySameBlock(hpatch_StreamPos_t* out_newDataPoss,const TNewDataSyncInfo* newSyncInfo){
+static void matchInOldBySameBlock(hpatch_StreamPos_t* out_newBlockDataInOldPoss,const TNewDataSyncInfo* newSyncInfo){
     for (uint32_t curPair=0; curPair<newSyncInfo->samePairCount; ++curPair) {
         const TSameNewBlockPair& pair=newSyncInfo->samePairList[curPair];
-        hpatch_StreamPos_t syncInfo=out_newDataPoss[pair.sameIndex];
+        hpatch_StreamPos_t syncInfo=out_newBlockDataInOldPoss[pair.sameIndex];
         if (syncInfo!=kBlockType_needSync)//can from old?
-            out_newDataPoss[pair.curIndex]=syncInfo;
+            out_newBlockDataInOldPoss[pair.curIndex]=syncInfo;
     }
 }
 
-void matchNewDataInOld(hpatch_StreamPos_t* out_newDataPoss,const TNewDataSyncInfo* newSyncInfo,
+void matchNewDataInOld(hpatch_StreamPos_t* out_newBlockDataInOldPoss,const TNewDataSyncInfo* newSyncInfo,
                        const hpatch_TStreamInput* oldStream,hpatch_TChecksum* strongChecksumPlugin,int threadNum){
     uint32_t kBlockCount=(uint32_t)TNewDataSyncInfo_blockCount(newSyncInfo);
     for (uint32_t i=0; i<kBlockCount; ++i)
-        out_newDataPoss[i]=kBlockType_needSync;
+        out_newBlockDataInOldPoss[i]=kBlockType_needSync;
     
     _TMatchDatas matchDatas; memset(&matchDatas,0,sizeof(matchDatas));
-    matchDatas.out_newDataPoss=out_newDataPoss;
+    matchDatas.out_newBlockDataInOldPoss=out_newBlockDataInOldPoss;
     matchDatas.newSyncInfo=newSyncInfo;
     matchDatas.oldStream=oldStream;
     matchDatas.strongChecksumPlugin=strongChecksumPlugin;
@@ -364,7 +364,7 @@ void matchNewDataInOld(hpatch_StreamPos_t* out_newDataPoss,const TNewDataSyncInf
         tm_matchNewDataInOld<uint32_t>(matchDatas,threadNum);
     else
         tm_matchNewDataInOld<uint64_t>(matchDatas,threadNum);
-    matchInOldBySameBlock(out_newDataPoss,newSyncInfo);
+    matchInOldBySameBlock(out_newBlockDataInOldPoss,newSyncInfo);
 }
 
 } //namespace sync_private

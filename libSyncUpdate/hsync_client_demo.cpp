@@ -49,12 +49,12 @@
 #endif
 #if (_IS_NEED_DOWNLOAD_EMULATION)
 //simple file demo
-#   include "client_download_test.h"
+#   include "client_download_demo.h"
 static inline bool openNewSyncDataByUrl(ISyncPatchListener* listener,const char* newSyncDataFile){
-    return downloadEmulation_open_by_file(listener,newSyncDataFile);
+    return downloadEmulation_open_by_file(&listener->readSyncDataListener,newSyncDataFile);
 }
 static inline bool closeNewSyncData(ISyncPatchListener* listener){
-    return downloadEmulation_close(listener);
+    return downloadEmulation_close(&listener->readSyncDataListener);
 }
 #else //download by http/https ?
 bool openNewSyncDataByUrl(ISyncPatchListener* listener,const char* newSyncDataFile_url);
@@ -89,7 +89,7 @@ static void printUsage(){
     printf("test sync patch: [options] oldPath newSyncInfoFile newSyncDataFile_test outNewPath\n"
 #else
     printf("http sync patch: [options] oldPath newSyncInfoFile newSyncDataFile_url outNewPath\n"
-           "http download: -L#newSyncInfoFile_url newSyncInfoFile\n"
+           "http download: -U#newSyncInfoFile_url newSyncInfoFile\n"
 #endif
 #if (_IS_NEED_DIR_DIFF_PATCH)
            "  oldPath can be file or directory(folder),\n"
@@ -98,7 +98,7 @@ static void printUsage(){
            "options:\n"
 #if (_IS_NEED_DOWNLOAD_EMULATION)
 #else
-           "  -L#newSyncInfoFile_url\n"
+           "  -U#newSyncInfoFile_url\n"
            "    http download newSyncInfoFile from newSyncInfoFile_url befor sync patch;\n"
 #endif
 #if (_IS_USED_MULTITHREAD)
@@ -231,24 +231,24 @@ static hpatch_TChecksum* _findChecksumPlugin(ISyncInfoListener* listener,const c
     }
 }
 
-    static void printMatchResult(const TNewDataSyncInfo* newSyncInfo,const TNeedSyncInfo* nsi) {
+    static void printMatchResult(const TNeedSyncInfos* nsi) {
+        const TNewDataSyncInfo* newi=nsi->newSyncInfo;
         const uint32_t kBlockCount=nsi->blockCount;
         printf("  syncBlockCount: %d, /%d=%.1f%%\n  syncDataSize: %" PRIu64 "\n",
-               nsi->syncBlockCount,kBlockCount,100.0*nsi->syncBlockCount/kBlockCount,nsi->syncDataSize);
-        hpatch_StreamPos_t downloadSize=newSyncInfo->newSyncInfoSize+nsi->syncDataSize;
+               nsi->needSyncBlockCount,kBlockCount,100.0*nsi->needSyncBlockCount/kBlockCount,nsi->needSyncSumSize);
+        hpatch_StreamPos_t downloadSize=newi->newSyncInfoSize+nsi->needSyncSumSize;
         printf("  downloadSize: %" PRIu64 "+%" PRIu64 "= %" PRIu64 ", /%" PRIu64 "=%.1f%%",
-               newSyncInfo->newSyncInfoSize,nsi->syncDataSize,downloadSize,
-               newSyncInfo->newDataSize,100.0*downloadSize/newSyncInfo->newDataSize);
-        if (newSyncInfo->savedSizes){
-            hpatch_StreamPos_t maxDownloadSize=newSyncInfo->newSyncInfoSize+newSyncInfo->newSyncDataSize;
+               newi->newSyncInfoSize,nsi->needSyncSumSize,downloadSize,
+               newi->newDataSize,100.0*downloadSize/newi->newDataSize);
+        if (newi->newSyncDataSize<newi->newDataSize){
+            hpatch_StreamPos_t maxDownloadSize=newi->newSyncInfoSize+newi->newSyncDataSize;
             printf(" (/%" PRIu64 "=%.1f%%)",maxDownloadSize,100.0*downloadSize/maxDownloadSize);
         }
         printf("\n");
     }
-//ISyncInfoListener::syncInfo
-static void _syncInfo(ISyncPatchListener* listener,const TNewDataSyncInfo* newSyncInfo,
-                      const TNeedSyncInfo* needSyncInfo){
-    printMatchResult(newSyncInfo,needSyncInfo);
+//ISyncInfoListener::needSyncInfo
+static void _needSyncInfo(ISyncInfoListener* listener,const TNeedSyncInfos* needSyncInfo){
+    printMatchResult(needSyncInfo);
 }
 
 
@@ -333,9 +333,9 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
 #endif
 #if (_IS_NEED_DOWNLOAD_EMULATION)
 #else
-            case 'L':{
+            case 'U':{
                 const char* purl=op+3;
-                _options_check((newSyncInfoFile_url==0)&&(op[2]=='#')&&(strlen(purl)>0),"-L#?");
+                _options_check((newSyncInfoFile_url==0)&&(op[2]=='#')&&(strlen(purl)>0),"-U#?");
                 newSyncInfoFile_url=purl;
             } break;
 #endif
@@ -405,7 +405,7 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     
     if (isOutputHelp||isOutputVersion){
 #if (_IS_NEED_DOWNLOAD_EMULATION)
-        printf("HDiffPatch::hsync_client_test v" HDIFFPATCH_VERSION_STRING "\n\n");
+        printf("HDiffPatch::hsync_client_demo v" HDIFFPATCH_VERSION_STRING "\n\n");
 #else
         printf("HDiffPatch::hsync_client_http v" HDIFFPATCH_VERSION_STRING "\n\n");
 #endif
@@ -548,7 +548,7 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
     listener.checksumSet=checksumSet;
     listener.findChecksumPlugin=_findChecksumPlugin;
     listener.findDecompressPlugin=_findDecompressPlugin;
-    listener.syncInfo=_syncInfo;
+    listener.needSyncInfo=_needSyncInfo;
     _return_check(openNewSyncDataByUrl(&listener,newSyncDataFile_url),
                   kSyncClient_openSyncDataError,"open newSyncData: %s",newSyncDataFile_url);
     int result=kSyncClient_ok;
@@ -684,7 +684,7 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
     listener.checksumSet=checksumSet;
     listener.findChecksumPlugin=_findChecksumPlugin;
     listener.findDecompressPlugin=_findDecompressPlugin;
-    listener.syncInfo=_syncInfo;
+    listener.needSyncInfo=_needSyncInfo;
     
     listener.patchImport=&listener;
     listener.isPatchToNewTempDir=isSamePath;

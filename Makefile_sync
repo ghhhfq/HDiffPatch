@@ -86,7 +86,7 @@ CXXFLAGS += $(DEF_FLAGS)
 
 .PHONY: all clean
 
-all: md5Lib lzmaLib libsyncupdate.a hsync_server hsync_client_test hsync_client_http
+all: md5Lib lzmaLib libsyncupdate.a hsync_server hsync_client_demo hsync_client_http
 
 MD5_OBJ     := 'md5.o'
 md5Lib      : # https://sourceforge.net/projects/libmd5-rfc  https://github.com/sisong/libmd5
@@ -110,14 +110,14 @@ libsyncupdate.a: $(SERVER_OBJ) $(CLIENT_OBJ)
 hsync_server: 
 	$(CXX)	libSyncUpdate/hsync_server.cpp \
 		$(SERVER_OBJ) $(MD5_OBJ) $(LZMA_OBJ) $(CXXFLAGS) $(SYNC_LINK) -o hsync_server
-hsync_client_test: 
-	$(CXX)	libSyncUpdate/hsync_client_test.cpp libSyncUpdate/client_download_test.cpp \
-		$(CLIENT_OBJ) $(MD5_OBJ) $(LZMA_DEC_OBJ) $(CXXFLAGS) $(SYNC_LINK) -o hsync_client_test
+hsync_client_demo: 
+	$(CXX)	libSyncUpdate/hsync_client_demo.cpp libSyncUpdate/client_download_demo.cpp \
+		$(CLIENT_OBJ) $(MD5_OBJ) $(LZMA_DEC_OBJ) $(CXXFLAGS) $(SYNC_LINK) -o hsync_client_demo
 hsync_client_http: 
 	$(CXX)	libSyncUpdate/hsync_client_http.cpp libSyncUpdate/client_download_http/client_download_http.cpp \
 		$(CLIENT_OBJ) $(MD5_OBJ) $(LZMA_DEC_OBJ) $(CXXFLAGS) $(SYNC_LINK) -o hsync_client_http
 
 RM := rm -f
 clean:
-	$(RM)	libsyncupdate.a hsync_server hsync_client_test hsync_client_http \
+	$(RM)	libsyncupdate.a hsync_server hsync_client_demo hsync_client_http \
 		$(SERVER_OBJ) $(CLIENT_OBJ) $(MD5_OBJ) $(LZMA_OBJ)

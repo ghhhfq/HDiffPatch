@@ -58,6 +58,7 @@ typedef enum TSyncClient_resultType{
     kSyncClient_newFileCloseError,
     kSyncClient_matchNewDataInOldError,
     kSyncClient_openSyncDataError,
+    kSyncClient_readSyncDataBeginError,
     kSyncClient_readSyncDataError,
     kSyncClient_closeSyncDataError,
     kSyncClient_decompressError,
@@ -84,6 +85,8 @@ typedef struct ISyncInfoListener{
     TSyncPatchChecksumSet checksumSet;
     hpatch_TDecompress* (*findDecompressPlugin)(ISyncInfoListener* listener,const char* compressType);
     hpatch_TChecksum*   (*findChecksumPlugin)  (ISyncInfoListener* listener,const char* strongChecksumType);
+    //needSyncInfo can null
+    void                (*needSyncInfo)(ISyncInfoListener* listener,const TNeedSyncInfos* needSyncInfo);
 } ISyncInfoListener;
 
 int  TNewDataSyncInfo_open_by_file(TNewDataSyncInfo* self,const char* newSyncInfoFile,
@@ -94,6 +97,5 @@ void TNewDataSyncInfo_close       (TNewDataSyncInfo* self);
 
 int  checkNewSyncInfoType_by_file(const char* newSyncInfoFile,hpatch_BOOL* out_newIsDir);
 int  checkNewSyncInfoType(const hpatch_TStreamInput* newSyncInfo,hpatch_BOOL* out_newIsDir);
-
 
 #endif // sync_info_client_h

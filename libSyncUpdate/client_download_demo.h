@@ -1,4 +1,4 @@
-//  client_download_test.h
+//  client_download_demo.h
 //  sync_client
 //  Created by housisong on 2019-09-23.
 /*
@@ -26,21 +26,21 @@
  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef client_download_test_h
-#define client_download_test_h
-#include "sync_client/sync_client.h"
+#ifndef client_download_demo_h
+#define client_download_demo_h
+#include "sync_client/sync_client_type.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 //downloadEmulation for patch test:
 //  when need to download part of newSyncData, emulation read it from local data;
-bool downloadEmulation_open_by_file(ISyncPatchListener* out_emulation,const char* newSyncDataPath);
-bool downloadEmulation_open(ISyncPatchListener* out_emulation,const hpatch_TStreamInput* newSyncData);
-bool downloadEmulation_close(ISyncPatchListener* emulation);
+bool downloadEmulation_open_by_file(IReadSyncDataListener* out_emulation,const char* newSyncDataPath);
+bool downloadEmulation_open(IReadSyncDataListener* out_emulation,const hpatch_TStreamInput* newSyncData);
+bool downloadEmulation_close(IReadSyncDataListener* emulation);
 
 #ifdef __cplusplus
 }
 #endif
         
-#endif // client_download_test_h
+#endif // client_download_demo_h

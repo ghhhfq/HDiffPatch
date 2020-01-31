@@ -31,25 +31,8 @@
 #include "sync_client_type.h"
 #include "sync_info_client.h"
 
-typedef struct TNeedSyncInfo{
-    uint32_t           blockCount;
-    uint32_t           syncBlockCount;
-    hpatch_StreamPos_t syncDataSize;
-} TNeedSyncInfo;
-
 typedef struct ISyncPatchListener:public ISyncInfoListener{
-    void*                  syncImport;
-    //syncInfo can null
-    void (*syncInfo)       (ISyncPatchListener* listener,const TNewDataSyncInfo* newSyncInfo,
-                            const TNeedSyncInfo* needSyncInfo);
-    //needSyncMsg can null
-    void (*needSyncMsg)    (ISyncPatchListener* listener,const TNeedSyncInfo* needSyncInfo);
-    //needSyncDataMsg can null; called befor all readSyncData called;
-    void (*needSyncDataMsg)(ISyncPatchListener* listener,hpatch_StreamPos_t posInNewSyncData,
-                            uint32_t syncDataSize);
-    //download data
-    bool (*readSyncData)   (ISyncPatchListener* listener,hpatch_StreamPos_t posInNewSyncData,
-                            uint32_t syncDataSize,unsigned char* out_syncDataBuf);
+    IReadSyncDataListener   readSyncDataListener;
 } ISyncPatchListener;
 
 int sync_patch(ISyncPatchListener* listener,const hpatch_TStreamOutput* out_newStream,

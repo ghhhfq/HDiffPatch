@@ -29,17 +29,16 @@
 #ifndef match_in_old_h
 #define match_in_old_h
 #include "sync_client_type.h"
-#include "../../libHDiffPatch/HPatch/checksum_plugin.h"
 namespace sync_private{
 
 static const hpatch_StreamPos_t kBlockType_needSync =~(hpatch_StreamPos_t)0; //download, default
 
 //matchNewDataInOld()
 //throw std::runtime_error on error
-//result value in out_newDataPoss:
+//result value in out_newBlockDataInOldPoss:
 // value==kBlockType_needSync : this block need download from server;
 // 0<=value<oldDataSize : this block read from oldStream,starting at value in oldStream;
-void matchNewDataInOld(hpatch_StreamPos_t* out_newDataPoss,const TNewDataSyncInfo* newSyncInfo,
+void matchNewDataInOld(hpatch_StreamPos_t* out_newBlockDataInOldPoss,const TNewDataSyncInfo* newSyncInfo,
                        const hpatch_TStreamInput* oldStream,hpatch_TChecksum* strongChecksumPlugin,int threadNum=1);
 
 } //namespace sync_private

@@ -27,14 +27,14 @@
  OTHER DEALINGS IN THE SOFTWARE.
  */
 #define  _IS_NEED_DOWNLOAD_EMULATION 0
-#include "hsync_client_test.cpp"
+#include "hsync_client_demo.cpp"
 #include "client_download_http/client_download_http.h"
 
 bool openNewSyncDataByUrl(ISyncPatchListener* listener,const char* newSyncDataFile_url){
-    return download_part_by_http_open(listener,newSyncDataFile_url);
+    return download_part_by_http_open(&listener->readSyncDataListener,newSyncDataFile_url);
 }
 bool closeNewSyncData(ISyncPatchListener* listener){
-    return download_part_by_http_close(listener);
+    return download_part_by_http_close(&listener->readSyncDataListener);
 }
 bool downloadNewSyncInfoFromUrl(const char* newSyncInfoFile_url,const hpatch_TStreamOutput* out_stream){
     return download_file_by_http(newSyncInfoFile_url,out_stream);

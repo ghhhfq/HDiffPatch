@@ -27,6 +27,7 @@
  OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "sync_client.h"
+#include "sync_client_type_private.h"
 #include "../../file_for_patch.h"
 #include "match_in_old.h"
 #include "mt_by_queue.h"
@@ -40,7 +41,7 @@ namespace sync_private{
 struct _TWriteDatas {
     const hpatch_TStreamOutput* out_newStream;
     const TNewDataSyncInfo*     newSyncInfo;
-    const hpatch_StreamPos_t*   newDataPoss;
+    const hpatch_StreamPos_t*   newBlockDataInOldPoss;
     const hpatch_TStreamInput*  oldStream;
     hpatch_TDecompress*         decompressPlugin;
     hpatch_TChecksum*           strongChecksumPlugin;
@@ -79,7 +80,7 @@ static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
 #if (_IS_USED_MULTITHREAD)
         if (_mt) { if (!((TMt_by_queue*)_mt)->getWork(threadIndex,i)) continue; } //next work;
 #endif
-        const hpatch_StreamPos_t curSyncPos=wd.newDataPoss[i];
+        const hpatch_StreamPos_t curSyncPos=wd.newBlockDataInOldPoss[i];
         if (curSyncPos==kBlockType_needSync){
             TByte* buf=(syncSize<newDataSize)?(dataBuf+kMatchBlockSize):dataBuf;
             if ((wd.out_newStream)||(listener)){
@@ -87,7 +88,8 @@ static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
 #if (_IS_USED_MULTITHREAD)
                     TMt_by_queue::TAutoInputLocker _autoLocker((TMt_by_queue*)_mt);
 #endif
-                    check(listener->readSyncData(listener,posInNewSyncData,syncSize,buf),
+                    check(listener->readSyncDataListener.readSyncData(&listener->readSyncDataListener,
+                                                                      posInNewSyncData,syncSize,buf),
                           kSyncClient_readSyncDataError);
                 }
                 if (syncSize<newDataSize){
@@ -172,36 +174,34 @@ static int writeToNew(_TWriteDatas& writeDatas,int threadNum) {
     }
 }
 
+    struct TNeedSyncInfosImport:public TNeedSyncInfos{
+        const hpatch_StreamPos_t* newBlockDataInOldPoss;
+    };
+static void _getBlockInfoByIndex(const TNeedSyncInfos* needSyncInfos,uint32_t blockIndex,
+                                 hpatch_BOOL* out_isNeedSync,uint32_t* out_dataSize){
+    const TNeedSyncInfosImport* self=(const TNeedSyncInfosImport*)needSyncInfos->needSyncInfosImport;
+    assert(blockIndex<self->blockCount);
+    *out_isNeedSync=(self->newBlockDataInOldPoss[blockIndex]==kBlockType_needSync);
+    *out_dataSize=TNewDataSyncInfo_syncBlockSize(self->newSyncInfo,blockIndex);
+}
     
-static void getNeedSyncInfo(const hpatch_StreamPos_t* newDataPoss,
-                            const TNewDataSyncInfo* newSyncInfo,TNeedSyncInfo* out_nsi){
+static void getNeedSyncInfo(const hpatch_StreamPos_t* newBlockDataInOldPoss,
+                            const TNewDataSyncInfo* newSyncInfo,TNeedSyncInfosImport* out_nsi){
     const uint32_t kBlockCount=(uint32_t)TNewDataSyncInfo_blockCount(newSyncInfo);
+    out_nsi->needSyncInfosImport=out_nsi; //self
+    out_nsi->newBlockDataInOldPoss=newBlockDataInOldPoss;
+    
+    out_nsi->newSyncInfo=newSyncInfo;
+    out_nsi->getBlockInfoByIndex=_getBlockInfoByIndex;
     out_nsi->blockCount=kBlockCount;
-    out_nsi->syncBlockCount=0;
-    out_nsi->syncDataSize=0;
+    out_nsi->needSyncBlockCount=0;
+    out_nsi->needSyncSumSize=0;
     for (uint32_t i=0; i<kBlockCount; ++i){
-        if (newDataPoss[i]==kBlockType_needSync){
-            ++out_nsi->syncBlockCount;
-            out_nsi->syncDataSize+=TNewDataSyncInfo_syncBlockSize(newSyncInfo,i);
+        if (newBlockDataInOldPoss[i]==kBlockType_needSync){
+            ++out_nsi->needSyncBlockCount;
+            out_nsi->needSyncSumSize+=TNewDataSyncInfo_syncBlockSize(newSyncInfo,i);
         }
     }
-}
-
-static void sendSyncMsg(ISyncPatchListener* listener,const hpatch_StreamPos_t* newDataPoss,
-                        const TNewDataSyncInfo* newSyncInfo,const TNeedSyncInfo& nsi){
-    if (listener==0) return;
-    if (listener->needSyncMsg)
-        listener->needSyncMsg(listener,&nsi);
-    if (listener->needSyncDataMsg==0) return;
-    
-    const uint32_t kBlockCount=(uint32_t)TNewDataSyncInfo_blockCount(newSyncInfo);
-    hpatch_StreamPos_t posInNewSyncData=0;
-    for (uint32_t syncSize,i=0; i<kBlockCount; ++i,posInNewSyncData+=syncSize){
-        syncSize=TNewDataSyncInfo_syncBlockSize(newSyncInfo,i);
-        if (newDataPoss[i]==kBlockType_needSync)
-            listener->needSyncDataMsg(listener,posInNewSyncData,syncSize);
-    }
-    assert(posInNewSyncData==newSyncInfo->newSyncDataSize);
 }
 
 } //namespace sync_private
@@ -213,8 +213,8 @@ int sync_patch(ISyncPatchListener* listener,const hpatch_TStreamOutput* out_newS
     hpatch_TDecompress* decompressPlugin=0;
     hpatch_TChecksum*   strongChecksumPlugin=0;
     const uint32_t kBlockCount=(uint32_t)TNewDataSyncInfo_blockCount(newSyncInfo);
-    TNeedSyncInfo needSyncInfo={0,0};
-    hpatch_StreamPos_t* newDataPoss=0;
+    TNeedSyncInfosImport needSyncInfo; memset(&needSyncInfo,0,sizeof(needSyncInfo));
+    hpatch_StreamPos_t* newBlockDataInOldPoss=0;
     int result=kSyncClient_ok;
     int _inClear=0;
     
@@ -241,34 +241,39 @@ int sync_patch(ISyncPatchListener* listener,const hpatch_TStreamOutput* out_newS
     }
 
     //match in oldData
-    newDataPoss=(hpatch_StreamPos_t*)malloc(kBlockCount*(size_t)sizeof(hpatch_StreamPos_t));
-    check(newDataPoss!=0,kSyncClient_memError);
+    newBlockDataInOldPoss=(hpatch_StreamPos_t*)malloc(kBlockCount*(size_t)sizeof(hpatch_StreamPos_t));
+    check(newBlockDataInOldPoss!=0,kSyncClient_memError);
     try{
-        matchNewDataInOld(newDataPoss,newSyncInfo,oldStream,strongChecksumPlugin,threadNum);
+        matchNewDataInOld(newBlockDataInOldPoss,newSyncInfo,oldStream,strongChecksumPlugin,threadNum);
     }catch(const std::exception& e){
         fprintf(stderr,"matchNewDataInOld() run an error: %s",e.what());
         result=kSyncClient_matchNewDataInOldError;
     }
     check(result==kSyncClient_ok,result);
-    getNeedSyncInfo(newDataPoss,newSyncInfo,&needSyncInfo);
-    if (listener->syncInfo)
-        listener->syncInfo(listener,newSyncInfo,&needSyncInfo);
-    //send msg: all need sync block
-    sendSyncMsg(listener,newDataPoss,newSyncInfo,needSyncInfo);
+    getNeedSyncInfo(newBlockDataInOldPoss,newSyncInfo,&needSyncInfo);
+    if (listener->needSyncInfo)
+        listener->needSyncInfo(listener,&needSyncInfo);
+    
+    if (listener->readSyncDataListener.readSyncDataBegin)
+        check(listener->readSyncDataListener.readSyncDataBegin(&listener->readSyncDataListener,&needSyncInfo),
+              kSyncClient_readSyncDataBeginError);
     
     _TWriteDatas writeDatas;
     writeDatas.out_newStream=out_newStream;
     writeDatas.newSyncInfo=newSyncInfo;
-    writeDatas.newDataPoss=newDataPoss;
+    writeDatas.newBlockDataInOldPoss=newBlockDataInOldPoss;
     writeDatas.oldStream=oldStream;
     writeDatas.decompressPlugin=decompressPlugin;
     writeDatas.strongChecksumPlugin=strongChecksumPlugin;
     writeDatas.listener=listener;
     result=writeToNew(writeDatas,threadNum);
+    
+    if (listener->readSyncDataListener.readSyncDataEnd)
+        listener->readSyncDataListener.readSyncDataEnd(&listener->readSyncDataListener);
     check(result==kSyncClient_ok,result);
 clear:
     _inClear=1;
-    if (newDataPoss) free(newDataPoss);
+    if (newBlockDataInOldPoss) free(newBlockDataInOldPoss);
     return result;
 }
 
