@@ -26,16 +26,14 @@
  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
  */
+#define  _IS_NEED_MAIN 1
 #define  _IS_NEED_DOWNLOAD_EMULATION 0
-#include "hsync_client_demo.cpp"
+#include "hsync_client_demo.cpp" //main()
 #include "client_download_http/client_download_http.h"
 
-bool openNewSyncDataByUrl(ISyncPatchListener* listener,const char* newSyncDataFile_url){
-    return download_part_by_http_open(&listener->readSyncDataListener,newSyncDataFile_url);
-}
-bool closeNewSyncData(ISyncPatchListener* listener){
-    return download_part_by_http_close(&listener->readSyncDataListener);
-}
-bool downloadNewSyncInfoFromUrl(const char* newSyncInfoFile_url,const hpatch_TStreamOutput* out_stream){
-    return download_file_by_http(newSyncInfoFile_url,out_stream);
+hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin){
+    out_downloadPlugin->download_part_open=download_part_by_http_open;
+    out_downloadPlugin->download_part_close=download_part_by_http_close;
+    out_downloadPlugin->download_file=download_file_by_http;
+    return hpatch_TRUE;
 }

@@ -47,19 +47,19 @@
 #ifndef _IS_NEED_DOWNLOAD_EMULATION
 #   define  _IS_NEED_DOWNLOAD_EMULATION 1
 #endif
+
 #if (_IS_NEED_DOWNLOAD_EMULATION)
-//simple file demo
+//simple file demo plugin
 #   include "client_download_demo.h"
-static inline bool openNewSyncDataByUrl(ISyncPatchListener* listener,const char* newSyncDataFile){
-    return downloadEmulation_open_by_file(&listener->readSyncDataListener,newSyncDataFile);
+hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin){
+    out_downloadPlugin->download_part_open=downloadEmulation_open_by_file;
+    out_downloadPlugin->download_part_close=downloadEmulation_close;
+    out_downloadPlugin->download_file=0; //demo not need, because newSyncInfoFile is local file
+    return hpatch_TRUE;
 }
-static inline bool closeNewSyncData(ISyncPatchListener* listener){
-    return downloadEmulation_close(&listener->readSyncDataListener);
-}
-#else //download by http/https ?
-bool openNewSyncDataByUrl(ISyncPatchListener* listener,const char* newSyncDataFile_url);
-bool closeNewSyncData(ISyncPatchListener* listener);
-bool downloadNewSyncInfoFromUrl(const char* newSyncInfoFile_url,const hpatch_TStreamOutput* out_stream);
+#else
+//download by http/https?  You can swap to your http pluginvoid
+hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin);
 #endif
 
 #ifndef _IS_NEED_DEFAULT_CompressPlugin
@@ -158,17 +158,20 @@ int sync_client_cmd_line(int argc, const char * argv[]);
 int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* newSyncInfoFile,const char* newSyncDataFile_url,
+                     const TSyncDownloadPlugin* downloadPlugin,
                      TSyncPatchChecksumSet checksumSet,size_t kMaxOpenFileNumber,size_t threadNum);
 #if (_IS_NEED_DIR_DIFF_PATCH)
 int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* newSyncInfoFile,const char* newSyncDataFile_url,
+                     const TSyncDownloadPlugin* downloadPlugin,
                      TSyncPatchChecksumSet checksumSet,size_t kMaxOpenFileNumber,size_t threadNum);
 #endif
            
 #if (_IS_NEED_DOWNLOAD_EMULATION)
 #else
-int downloadNewSyncInfoFile(const char* newSyncInfoFile_url,const char* outNewSyncInfoFile);
+static int downloadNewSyncInfoFile(const TSyncDownloadPlugin* downloadPlugin,
+                                   const char* newSyncInfoFile_url,const char* outNewSyncInfoFile);
 #endif
 
 
@@ -422,13 +425,17 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     const char* newSyncDataFile_url =isOnlyDownload?            0:arg_values[2]; // .hsynd
     const char* outNewPath          =isOnlyDownload?            0:arg_values[3];
     double time0=clock_s();
+    
+    TSyncDownloadPlugin downloadPlugin; memset(&downloadPlugin,0,sizeof(downloadPlugin));
+    _return_check(getSyncDownloadPlugin(&downloadPlugin),kSyncClient_getSyncDownloadPluginError,
+                  "getSyncDownloadPlugin()%s","");
 #if (_IS_NEED_DOWNLOAD_EMULATION)
 #else
     if (newSyncInfoFile_url){
         if (!isForceOverwrite)
             _return_check(_isPathNotExist(newSyncInfoFile),kSyncClient_overwriteNewSyncInfoFileError,
                           "%s already exists, overwrite",newSyncInfoFile);
-        int result=downloadNewSyncInfoFile(newSyncInfoFile_url,newSyncInfoFile);
+        int result=downloadNewSyncInfoFile(&downloadPlugin,newSyncInfoFile_url,newSyncInfoFile);
         _return_check(result==kSyncClient_ok,result,"download from url:%s",newSyncInfoFile_url);
         if (isOnlyDownload)
             return result;
@@ -486,12 +493,12 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     if (newIsDir)
         result=sync_patch_2dir(outNewPath,oldPath,isSamePath,oldIsDir,
                                ignoreOldPathList,newSyncInfoFile,newSyncDataFile_url,
-                               checksumSet,kMaxOpenFileNumber,threadNum);
+                               &downloadPlugin,checksumSet,kMaxOpenFileNumber,threadNum);
     else
 #endif
         result=sync_patch_2file(outNewPath,oldPath,isSamePath,oldIsDir,
                                 ignoreOldPathList,newSyncInfoFile,newSyncDataFile_url,
-                                checksumSet,kMaxOpenFileNumber,threadNum);
+                                &downloadPlugin,checksumSet,kMaxOpenFileNumber,threadNum);
     double time1=clock_s();
     printf("\nsync_patch_%s2%s time: %.3f s\n\n",oldIsDir?"dir":"file",newIsDir?"dir":"file",(time1-time0));
     return result;
@@ -526,6 +533,7 @@ bool getManifest(TManifest& out_manifest,const char* _rootPath,bool rootPathIsDi
 int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* newSyncInfoFile,const char* newSyncDataFile_url,
+                     const TSyncDownloadPlugin* downloadPlugin,
                      TSyncPatchChecksumSet checksumSet,size_t kMaxOpenFileNumber,size_t threadNum){
 #if (_IS_NEED_DIR_DIFF_PATCH)
     std::string _oldPath(oldPath); if (oldIsDir) assignDirTag(_oldPath); oldPath=_oldPath.c_str();
@@ -549,7 +557,7 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
     listener.findChecksumPlugin=_findChecksumPlugin;
     listener.findDecompressPlugin=_findDecompressPlugin;
     listener.needSyncInfo=_needSyncInfo;
-    _return_check(openNewSyncDataByUrl(&listener,newSyncDataFile_url),
+    _return_check(downloadPlugin->download_part_open(&listener.readSyncDataListener,newSyncDataFile_url),
                   kSyncClient_openSyncDataError,"open newSyncData: %s",newSyncDataFile_url);
     int result=kSyncClient_ok;
 #if (_IS_NEED_DIR_DIFF_PATCH)
@@ -579,7 +587,8 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
             }
         }
     }
-    _return_check(closeNewSyncData(&listener),(result!=kSyncClient_ok)?result:kSyncClient_closeSyncDataError,
+    _return_check(downloadPlugin->download_part_close(&listener.readSyncDataListener),
+                  (result!=kSyncClient_ok)?result:kSyncClient_closeSyncDataError,
                   "close newSyncData: %s",newSyncDataFile_url);
     return result;
 }
@@ -664,6 +673,7 @@ static hpatch_BOOL _dirSyncPatchFinish(IDirSyncPatchListener* listener,hpatch_BO
 int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* newSyncInfoFile,const char* newSyncDataFile_url,
+                     const TSyncDownloadPlugin* downloadPlugin,
                      TSyncPatchChecksumSet checksumSet,size_t kMaxOpenFileNumber,size_t threadNum){
     std::string _outNewDir(outNewDir); assignDirTag(_outNewDir); outNewDir=_outNewDir.c_str();
     std::string _oldPath(oldPath); if (oldIsDir) assignDirTag(_oldPath); oldPath=_oldPath.c_str();
@@ -693,26 +703,28 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
     listener.patchBegin=0;
     listener.patchFinish=_dirSyncPatchFinish;
     
-    _return_check(openNewSyncDataByUrl(&listener,newSyncDataFile_url),
+    _return_check(downloadPlugin->download_part_open(&listener.readSyncDataListener,newSyncDataFile_url),
                   kSyncClient_openSyncDataError,"open newSyncData: %s",newSyncDataFile_url);
     int result=sync_patch_fileOrDir2dir(&defaultPatchDirlistener,&listener, outNewDir,oldManifest,
                                         newSyncInfoFile, kMaxOpenFileNumber,(int)threadNum);
-    _return_check(closeNewSyncData(&listener),(result!=kSyncClient_ok)?result:kSyncClient_closeSyncDataError,
+    _return_check(downloadPlugin->download_part_close(&listener.readSyncDataListener),
+                  (result!=kSyncClient_ok)?result:kSyncClient_closeSyncDataError,
                   "close newSyncData: %s",newSyncDataFile_url);
     return result;
 }
 #endif
 
-
+           
 #if (_IS_NEED_DOWNLOAD_EMULATION)
 #else
-int downloadNewSyncInfoFile(const char* newSyncInfoFile_url,const char* outNewSyncInfoFile){
+static int downloadNewSyncInfoFile(const TSyncDownloadPlugin* downloadPlugin,
+                                   const char* newSyncInfoFile_url,const char* outNewSyncInfoFile){
     int result=kSyncClient_ok;
     hpatch_TFileStreamOutput out_stream;
     hpatch_TFileStreamOutput_init(&out_stream);
     if (!hpatch_TFileStreamOutput_open(&out_stream,outNewSyncInfoFile,(hpatch_StreamPos_t)(-1)))
         return kSyncClient_newSyncInfoFileCreateError;
-    if (downloadNewSyncInfoFromUrl(newSyncInfoFile_url,&out_stream.base))
+    if (downloadPlugin->download_file(newSyncInfoFile_url,&out_stream.base,0))
         out_stream.base.streamSize=out_stream.out_length;
     else
         result=kSyncClient_newSyncInfoFileDownloadError;

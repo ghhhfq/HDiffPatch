@@ -38,7 +38,8 @@ bool download_part_by_http_open(IReadSyncDataListener* out_httpListener,const ch
 bool download_part_by_http_close(IReadSyncDataListener* httpListener);
 
 //download file by http(s)
-bool download_file_by_http(const char* file_url,const hpatch_TStreamOutput* out_stream);
+bool download_file_by_http(const char* file_url,const hpatch_TStreamOutput* out_stream,
+                           hpatch_StreamPos_t continueDownloadPos);
 
 #ifdef __cplusplus
 }

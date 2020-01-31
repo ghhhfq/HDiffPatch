@@ -260,8 +260,8 @@ static bool readPartStrongChecksumsTo(TStreamCacheClip* clip,TByte* partChecksum
     return true;
 }
 
-int TNewDataSyncInfo_open(TNewDataSyncInfo* self,const hpatch_TStreamInput* newSyncInfo,
-                          ISyncInfoListener *listener){
+static int _TNewDataSyncInfo_open(TNewDataSyncInfo* self,const hpatch_TStreamInput* newSyncInfo,
+                                  ISyncInfoListener *listener){
     assert(self->_import==0);
     hpatch_TDecompress* decompressPlugin=0;
     hpatch_TChecksum*   strongChecksumPlugin=0;
@@ -520,6 +520,14 @@ void TNewDataSyncInfo_close(TNewDataSyncInfo* self){
     TNewDataSyncInfo_init(self);
 }
 
+int TNewDataSyncInfo_open(TNewDataSyncInfo* self,const hpatch_TStreamInput* newSyncInfo,
+                          ISyncInfoListener* listener){
+    int result=_TNewDataSyncInfo_open(self,newSyncInfo,listener);
+    if ((result==kSyncClient_ok)&&listener->loadedNewSyncInfo)
+        listener->loadedNewSyncInfo(listener,self);
+    return result;
+}
+
 int TNewDataSyncInfo_open_by_file(TNewDataSyncInfo* self,const char* newSyncInfoFile,
                                   ISyncInfoListener *listener){
     hpatch_TFileStreamInput  newSyncInfo;
@@ -527,10 +535,12 @@ int TNewDataSyncInfo_open_by_file(TNewDataSyncInfo* self,const char* newSyncInfo
     int result=kSyncClient_ok;
     int _inClear=0;
     check(hpatch_TFileStreamInput_open(&newSyncInfo,newSyncInfoFile), kSyncClient_newSyncInfoOpenError);
-    result=TNewDataSyncInfo_open(self,&newSyncInfo.base,listener);
+    result=_TNewDataSyncInfo_open(self,&newSyncInfo.base,listener);
 clear:
     _inClear=1;
     check(hpatch_TFileStreamInput_close(&newSyncInfo), kSyncClient_newSyncInfoCloseError);
+    if ((result==kSyncClient_ok)&&listener->loadedNewSyncInfo)
+        listener->loadedNewSyncInfo(listener,self);
     return result;
 }
 

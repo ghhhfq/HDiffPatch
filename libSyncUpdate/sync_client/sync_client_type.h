@@ -93,12 +93,21 @@ typedef struct IReadSyncDataListener{
     void*       readSyncDataImport;
     //readSyncDataBegin can null
     hpatch_BOOL (*readSyncDataBegin)(IReadSyncDataListener* listener,const TNeedSyncInfos* needSyncInfo);
-    //download data
+    //download range data
     bool        (*readSyncData)     (IReadSyncDataListener* listener,hpatch_StreamPos_t posInNewSyncData,
                                      uint32_t syncDataSize,unsigned char* out_syncDataBuf);
     //readSyncDataEnd can null
     void        (*readSyncDataEnd)  (IReadSyncDataListener* listener);
 } IReadSyncDataListener;
+
+typedef struct TSyncDownloadPlugin{
+    //download part of file
+    bool (*download_part_open) (IReadSyncDataListener* out_listener,const char* file_url);
+    bool (*download_part_close)(IReadSyncDataListener* listener);
+    //download file
+    bool (*download_file)      (const char* file_url,const hpatch_TStreamOutput* out_stream,
+                                hpatch_StreamPos_t continueDownloadPos);
+} TSyncDownloadPlugin;
 
 #ifdef __cplusplus
 }
