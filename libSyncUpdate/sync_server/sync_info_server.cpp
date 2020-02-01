@@ -36,8 +36,8 @@ namespace sync_private{
 #define _outBuf(_buf_begin,_buf_end) { \
             checksumInfo.append(_buf_begin,_buf_end); \
             writeStream(out_stream,outPos,_buf_begin,_buf_end); }
-#define _outV(_v)  if (!_v.empty()){ _outBuf(_v.data(),_v.data()+_v.size()); }
-#define _outV_clear(_v)  if (!_v.empty()){ _outV(_v); swapClear(_v); }
+#define _flushV(_v)  if (!_v.empty()){ _outBuf(_v.data(),_v.data()+_v.size()); _v.clear(); }
+#define _flushV_end(_v)  if (!_v.empty()){ _flushV(_v); swapClear(_v); }
 
     static void saveSamePairList(std::vector<TByte> &buf,
                                  const TSameNewBlockPair* samePairList, size_t samePairCount) {
@@ -96,9 +96,9 @@ namespace sync_private{
             else
                 pushUInt(buf,((const uint64_t*)rollHashs)[i]);
             if (buf.size()>=hpatch_kFileIOBufBetterSize)
-                _outV(buf);
+                _flushV(buf);
         }
-        _outV(buf);
+        _flushV(buf);
         assert(curPair==samePairCount);
     }
     
@@ -113,9 +113,9 @@ namespace sync_private{
                 { ++curPair; continue; }
             pushBack(buf,partChecksums,kPartStrongChecksumByteSize);
             if (buf.size()>=hpatch_kFileIOBufBetterSize)
-                _outV(buf);
+                _flushV(buf);
         }
-        _outV(buf);
+        _flushV(buf);
         assert(curPair==samePairCount);
     }
     
@@ -201,10 +201,10 @@ void TNewDataSyncInfo_saveTo(TNewDataSyncInfo* self,const hpatch_TStreamOutput* 
     CChecksum checksumInfo(strongChecksumPlugin);
     hpatch_StreamPos_t outPos=0;
     //out head buf
-    _outV_clear(head);
+    _flushV_end(head);
     assert(privateExternDataSize==0);//out privateExternData //reserved ,now empty
     _outBuf(self->externData_end,self->externData_begin);
-    _outV_clear(buf);
+    _flushV_end(buf);
     
     saveRollHashs(out_stream,outPos,(uint32_t)kBlockCount,self->rollHashs,self->is32Bit_rollHash,
                   self->samePairList,self->samePairCount,checksumInfo);

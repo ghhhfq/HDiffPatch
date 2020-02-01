@@ -28,6 +28,7 @@
  */
 #include "match_in_new.h"
 #include <algorithm> //sort, equal_range lower_bound
+#include "../sync_client/sync_client_type_private.h"
 #include "../../libHDiffPatch/HDiff/private_diff/mem_buf.h"
 
 using namespace hdiff_private;

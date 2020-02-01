@@ -39,7 +39,9 @@ bool download_part_by_http_close(IReadSyncDataListener* httpListener){
     return false;
 }
 
-bool download_file_by_http(const char* file_url,const hpatch_TStreamOutput* out_stream){
+
+bool download_file_by_http(const char* file_url,const hpatch_TStreamOutput* out_stream,
+                           hpatch_StreamPos_t continueDownloadPos){
     assert(false);
     return false;
 }

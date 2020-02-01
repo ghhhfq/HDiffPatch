@@ -42,7 +42,7 @@ void TNewDataSyncInfo_saveTo(TNewDataSyncInfo* self,const hpatch_TStreamOutput* 
 class CNewDataSyncInfo :public TNewDataSyncInfo{
 public:
     inline uint32_t blockCount()const{
-        hpatch_StreamPos_t result=TNewDataSyncInfo_blockCount(this);
+        hpatch_StreamPos_t result=getSyncBlockCount(this->newDataSize,this->kMatchBlockSize);
         checkv(result==(uint32_t)result);
         return (uint32_t)result; }
     CNewDataSyncInfo(hpatch_TChecksum* strongChecksumPlugin,const hdiff_TCompress* compressPlugin,

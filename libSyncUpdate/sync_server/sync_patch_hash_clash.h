@@ -29,6 +29,7 @@
 #ifndef sync_patch_hash_clash_h
 #define sync_patch_hash_clash_h
 #include "../sync_client/sync_client_type.h"
+#include "../sync_client/sync_client_type_private.h"
 
 const int kAllowMaxHashClashBit = -48; // (1/2^48)
 

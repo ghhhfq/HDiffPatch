@@ -424,7 +424,6 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     const char* newSyncInfoFile     =isOnlyDownload?arg_values[0]:arg_values[1]; // .hsyni
     const char* newSyncDataFile_url =isOnlyDownload?            0:arg_values[2]; // .hsynd
     const char* outNewPath          =isOnlyDownload?            0:arg_values[3];
-    double time0=clock_s();
     
     TSyncDownloadPlugin downloadPlugin; memset(&downloadPlugin,0,sizeof(downloadPlugin));
     _return_check(getSyncDownloadPlugin(&downloadPlugin),kSyncClient_getSyncDownloadPluginError,
@@ -435,13 +434,20 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
         if (!isForceOverwrite)
             _return_check(_isPathNotExist(newSyncInfoFile),kSyncClient_overwriteNewSyncInfoFileError,
                           "%s already exists, overwrite",newSyncInfoFile);
+        double dtime0=clock_s();
+        printf(    "download .hsyni: \""); hpatch_printPath_utf8(newSyncInfoFile);
+        printf("\"\n       from URL: \""); hpatch_printPath_utf8(newSyncInfoFile_url);
+        printf("\"\n");
         int result=downloadNewSyncInfoFile(&downloadPlugin,newSyncInfoFile_url,newSyncInfoFile);
         _return_check(result==kSyncClient_ok,result,"download from url:%s",newSyncInfoFile_url);
+        double dtime1=clock_s();
+        printf(    "  download time: %.3f s\n\n",(dtime1-dtime0));
         if (isOnlyDownload)
             return result;
         //else continue sync patch
     }
 #endif
+    double time0=clock_s();
     
     const bool isSamePath=hpatch_getIsSamePath(oldPath,outNewPath)!=0;
     hpatch_TPathType   outNewPathType;
@@ -724,7 +730,10 @@ static int downloadNewSyncInfoFile(const TSyncDownloadPlugin* downloadPlugin,
     hpatch_TFileStreamOutput_init(&out_stream);
     if (!hpatch_TFileStreamOutput_open(&out_stream,outNewSyncInfoFile,(hpatch_StreamPos_t)(-1)))
         return kSyncClient_newSyncInfoFileCreateError;
-    if (downloadPlugin->download_file(newSyncInfoFile_url,&out_stream.base,0))
+    hpatch_TFileStreamOutput_setRandomOut(&out_stream,hpatch_TRUE);
+    //todo: hpatch_TFileStreamOutput_reopen & set continueDownloadPos=out_stream.out_length
+    hpatch_StreamPos_t continueDownloadPos=0;
+    if (downloadPlugin->download_file(newSyncInfoFile_url,&out_stream.base,continueDownloadPos))
         out_stream.base.streamSize=out_stream.out_length;
     else
         result=kSyncClient_newSyncInfoFileDownloadError;

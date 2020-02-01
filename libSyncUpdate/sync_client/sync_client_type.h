@@ -56,8 +56,8 @@ typedef struct TNewDataSyncInfo{
     uint8_t                 isDirSyncInfo;
     uint8_t                 is32Bit_rollHash;
     hpatch_StreamPos_t      newDataSize;      // newData version size;
-    hpatch_StreamPos_t      newSyncDataSize;  // .hsyncd size ,saved newData or complessed newData
-    hpatch_StreamPos_t      newSyncInfoSize;  // .hsynci size ,saved newData's info
+    hpatch_StreamPos_t      newSyncDataSize;  // .hsynd size ,saved newData or complessed newData
+    hpatch_StreamPos_t      newSyncInfoSize;  // .hsyni size ,saved newData's info
     unsigned char*          infoPartChecksum; // this info data's strongChecksum
     TSameNewBlockPair*      samePairList;
     uint32_t*               savedSizes;
@@ -81,7 +81,7 @@ struct TNeedSyncInfos;
 typedef void (*TSync_getBlockInfoByIndex)(const struct TNeedSyncInfos* needSyncInfos,uint32_t blockIndex,
                                           hpatch_BOOL* out_isNeedSync,uint32_t* out_dataSize);
 typedef struct TNeedSyncInfos{
-    const TNewDataSyncInfo*     newSyncInfo;  // opened .hsynci
+    const TNewDataSyncInfo*     newSyncInfo;  // opened .hsyni
     uint32_t                    blockCount;
     uint32_t                    needSyncBlockCount;
     hpatch_StreamPos_t          needSyncSumSize;
@@ -94,7 +94,7 @@ typedef struct IReadSyncDataListener{
     //readSyncDataBegin can null
     hpatch_BOOL (*readSyncDataBegin)(IReadSyncDataListener* listener,const TNeedSyncInfos* needSyncInfo);
     //download range data
-    bool        (*readSyncData)     (IReadSyncDataListener* listener,hpatch_StreamPos_t posInNewSyncData,
+    hpatch_BOOL (*readSyncData)     (IReadSyncDataListener* listener,hpatch_StreamPos_t posInNewSyncData,
                                      uint32_t syncDataSize,unsigned char* out_syncDataBuf);
     //readSyncDataEnd can null
     void        (*readSyncDataEnd)  (IReadSyncDataListener* listener);
@@ -102,11 +102,11 @@ typedef struct IReadSyncDataListener{
 
 typedef struct TSyncDownloadPlugin{
     //download part of file
-    bool (*download_part_open) (IReadSyncDataListener* out_listener,const char* file_url);
-    bool (*download_part_close)(IReadSyncDataListener* listener);
+    hpatch_BOOL (*download_part_open) (IReadSyncDataListener* out_listener,const char* file_url);
+    hpatch_BOOL (*download_part_close)(IReadSyncDataListener* listener);
     //download file
-    bool (*download_file)      (const char* file_url,const hpatch_TStreamOutput* out_stream,
-                                hpatch_StreamPos_t continueDownloadPos);
+    hpatch_BOOL (*download_file)      (const char* file_url,const hpatch_TStreamOutput* out_stream,
+                                       hpatch_StreamPos_t continueDownloadPos);
 } TSyncDownloadPlugin;
 
 #ifdef __cplusplus
