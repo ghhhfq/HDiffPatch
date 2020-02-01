@@ -553,9 +553,9 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
         _oldPath=oldManifest.rootPath.c_str();
     }
 #endif
-    printf(    "in .hsyni  : \""); hpatch_printPath_utf8(newSyncInfoFile);
-    printf("\"\nin .hsynd  : \""); hpatch_printPath_utf8(newSyncDataFile_url);
-    printf("\"\nout file   : \""); hpatch_printPath_utf8(outNewFile);
+    printf(    "in  .hsyni : \""); hpatch_printPath_utf8(newSyncInfoFile);
+    printf("\"\nurl .hsynd : \""); hpatch_printPath_utf8(newSyncDataFile_url);
+    printf("\"\nout  file  : \""); hpatch_printPath_utf8(outNewFile);
     printf("\"\n");
 
     ISyncPatchListener listener; memset(&listener,0,sizeof(listener));
@@ -690,9 +690,9 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
                       kSyncClient_oldDirFilesError,"open oldPath: %s",oldPath);
         _oldPath=oldManifest.rootPath.c_str();
     }
-    printf(    "in .hsyni  : \""); hpatch_printPath_utf8(newSyncInfoFile);
-    printf("\"\nin .hsynd  : \""); hpatch_printPath_utf8(newSyncDataFile_url);
-    printf("\"\nout dir    : \""); hpatch_printPath_utf8(outNewDir);
+    printf(    "in  .hsyni : \""); hpatch_printPath_utf8(newSyncInfoFile);
+    printf("\"\nurl .hsynd : \""); hpatch_printPath_utf8(newSyncDataFile_url);
+    printf("\"\nout  dir   : \""); hpatch_printPath_utf8(outNewDir);
     printf("\"\n");
     
     IDirPatchListener     defaultPatchDirlistener={0,_makeNewDir,_copySameFile,_openNewFile,_closeNewFile};

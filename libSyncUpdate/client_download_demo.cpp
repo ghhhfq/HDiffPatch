@@ -34,7 +34,8 @@ struct TDownloadEmulation {
     hpatch_TFileStreamInput    newSyncFile;
 };
 
-static hpatch_BOOL _readSyncData(IReadSyncDataListener* listener,hpatch_StreamPos_t posInNewSyncData,
+static hpatch_BOOL _readSyncData(IReadSyncDataListener* listener,uint32_t blockIndex,
+                                 hpatch_StreamPos_t posInNewSyncData,
                                  uint32_t syncDataSize,unsigned char* out_syncDataBuf){
 //warning: Read newSyncData from emulation data;
 //         In the actual project, these data need downloaded from server.

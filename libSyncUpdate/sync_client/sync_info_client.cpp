@@ -333,7 +333,7 @@ static int _TNewDataSyncInfo_open(TNewDataSyncInfo* self,const hpatch_TStreamInp
         
         check(_clip_unpackUIntTo(&uncompressDataSize,&clip),kSyncClient_newSyncInfoDataError);
         check(_clip_unpackUIntTo(&compressDataSize,&clip),kSyncClient_newSyncInfoDataError);
-        check(compressDataSize<uncompressDataSize, kSyncClient_newSyncInfoDataError);
+        check((compressDataSize==0)||(compressDataSize<uncompressDataSize),kSyncClient_newSyncInfoDataError);
         if (compressDataSize>0) check(decompressPlugin!=0, kSyncClient_newSyncInfoDataError);
 #if (_IS_NEED_DIR_DIFF_PATCH)
         if (self->isDirSyncInfo){

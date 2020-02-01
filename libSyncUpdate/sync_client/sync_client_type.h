@@ -94,7 +94,8 @@ typedef struct IReadSyncDataListener{
     //readSyncDataBegin can null
     hpatch_BOOL (*readSyncDataBegin)(IReadSyncDataListener* listener,const TNeedSyncInfos* needSyncInfo);
     //download range data
-    hpatch_BOOL (*readSyncData)     (IReadSyncDataListener* listener,hpatch_StreamPos_t posInNewSyncData,
+    hpatch_BOOL (*readSyncData)     (IReadSyncDataListener* listener,uint32_t blockIndex,
+                                     hpatch_StreamPos_t posInNewSyncData,
                                      uint32_t syncDataSize,unsigned char* out_syncDataBuf);
     //readSyncDataEnd can null
     void        (*readSyncDataEnd)  (IReadSyncDataListener* listener);

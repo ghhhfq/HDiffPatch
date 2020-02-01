@@ -63,7 +63,9 @@ static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
     hpatch_StreamPos_t posInNewSyncData=0;
     hpatch_StreamPos_t outNewDataPos=0;
     const hpatch_StreamPos_t oldDataSize=wd.oldStream->streamSize;
-    
+#if (_IS_USED_MULTITHREAD)
+    uint32_t gotWorkIndex=kBlockCount;
+#endif
     size_t _memSize=kMatchBlockSize*(wd.decompressPlugin?2:1)
                     +(isChecksumNewSyncData ? newSyncInfo->kStrongChecksumByteSize:0);
     dataBuf=(TByte*)malloc(_memSize);
@@ -79,6 +81,7 @@ static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
         newDataSize=TNewDataSyncInfo_newDataBlockSize(newSyncInfo,i);
 #if (_IS_USED_MULTITHREAD)
         if (_mt) { if (!((TMt_by_queue*)_mt)->getWork(threadIndex,i)) continue; } //next work;
+        gotWorkIndex=i; //got cur work
 #endif
         const hpatch_StreamPos_t curSyncPos=wd.newBlockDataInOldPoss[i];
         if (curSyncPos==kBlockType_needSync){
@@ -89,7 +92,7 @@ static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
                     TMt_by_queue::TAutoInputLocker _autoLocker((TMt_by_queue*)_mt);
 #endif
                     check(listener->readSyncDataListener.readSyncData(&listener->readSyncDataListener,
-                                                                      posInNewSyncData,syncSize,buf),
+                                                                      i,posInNewSyncData,syncSize,buf),
                           kSyncClient_readSyncDataError);
                 }
                 if (syncSize<newDataSize){
@@ -119,7 +122,9 @@ static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
         }
         if (wd.out_newStream){//write
 #if (_IS_USED_MULTITHREAD)
+            gotWorkIndex=kBlockCount;
             TMt_by_queue::TAutoOutputLocker _autoLocker((TMt_by_queue*)_mt,threadIndex,i);
+            check(_autoLocker.isWaitOk,kSyncClient_writeNewDataError);
 #endif
             check(wd.out_newStream->write(wd.out_newStream,outNewDataPos,dataBuf,
                                           dataBuf+newDataSize), kSyncClient_writeNewDataError);
@@ -129,6 +134,14 @@ static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
     assert(posInNewSyncData==newSyncInfo->newSyncDataSize);
 clear:
     _inClear=1;
+#if (_IS_USED_MULTITHREAD)
+    if ((result!=kSyncClient_ok)&&(_mt))
+        ((TMt_by_queue*)_mt)->stop();
+    if ((gotWorkIndex<kBlockCount)&&(wd.out_newStream)){ //finish cur work
+        TMt_by_queue::TAutoOutputLocker _autoLocker((TMt_by_queue*)_mt,threadIndex,gotWorkIndex);
+    }
+#endif
+
     if (checksumSync) strongChecksumPlugin->close(strongChecksumPlugin,checksumSync);
     if (dataBuf) free(dataBuf);
     return result;
@@ -160,7 +173,7 @@ static int writeToNew(_TWriteDatas& writeDatas,int threadNum) {
 #if (_IS_USED_MULTITHREAD)
     if (threadNum>1){
         const uint32_t kBlockCount=(uint32_t)TNewDataSyncInfo_blockCount(writeDatas.newSyncInfo);
-        TMt_by_queue   shareDatas((int)threadNum,kBlockCount,true);
+        TMt_by_queue   shareDatas((int)threadNum,kBlockCount,writeDatas.out_newStream!=0);
         TMt_threadDatas  tdatas;
         tdatas.shareDatas=&shareDatas;
         tdatas.writeDatas=&writeDatas;

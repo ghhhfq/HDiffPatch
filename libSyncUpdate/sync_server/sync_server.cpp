@@ -99,6 +99,7 @@ static void mt_create_sync_data(_TCreateDatas& cd,void* _mt=0,int threadIndex=0)
         {//save data
 #if (_IS_USED_MULTITHREAD)
             TMt_by_queue::TAutoOutputLocker _autoLocker((TMt_by_queue*)_mt,threadIndex,i);
+            checkv(_autoLocker.isWaitOk);
 #endif
             if (out_newSyncInfo->is32Bit_rollHash)
                 ((uint32_t*)out_newSyncInfo->rollHashs)[i]=(uint32_t)rollHash;

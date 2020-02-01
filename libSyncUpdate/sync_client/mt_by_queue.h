@@ -38,10 +38,17 @@ struct TMt_by_queue {
     const int    threadNum;
     const size_t workCount;
     inline explicit TMt_by_queue(int _threadNum,size_t _workCount,bool _isOutputNeedQueue=true)
-    :threadNum(_threadNum),workCount(_workCount),isOutputNeedQueue(_isOutputNeedQueue),
-    finishedThreadNum(0),inputWorkIndex(0){
+    :threadNum(_threadNum),workCount(_workCount),isStopDoWork(false),
+    isOutputNeedQueue(_isOutputNeedQueue),finishedThreadNum(0),inputWorkIndex(0){
         if (isOutputNeedQueue) {  threadChannels.resize(_threadNum);
-                                  threadWorkIndexs.resize(_threadNum,0); } }
+                                  threadWorkIndexs.resize(_threadNum,~(size_t)0); } }
+    inline void stop(){
+        TAutoLocker _auto_locker(this);
+        if (isStopDoWork) return;
+        isStopDoWork=true;
+        for (size_t i=0;i<threadNum;++i)
+            threadChannels[i].close();
+    }
     inline void finish(){
         TAutoLocker _auto_locker(this);
         ++finishedThreadNum;
@@ -63,7 +70,7 @@ struct TMt_by_queue {
     
     bool getWork(int threadIndex,size_t workIndex){
         TAutoLocker _auto_locker(this);
-        if (workIndex==inputWorkIndex){
+        if ((workIndex==inputWorkIndex)&&(!isStopDoWork)){
             threadWorkIndexs[threadIndex]=workIndex;
             if (isOutputNeedQueue&&(workIndex==0))
                 wakeupChannel(threadChannels[threadIndex],0);
@@ -82,13 +89,15 @@ struct TMt_by_queue {
     };
     struct TAutoOutputLocker{//for Output Queue by workIndex
         inline TAutoOutputLocker(TMt_by_queue* _mt,int threadIndex,size_t _workIndex)
-        :mt(_mt),workIndex(_workIndex){
-            if (mt) mt->wait(threadIndex,workIndex); }
-        inline ~TAutoOutputLocker(){ if (mt) mt->wakeup(workIndex+1); }
+        :mt(_mt),workIndex(_workIndex),isWaitOk(true){
+            if (mt) isWaitOk=mt->wait(threadIndex,workIndex); }
+        inline ~TAutoOutputLocker(){ if ((mt!=0)&&isWaitOk) mt->wakeup(workIndex+1); }
         TMt_by_queue* mt;
         size_t        workIndex;
+        bool          isWaitOk;
     };
 private:
+    bool      isStopDoWork;
     bool      isOutputNeedQueue;
     int       finishedThreadNum;
     size_t    inputWorkIndex;
@@ -101,26 +110,28 @@ private:
         assert(isOutputNeedQueue);
         if (!isOutputNeedQueue) return true;
         CChannel& channel=threadChannels[threadIndex];
-        TChanData cData=channel.accept(true);//wait
-        if (cData==0) return false; //error
-        size_t outputWorkIndex=(size_t)cData-1;
+        TChanData cData_inc=channel.accept(true);//wait
+        if (cData_inc==0) return false; //closed
+        size_t outputWorkIndex=(size_t)cData_inc-1;
         return workWorkIndex==outputWorkIndex;
     }
     void wakeup(size_t outputWorkIndex){
         if (!isOutputNeedQueue) return;
         if (outputWorkIndex>=workCount) return;
         int threadIndex=getThread(outputWorkIndex);
-        wakeupChannel(threadChannels[threadIndex],outputWorkIndex);
+        if (threadIndex>=0)
+            wakeupChannel(threadChannels[threadIndex],outputWorkIndex);
     }
     inline void wakeupChannel(CChannel& channel,size_t outputWorkIndex){
         if (outputWorkIndex>=workCount) return;
-        TChanData cData=(TChanData)(size_t)(outputWorkIndex+1);
-        channel.send(cData,true);
+        TChanData cData_inc=(TChanData)(size_t)(outputWorkIndex+1);
+        channel.send(cData_inc,true);
     }
     
     int getThread(size_t workIndex){
         while(true){
             {   TAutoLocker _auto_locker(this);
+                if (isStopDoWork) return -1;
                 for (int i=0;i<threadNum;++i)
                     if (threadWorkIndexs[i]==workIndex) return i;
             }//else

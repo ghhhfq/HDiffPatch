@@ -51,7 +51,7 @@ public:
             this_thread_yield(); //todo:优化?
         }
         locker_delete(_locker);
-        assert(_dataList.empty()); // error, why?
+        assert(_dataList.empty()); // why? if saved resource then leaks
         condvar_delete(_acceptCond);
         condvar_delete(_sendCond);
         condvar_delete(_wantSendCond);
