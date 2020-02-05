@@ -40,16 +40,20 @@ void hpatch_TRefStream_close(hpatch_TRefStream* self){
 static hpatch_BOOL _TRefStream_read_do(hpatch_TRefStream* self,hpatch_StreamPos_t readFromPos,
                                unsigned char* out_data,unsigned char* out_data_end,size_t curRangeIndex){
     hpatch_StreamPos_t readPos=readFromPos - self->_rangeEndList[curRangeIndex-1];
+    //[0                streamSize]
+    //     ^
+    //     [readPos                    ]
     const hpatch_TStreamInput* ref=self->_refList[curRangeIndex];
-    unsigned char* max_end=out_data+ref->streamSize-readPos;
-    if (out_data_end<=max_end){
-        //continue;
-    }else{
-        memset(max_end,0,out_data_end-max_end);//for align
-        out_data_end=max_end;
-        if (out_data>=out_data_end) return hpatch_TRUE;
+    size_t needOutSize=out_data_end-out_data;
+    if (readPos>=ref->streamSize){
+        memset(out_data,0,needOutSize);
+        return hpatch_TRUE;
     }
-    return ref->read(ref,readPos,out_data,out_data_end);
+    if (readPos+needOutSize>ref->streamSize){
+        memset(out_data+(ref->streamSize-readPos),0,(readPos+needOutSize)-ref->streamSize);
+        needOutSize=(ref->streamSize-readPos);
+    }
+    return ref->read(ref,readPos,out_data,out_data+needOutSize);
 }
 
 static size_t findRangeIndex(const hpatch_StreamPos_t* ranges,size_t rangeCount,hpatch_StreamPos_t pos){

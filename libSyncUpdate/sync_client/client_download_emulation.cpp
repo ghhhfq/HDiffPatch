@@ -1,4 +1,4 @@
-//  client_download_demo.cpp
+//  client_download_emulation.cpp
 //  sync_client
 //  Created by housisong on 2019-09-23.
 /*
@@ -26,8 +26,8 @@
  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "client_download_demo.h"
-#include "../file_for_patch.h"
+#include "client_download_emulation.h"
+#include "../../file_for_patch.h"
 
 struct TDownloadEmulation {
     const hpatch_TStreamInput* emulation_newSyncData;

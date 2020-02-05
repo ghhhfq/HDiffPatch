@@ -43,6 +43,7 @@ struct _TWriteDatas {
     const TNewDataSyncInfo*     newSyncInfo;
     const hpatch_StreamPos_t*   newBlockDataInOldPoss;
     const hpatch_TStreamInput*  oldStream;
+    uint32_t                    needSyncBlockCount;
     hpatch_TDecompress*         decompressPlugin;
     hpatch_TChecksum*           strongChecksumPlugin;
     ISyncPatchListener*         listener;
@@ -64,7 +65,7 @@ static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
     hpatch_StreamPos_t outNewDataPos=0;
     const hpatch_StreamPos_t oldDataSize=wd.oldStream->streamSize;
 #if (_IS_USED_MULTITHREAD)
-    uint32_t gotWorkIndex=kBlockCount;
+    TMt_by_queue* mt=(TMt_by_queue*)_mt;
 #endif
     size_t _memSize=kMatchBlockSize*(wd.decompressPlugin?2:1)
                     +(isChecksumNewSyncData ? newSyncInfo->kStrongChecksumByteSize:0);
@@ -75,21 +76,23 @@ static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
         checksumSync=strongChecksumPlugin->open(strongChecksumPlugin);
         check(checksumSync!=0,kSyncClient_strongChecksumOpenError);
     }
-    for (uint32_t syncSize,newDataSize,i=0; i<kBlockCount; ++i,
-                            outNewDataPos+=newDataSize,posInNewSyncData+=syncSize) {
+    for (uint32_t syncSize,newDataSize,isNeedSync,cur_sync_i=0,i=0; i<kBlockCount; ++i,
+                    outNewDataPos+=newDataSize,posInNewSyncData+=syncSize,cur_sync_i+=isNeedSync){
         syncSize=TNewDataSyncInfo_syncBlockSize(newSyncInfo,i);
         newDataSize=TNewDataSyncInfo_newDataBlockSize(newSyncInfo,i);
-#if (_IS_USED_MULTITHREAD)
-        if (_mt) { if (!((TMt_by_queue*)_mt)->getWork(threadIndex,i)) continue; } //next work;
-        gotWorkIndex=i; //got cur work
-#endif
         const hpatch_StreamPos_t curSyncPos=wd.newBlockDataInOldPoss[i];
-        if (curSyncPos==kBlockType_needSync){
+        isNeedSync=(curSyncPos==kBlockType_needSync)?1:0;
+#if (_IS_USED_MULTITHREAD)
+        size_t sync_i=isNeedSync?cur_sync_i:~(size_t)0;
+        if (mt&&(!mt->getWork(threadIndex,i,sync_i))) continue; //next work;
+#endif
+        if (isNeedSync){
             TByte* buf=(syncSize<newDataSize)?(dataBuf+kMatchBlockSize):dataBuf;
             if ((wd.out_newStream)||(listener)){
                 {//download data
 #if (_IS_USED_MULTITHREAD)
-                    TMt_by_queue::TAutoInputLocker _autoLocker((TMt_by_queue*)_mt);
+                    TMt_by_queue::TAutoQueueLocker _autoLocker(mt?&mt->inputQueue:0,threadIndex,sync_i);
+                    check(_autoLocker.isWaitOk,kSyncClient_readSyncDataError);
 #endif
                     check(listener->readSyncDataListener.readSyncData(&listener->readSyncDataListener,
                                                                       i,posInNewSyncData,syncSize,buf),
@@ -115,15 +118,14 @@ static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
         }else{//copy from old
             assert(curSyncPos<oldDataSize);
 #if (_IS_USED_MULTITHREAD)
-            TMt_by_queue::TAutoInputLocker _autoLocker((TMt_by_queue*)_mt); //can use other locker
+            TMt_by_queue::TAutoInputLocker _autoLocker(mt);
 #endif
             check(wd.oldStream->read(wd.oldStream,curSyncPos,dataBuf,dataBuf+newDataSize),
                   kSyncClient_readOldDataError);
         }
         if (wd.out_newStream){//write
 #if (_IS_USED_MULTITHREAD)
-            gotWorkIndex=kBlockCount;
-            TMt_by_queue::TAutoOutputLocker _autoLocker((TMt_by_queue*)_mt,threadIndex,i);
+            TMt_by_queue::TAutoQueueLocker _autoLocker(mt?&mt->outputQueue:0,threadIndex,i);
             check(_autoLocker.isWaitOk,kSyncClient_writeNewDataError);
 #endif
             check(wd.out_newStream->write(wd.out_newStream,outNewDataPos,dataBuf,
@@ -135,13 +137,9 @@ static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
 clear:
     _inClear=1;
 #if (_IS_USED_MULTITHREAD)
-    if ((result!=kSyncClient_ok)&&(_mt))
-        ((TMt_by_queue*)_mt)->stop();
-    if ((gotWorkIndex<kBlockCount)&&(wd.out_newStream)){ //finish cur work
-        TMt_by_queue::TAutoOutputLocker _autoLocker((TMt_by_queue*)_mt,threadIndex,gotWorkIndex);
-    }
+    if ((result!=kSyncClient_ok)&&(mt))
+        mt->stop();
 #endif
-
     if (checksumSync) strongChecksumPlugin->close(strongChecksumPlugin,checksumSync);
     if (dataBuf) free(dataBuf);
     return result;
@@ -173,7 +171,8 @@ static int writeToNew(_TWriteDatas& writeDatas,int threadNum) {
 #if (_IS_USED_MULTITHREAD)
     if (threadNum>1){
         const uint32_t kBlockCount=(uint32_t)TNewDataSyncInfo_blockCount(writeDatas.newSyncInfo);
-        TMt_by_queue   shareDatas((int)threadNum,kBlockCount,writeDatas.out_newStream!=0);
+        TMt_by_queue   shareDatas((int)threadNum,kBlockCount,writeDatas.out_newStream!=0,
+                                  writeDatas.needSyncBlockCount);
         TMt_threadDatas  tdatas;
         tdatas.shareDatas=&shareDatas;
         tdatas.writeDatas=&writeDatas;
@@ -191,11 +190,11 @@ static int writeToNew(_TWriteDatas& writeDatas,int threadNum) {
         const hpatch_StreamPos_t* newBlockDataInOldPoss;
     };
 static void _getBlockInfoByIndex(const TNeedSyncInfos* needSyncInfos,uint32_t blockIndex,
-                                 hpatch_BOOL* out_isNeedSync,uint32_t* out_dataSize){
+                                 hpatch_BOOL* out_isNeedSync,uint32_t* out_syncSize){
     const TNeedSyncInfosImport* self=(const TNeedSyncInfosImport*)needSyncInfos->needSyncInfosImport;
     assert(blockIndex<self->blockCount);
     *out_isNeedSync=(self->newBlockDataInOldPoss[blockIndex]==kBlockType_needSync);
-    *out_dataSize=TNewDataSyncInfo_syncBlockSize(self->newSyncInfo,blockIndex);
+    *out_syncSize=TNewDataSyncInfo_syncBlockSize(self->newSyncInfo,blockIndex);
 }
     
 static void getNeedSyncInfo(const hpatch_StreamPos_t* newBlockDataInOldPoss,
@@ -275,6 +274,7 @@ int sync_patch(ISyncPatchListener* listener,const hpatch_TStreamOutput* out_newS
     writeDatas.out_newStream=out_newStream;
     writeDatas.newSyncInfo=newSyncInfo;
     writeDatas.newBlockDataInOldPoss=newBlockDataInOldPoss;
+    writeDatas.needSyncBlockCount=needSyncInfo.needSyncBlockCount;
     writeDatas.oldStream=oldStream;
     writeDatas.decompressPlugin=decompressPlugin;
     writeDatas.strongChecksumPlugin=strongChecksumPlugin;

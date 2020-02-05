@@ -44,13 +44,13 @@
 #   define  _IS_NEED_MAIN 1
 #endif
 
-#ifndef _IS_NEED_DOWNLOAD_EMULATION
-#   define  _IS_NEED_DOWNLOAD_EMULATION 1
+#ifndef _IS_SYNC_PATCH_DEMO
+#   define  _IS_SYNC_PATCH_DEMO 1
 #endif
 
-#if (_IS_NEED_DOWNLOAD_EMULATION)
+#if (_IS_SYNC_PATCH_DEMO)
 //simple file demo plugin
-#   include "client_download_demo.h"
+#   include "sync_client/client_download_emulation.h"
 hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin){
     out_downloadPlugin->download_part_open=downloadEmulation_open_by_file;
     out_downloadPlugin->download_part_close=downloadEmulation_close;
@@ -85,22 +85,30 @@ hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin);
 #include "../checksum_plugin_demo.h"
 
 static void printUsage(){
-#if (_IS_NEED_DOWNLOAD_EMULATION)
-    printf("test sync patch: [options] oldPath newSyncInfoFile newSyncDataFile_test outNewPath\n"
+#if (_IS_SYNC_PATCH_DEMO)
+    printf("sync  patch: [options] oldPath newSyncInfoFile newSyncDataFile_test outNewPath\n"
+           "local  diff: [options] oldPath newSyncInfoFile newSyncDataFile_test -diff#outDiffFile\n"
 #else
-    printf("http sync patch: [options] oldPath newSyncInfoFile newSyncDataFile_url outNewPath\n"
-           "http download: -U#newSyncInfoFile_url newSyncInfoFile\n"
+    printf("sync  patch: [options] oldPath [-dl#newSyncInfoFile_url] newSyncInfoFile newSyncDataFile_url outNewPath\n"
+           "download   : [options] -dl#newSyncInfoFile_url newSyncInfoFile\n"
+           "local  diff: [options] oldPath newSyncInfoFile newSyncDataFile_url -diff#diffFile\n"
 #endif
+           "local patch: [options] oldPath newSyncInfoFile -patch#diffFile outNewPath\n"
+           "sync  infos: [options] oldPath newSyncInfoFile\n"
 #if (_IS_NEED_DIR_DIFF_PATCH)
            "  oldPath can be file or directory(folder),\n"
 #endif
            "  if oldPath is empty input parameter \"\" )\n"
            "options:\n"
-#if (_IS_NEED_DOWNLOAD_EMULATION)
+#if (_IS_SYNC_PATCH_DEMO)
 #else
-           "  -U#newSyncInfoFile_url\n"
+           "  -dl#newSyncInfoFile_url\n"
            "    http download newSyncInfoFile from newSyncInfoFile_url befor sync patch;\n"
 #endif
+           "  -diff#outDiffFile\n"
+           "    http download diffFile from part of newSyncInfoFile_url befor local patch;\n"
+           "  -patch#diffFile\n"
+           "    local patch(oldPath+diffFile) to outNewPath;\n"
 #if (_IS_USED_MULTITHREAD)
            "  -p-parallelThreadNumber\n"
            "    if parallelThreadNumber>1 then open multi-thread Parallel mode;\n"
@@ -168,7 +176,7 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
                      TSyncPatchChecksumSet checksumSet,size_t kMaxOpenFileNumber,size_t threadNum);
 #endif
            
-#if (_IS_NEED_DOWNLOAD_EMULATION)
+#if (_IS_SYNC_PATCH_DEMO)
 #else
 static int downloadNewSyncInfoFile(const TSyncDownloadPlugin* downloadPlugin,
                                    const char* newSyncInfoFile_url,const char* outNewSyncInfoFile);
@@ -334,7 +342,7 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
                 _options_check(threadNum>=_THREAD_NUMBER_MIN,"-p-?");
             } break;
 #endif
-#if (_IS_NEED_DOWNLOAD_EMULATION)
+#if (_IS_SYNC_PATCH_DEMO)
 #else
             case 'U':{
                 const char* purl=op+3;
@@ -407,7 +415,7 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
         isOldPathInputEmpty=hpatch_FALSE;
     
     if (isOutputHelp||isOutputVersion){
-#if (_IS_NEED_DOWNLOAD_EMULATION)
+#if (_IS_SYNC_PATCH_DEMO)
         printf("HDiffPatch::hsync_client_demo v" HDIFFPATCH_VERSION_STRING "\n\n");
 #else
         printf("HDiffPatch::hsync_client_http v" HDIFFPATCH_VERSION_STRING "\n\n");
@@ -428,7 +436,7 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     TSyncDownloadPlugin downloadPlugin; memset(&downloadPlugin,0,sizeof(downloadPlugin));
     _return_check(getSyncDownloadPlugin(&downloadPlugin),kSyncClient_getSyncDownloadPluginError,
                   "getSyncDownloadPlugin()%s","");
-#if (_IS_NEED_DOWNLOAD_EMULATION)
+#if (_IS_SYNC_PATCH_DEMO)
 #else
     if (newSyncInfoFile_url){
         if (!isForceOverwrite)
@@ -553,9 +561,9 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
         _oldPath=oldManifest.rootPath.c_str();
     }
 #endif
-    printf(    "in  .hsyni : \""); hpatch_printPath_utf8(newSyncInfoFile);
-    printf("\"\nurl .hsynd : \""); hpatch_printPath_utf8(newSyncDataFile_url);
-    printf("\"\nout  file  : \""); hpatch_printPath_utf8(outNewFile);
+    printf(    "info .hsyni: \""); hpatch_printPath_utf8(newSyncInfoFile);
+    printf("\"\nurl  .hsynd: \""); hpatch_printPath_utf8(newSyncDataFile_url);
+    printf("\"\nout   file : \""); hpatch_printPath_utf8(outNewFile);
     printf("\"\n");
 
     ISyncPatchListener listener; memset(&listener,0,sizeof(listener));
@@ -690,9 +698,9 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
                       kSyncClient_oldDirFilesError,"open oldPath: %s",oldPath);
         _oldPath=oldManifest.rootPath.c_str();
     }
-    printf(    "in  .hsyni : \""); hpatch_printPath_utf8(newSyncInfoFile);
-    printf("\"\nurl .hsynd : \""); hpatch_printPath_utf8(newSyncDataFile_url);
-    printf("\"\nout  dir   : \""); hpatch_printPath_utf8(outNewDir);
+    printf(    "info .hsyni: \""); hpatch_printPath_utf8(newSyncInfoFile);
+    printf("\"\nurl  .hsynd: \""); hpatch_printPath_utf8(newSyncDataFile_url);
+    printf("\"\nout   dir  : \""); hpatch_printPath_utf8(outNewDir);
     printf("\"\n");
     
     IDirPatchListener     defaultPatchDirlistener={0,_makeNewDir,_copySameFile,_openNewFile,_closeNewFile};
@@ -721,7 +729,7 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
 #endif
 
            
-#if (_IS_NEED_DOWNLOAD_EMULATION)
+#if (_IS_SYNC_PATCH_DEMO)
 #else
 static int downloadNewSyncInfoFile(const TSyncDownloadPlugin* downloadPlugin,
                                    const char* newSyncInfoFile_url,const char* outNewSyncInfoFile){

@@ -34,22 +34,23 @@
 #include <vector>
 namespace sync_private{
 
-struct TMt_by_queue {
+    
+struct TMt_by_queue{
     const int    threadNum;
     const size_t workCount;
-    inline explicit TMt_by_queue(int _threadNum,size_t _workCount,bool _isOutputNeedQueue=true)
-    :threadNum(_threadNum),workCount(_workCount),isStopDoWork(false),
-    isOutputNeedQueue(_isOutputNeedQueue),finishedThreadNum(0),inputWorkIndex(0){
-        if (isOutputNeedQueue) {  threadChannels.resize(_threadNum);
-                                  threadWorkIndexs.resize(_threadNum,~(size_t)0); } }
-    inline void stop(){
-        TAutoLocker _auto_locker(this);
-        if (isStopDoWork) return;
-        isStopDoWork=true;
-        for (size_t i=0;i<threadNum;++i)
-            threadChannels[i].close();
+    inline explicit TMt_by_queue(int _threadNum,size_t _workCount,bool _isOutputNeedQueue,
+                                 size_t _inputQueueCount=0)
+    :threadNum(_threadNum),workCount(_workCount),finishedThreadNum(0),curWorkIndex(0),
+    inputQueue(_threadNum,(_inputQueueCount>0),inputWorkIndexs,mtdataLocker),
+    outputQueue(_threadNum,_isOutputNeedQueue,outputWorkIndexs,mtdataLocker){
+        inputWorkIndexs.resize(threadNum,~(size_t)0);
+        outputWorkIndexs.resize(threadNum,~(size_t)0);
     }
-    inline void finish(){
+    inline void stop(){ //on a thread error
+        inputQueue.stop();
+        outputQueue.stop();
+    }
+    inline void finish(){ //for a thread work finish
         TAutoLocker _auto_locker(this);
         ++finishedThreadNum;
     }
@@ -57,7 +58,7 @@ struct TMt_by_queue {
         while(true){
             {   TAutoLocker _auto_locker(this);
                 if (finishedThreadNum==threadNum) break;
-            }//else
+            }//else wait
             this_thread_yield();
         }
     }
@@ -68,13 +69,12 @@ struct TMt_by_queue {
         TMt_by_queue* mt;
     };
     
-    bool getWork(int threadIndex,size_t workIndex){
+    bool getWork(int threadIndex,size_t workIndex,size_t inputWorkIndex=~(size_t)0){
         TAutoLocker _auto_locker(this);
-        if ((workIndex==inputWorkIndex)&&(!isStopDoWork)){
-            threadWorkIndexs[threadIndex]=workIndex;
-            if (isOutputNeedQueue&&(workIndex==0))
-                wakeupChannel(threadChannels[threadIndex],0);
-            ++inputWorkIndex;
+        if (workIndex==curWorkIndex){
+            ++curWorkIndex;
+            inputWorkIndexs[threadIndex]=inputWorkIndex;
+            outputWorkIndexs[threadIndex]=workIndex;
             return true;
         }else{
             return false;
@@ -87,57 +87,79 @@ struct TMt_by_queue {
         inline ~TAutoInputLocker(){ if (mt) locker_leave(mt->readLocker.locker); }
         TMt_by_queue* mt;
     };
-    struct TAutoOutputLocker{//for Output Queue by workIndex
-        inline TAutoOutputLocker(TMt_by_queue* _mt,int threadIndex,size_t _workIndex)
-        :mt(_mt),workIndex(_workIndex),isWaitOk(true){
-            if (mt) isWaitOk=mt->wait(threadIndex,workIndex); }
-        inline ~TAutoOutputLocker(){ if ((mt!=0)&&isWaitOk) mt->wakeup(workIndex+1); }
-        TMt_by_queue* mt;
+private:
+    int       finishedThreadNum;
+    size_t    curWorkIndex;
+    CHLocker  mtdataLocker;
+    CHLocker  readLocker;
+    std::vector<size_t>    inputWorkIndexs;
+    std::vector<size_t>    outputWorkIndexs;
+public://queue
+    struct _TMt_a_queue{
+        _TMt_a_queue(int _threadNum,bool _isQueue,
+                     std::vector<size_t>& _workIndexs,CHLocker& _qlocker)
+        :threadNum(_threadNum),isQueue(_isQueue),isStoped(false),curIndex(0),
+        workIndexs(_workIndexs),qlocker(_qlocker){
+            if (isQueue)
+                lockerChannels.resize(threadNum);
+        }
+        void stop(){ //on a thread error
+            CAutoLocker _auto_locker(this->qlocker.locker);
+            if (isStoped) return;
+            isStoped=true;
+            if (isQueue){
+                for (size_t i=0;i<threadNum;++i){
+                    lockerChannels[i].accept(false);
+                    lockerChannels[i].close();
+                }
+            }
+        }
+        bool wait(int threadIndex,size_t waitWorkIndex){
+            assert(isQueue);
+            {   CAutoLocker _auto_locker(this->qlocker.locker);
+                if (curIndex==waitWorkIndex)
+                    lockerChannels[threadIndex].send((TChanData)(1+curIndex),false);
+            }
+            //try wait
+            CChannel& channel=lockerChannels[threadIndex];
+            TChanData cData_inc=channel.accept(true);//wait
+            if (cData_inc==0)
+                return false; //closed
+            size_t savedWorkIndex=(size_t)cData_inc-1;
+            assert(savedWorkIndex==waitWorkIndex);
+            return true;
+        }
+        void wakeup(size_t wakeupThreadByWorkIndex){
+            assert(isQueue);
+            CAutoLocker _auto_locker(this->qlocker.locker);
+            assert(curIndex+1==wakeupThreadByWorkIndex);
+            ++curIndex;
+            for (int i=0;i<threadNum;++i){
+                if (workIndexs[i]==curIndex)
+                    lockerChannels[i].send((TChanData)(1+curIndex),false);
+            }
+        }
+    private:
+        const int       threadNum;
+        const bool      isQueue;
+        bool            isStoped;
+        size_t          curIndex;
+        struct CSChannel: public CChannel{ inline CSChannel():CChannel(1){} };
+        std::vector<CSChannel> lockerChannels;
+        std::vector<size_t>&   workIndexs;
+        CHLocker&              qlocker;
+    };
+    _TMt_a_queue           inputQueue;
+    _TMt_a_queue           outputQueue;
+    struct TAutoQueueLocker{//for Queue by workIndex
+        inline TAutoQueueLocker(_TMt_a_queue* _queue,int threadIndex,size_t _workIndex)
+        :queue(_queue),workIndex(_workIndex),isWaitOk(true){
+            if (queue) isWaitOk=queue->wait(threadIndex,workIndex); }
+        inline ~TAutoQueueLocker(){ if ((queue!=0)&&isWaitOk) queue->wakeup(workIndex+1); }
+        _TMt_a_queue* queue;
         size_t        workIndex;
         bool          isWaitOk;
     };
-private:
-    bool      isStopDoWork;
-    bool      isOutputNeedQueue;
-    int       finishedThreadNum;
-    size_t    inputWorkIndex;
-    CHLocker  mtdataLocker;
-    CHLocker  readLocker;
-    std::vector<CChannel> threadChannels;
-    std::vector<size_t>   threadWorkIndexs;
-    
-    bool wait(int threadIndex,size_t workWorkIndex){
-        assert(isOutputNeedQueue);
-        if (!isOutputNeedQueue) return true;
-        CChannel& channel=threadChannels[threadIndex];
-        TChanData cData_inc=channel.accept(true);//wait
-        if (cData_inc==0) return false; //closed
-        size_t outputWorkIndex=(size_t)cData_inc-1;
-        return workWorkIndex==outputWorkIndex;
-    }
-    void wakeup(size_t outputWorkIndex){
-        if (!isOutputNeedQueue) return;
-        if (outputWorkIndex>=workCount) return;
-        int threadIndex=getThread(outputWorkIndex);
-        if (threadIndex>=0)
-            wakeupChannel(threadChannels[threadIndex],outputWorkIndex);
-    }
-    inline void wakeupChannel(CChannel& channel,size_t outputWorkIndex){
-        if (outputWorkIndex>=workCount) return;
-        TChanData cData_inc=(TChanData)(size_t)(outputWorkIndex+1);
-        channel.send(cData_inc,true);
-    }
-    
-    int getThread(size_t workIndex){
-        while(true){
-            {   TAutoLocker _auto_locker(this);
-                if (isStopDoWork) return -1;
-                for (int i=0;i<threadNum;++i)
-                    if (threadWorkIndexs[i]==workIndex) return i;
-            }//else
-            this_thread_yield();
-        }
-    }
 };
 
 } //namespace sync_private

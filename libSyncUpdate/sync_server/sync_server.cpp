@@ -55,17 +55,20 @@ static void mt_create_sync_data(_TCreateDatas& cd,void* _mt=0,int threadIndex=0)
           &&(checksumByteSize>=kPartStrongChecksumByteSize)
           &&(checksumByteSize%kPartStrongChecksumByteSize==0));
     CChecksum checksumBlockData(strongChecksumPlugin,false);
+#if (_IS_USED_MULTITHREAD)
+    TMt_by_queue* mt=(TMt_by_queue*)_mt;
+#endif
     
     hpatch_StreamPos_t curReadPos=0;
     for (uint32_t i=0; i<kBlockCount; ++i,curReadPos+=kMatchBlockSize) {
 #if (_IS_USED_MULTITHREAD)
-        if (_mt) { if (!((TMt_by_queue*)_mt)->getWork(threadIndex,i)) continue; } //next work;
+        if (mt&&(!mt->getWork(threadIndex,i))) continue; //next work;
 #endif
         size_t dataLen=kMatchBlockSize;
         if (i==kBlockCount-1) dataLen=(size_t)(cd.newData->streamSize-curReadPos);
         {//read data
 #if (_IS_USED_MULTITHREAD)
-            TMt_by_queue::TAutoInputLocker _autoLocker((TMt_by_queue*)_mt);
+            TMt_by_queue::TAutoInputLocker _autoLocker(mt);
 #endif
             checkv(cd.newData->read(cd.newData,curReadPos,buf.data(),buf.data()+dataLen));
         }
@@ -84,7 +87,7 @@ static void mt_create_sync_data(_TCreateDatas& cd,void* _mt=0,int threadIndex=0)
         checksumBlockData.append(buf.data(),buf.data()+kMatchBlockSize);
         checksumBlockData.appendEnd();
         toSyncPartChecksum(checksumBlockData.checksum.data(),
-                       checksumBlockData.checksum.data(),checksumByteSize);
+                           checksumBlockData.checksum.data(),checksumByteSize);
         //compress
         size_t compressedSize=0;
         if (compressPlugin){
@@ -98,7 +101,7 @@ static void mt_create_sync_data(_TCreateDatas& cd,void* _mt=0,int threadIndex=0)
         }
         {//save data
 #if (_IS_USED_MULTITHREAD)
-            TMt_by_queue::TAutoOutputLocker _autoLocker((TMt_by_queue*)_mt,threadIndex,i);
+            TMt_by_queue::TAutoQueueLocker _autoLocker(mt?&mt->outputQueue:0,threadIndex,i);
             checkv(_autoLocker.isWaitOk);
 #endif
             if (out_newSyncInfo->is32Bit_rollHash)
@@ -121,7 +124,7 @@ static void mt_create_sync_data(_TCreateDatas& cd,void* _mt=0,int threadIndex=0)
             }else{
                 if (cd.out_newSyncData)
                     writeStream(cd.out_newSyncData,cd.curOutPos, buf.data(),dataLen); //!
-                out_newSyncInfo->newSyncDataSize+=kMatchBlockSize;
+                out_newSyncInfo->newSyncDataSize+=dataLen;
             }
         }
     }

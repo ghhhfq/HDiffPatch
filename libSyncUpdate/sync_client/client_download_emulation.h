@@ -1,4 +1,4 @@
-//  client_download_demo.h
+//  client_download_emulation.h
 //  sync_client
 //  Created by housisong on 2019-09-23.
 /*
@@ -26,9 +26,9 @@
  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef client_download_demo_h
-#define client_download_demo_h
-#include "sync_client/sync_client_type.h"
+#ifndef client_download_emulation_h
+#define client_download_emulation_h
+#include "sync_client_type.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -43,4 +43,4 @@ hpatch_BOOL downloadEmulation_close(IReadSyncDataListener* emulation);
 }
 #endif
         
-#endif // client_download_demo_h
+#endif // client_download_emulation_h

@@ -27,7 +27,7 @@
  OTHER DEALINGS IN THE SOFTWARE.
  */
 #define  _IS_NEED_MAIN 1
-#define  _IS_NEED_DOWNLOAD_EMULATION 0
+#define  _IS_SYNC_PATCH_DEMO 0
 #include "hsync_client_demo.cpp" //main()
 #include "client_download_http/client_download_http.h"
 

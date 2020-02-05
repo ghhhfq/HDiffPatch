@@ -34,6 +34,8 @@
 		D688CB5B23E1D51F006427D4 /* dir_sync_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D688CB5123E1D51F006427D4 /* dir_sync_client.cpp */; };
 		D688CB5C23E1D51F006427D4 /* sync_info_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D688CB5223E1D51F006427D4 /* sync_info_client.cpp */; };
 		D688CB6C23E3B92D006427D4 /* sync_client_type_private.h in Headers */ = {isa = PBXBuildFile; fileRef = D688CB6B23E3B92D006427D4 /* sync_client_type_private.h */; };
+		D68B355323EA474E0063D692 /* client_download_emulation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D68B355123EA474E0063D692 /* client_download_emulation.cpp */; };
+		D68B355423EA474E0063D692 /* client_download_emulation.h in Headers */ = {isa = PBXBuildFile; fileRef = D68B355223EA474E0063D692 /* client_download_emulation.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -65,6 +67,8 @@
 		D688CB5123E1D51F006427D4 /* dir_sync_client.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dir_sync_client.cpp; sourceTree = "<group>"; };
 		D688CB5223E1D51F006427D4 /* sync_info_client.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sync_info_client.cpp; sourceTree = "<group>"; };
 		D688CB6B23E3B92D006427D4 /* sync_client_type_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sync_client_type_private.h; sourceTree = "<group>"; };
+		D68B355123EA474E0063D692 /* client_download_emulation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = client_download_emulation.cpp; sourceTree = "<group>"; };
+		D68B355223EA474E0063D692 /* client_download_emulation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = client_download_emulation.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -146,6 +150,8 @@
 		D688CB4823E1D51F006427D4 /* sync_client */ = {
 			isa = PBXGroup;
 			children = (
+				D68B355123EA474E0063D692 /* client_download_emulation.cpp */,
+				D68B355223EA474E0063D692 /* client_download_emulation.h */,
 				D688CB6B23E3B92D006427D4 /* sync_client_type_private.h */,
 				D688CB4B23E1D51F006427D4 /* sync_client_type.h */,
 				D688CB4C23E1D51F006427D4 /* sync_client.h */,
@@ -171,6 +177,7 @@
 			files = (
 				D688CB3B23E1D4E4006427D4 /* parallel_import.h in Headers */,
 				D688CB5A23E1D51F006427D4 /* mt_by_queue.h in Headers */,
+				D68B355423EA474E0063D692 /* client_download_emulation.h in Headers */,
 				D688CB5323E1D51F006427D4 /* sync_info_client.h in Headers */,
 				D688CB3D23E1D4E4006427D4 /* parallel_channel.h in Headers */,
 				D688CB5523E1D51F006427D4 /* sync_client_type.h in Headers */,
@@ -251,6 +258,7 @@
 				D688CB3A23E1D4E4006427D4 /* parallel_channel.cpp in Sources */,
 				D688CB5923E1D51F006427D4 /* sync_client.cpp in Sources */,
 				D688CB4123E1D4E4006427D4 /* new_stream.c in Sources */,
+				D68B355323EA474E0063D692 /* client_download_emulation.cpp in Sources */,
 				D688CB4323E1D4E4006427D4 /* adler_roll.c in Sources */,
 				D688CB4523E1D4E4006427D4 /* res_handle_limit.c in Sources */,
 				D688CB2423E1D41E006427D4 /* LzmaDec.c in Sources */,

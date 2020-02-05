@@ -79,7 +79,7 @@ typedef struct TNewDataSyncInfo{
 
 struct TNeedSyncInfos;
 typedef void (*TSync_getBlockInfoByIndex)(const struct TNeedSyncInfos* needSyncInfos,uint32_t blockIndex,
-                                          hpatch_BOOL* out_isNeedSync,uint32_t* out_dataSize);
+                                          hpatch_BOOL* out_isNeedSync,uint32_t* out_syncSize);
 typedef struct TNeedSyncInfos{
     const TNewDataSyncInfo*     newSyncInfo;  // opened .hsyni
     uint32_t                    blockCount;

@@ -41,6 +41,7 @@ namespace hdiff_private{
         inline unsigned char* data_end(){ return _data_end; }
         inline const unsigned char* data_end()const{ return _data_end; }
         inline size_t size()const{ return (size_t)(_data_end-_data); }
+        inline bool empty()const{ return (_data_end==_data); }
         inline void clear(){ if (_data) { free(_data); _data=0; _data_end=0; } }
         inline void realloc(size_t newSize){
             if (newSize!=size()){
