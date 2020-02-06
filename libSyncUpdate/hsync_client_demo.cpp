@@ -69,7 +69,6 @@ hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin);
 //===== select needs decompress plugins or change to your plugin=====
 #   define _CompressPlugin_zlib
 #   define _CompressPlugin_lzma
-//#   define _CompressPlugin_bz2
 #endif
 
 #include "../decompress_plugin_demo.h"
@@ -124,7 +123,7 @@ static void printUsage(){
            "      maxOpenFileNumber>=8, DEFAULT -n-24, the best limit value by different\n"
            "        operating system.\n"
            "  -g#ignorePath[#ignorePath#...]\n"
-           "      set iGnore path list in newDataPath directory; ignore path list such as:\n"
+           "      set iGnore path list in oldPath directory; ignore path list such as:\n"
            "        #.DS_Store#desktop.ini#*thumbs*.db#.git*#.svn/#cache_*/00*11/*.tmp\n"
            "      # means separator between names; (if char # in name, need write #: )\n"
            "      * means can match any chars in name; (if char * in name, need write *: );\n"
@@ -205,10 +204,6 @@ static hpatch_TDecompress* _findDecompressPlugin(ISyncInfoListener* listener,con
 #ifdef  _CompressPlugin_zlib
     if ((!decompressPlugin)&&zlibDecompressPlugin.is_can_open(compressType))
         decompressPlugin=&zlibDecompressPlugin;
-#endif
-#ifdef  _CompressPlugin_bz2
-    if ((!decompressPlugin)&&bz2DecompressPlugin.is_can_open(compressType))
-        decompressPlugin=&bz2DecompressPlugin;
 #endif
 #ifdef  _CompressPlugin_lzma
     if ((!decompressPlugin)&&lzmaDecompressPlugin.is_can_open(compressType))

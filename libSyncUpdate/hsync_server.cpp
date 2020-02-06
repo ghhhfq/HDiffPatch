@@ -54,7 +54,6 @@
 //===== select needs decompress plugins or change to your plugin=====
 #   define _CompressPlugin_zlib
 #   define _CompressPlugin_lzma
-//#   define _CompressPlugin_bz2
 #endif
 
 #define  IS_NOTICE_compress_canceled 0
@@ -93,12 +92,9 @@ static void printUsage(){
 #ifdef _CompressPlugin_zlib
            "        -c-zlib[-{1..9}]                DEFAULT level 9\n"
 #endif
-#ifdef _CompressPlugin_bz2
-           "        -c-bzip2[-{1..9}]               (or -bz2) DEFAULT level 9\n"
-#endif
 #ifdef _CompressPlugin_lzma
            "        -c-lzma[-{0..9}[-dictSize]]     DEFAULT level 7\n"
-           "            dictSize can like 4096 or 4k or 4m or 64m etc..., DEFAULT 8m\n"
+           "            dictSize can like 4096 or 4k or 4m or 64m etc..., DEFAULT 2m\n"
 #endif
 #if (_IS_NEED_DIR_DIFF_PATCH)
            "  -n-maxOpenFileNumber\n"
@@ -212,7 +208,7 @@ static int _checkSetCompress(hdiff_TCompress** out_compressPlugin,
                              const char* ptype,const char* ptypeEnd){
     const char* isMatchedType=0;
     size_t      compressLevel=0;
-#if (defined _CompressPlugin_lzma)||(defined _CompressPlugin_lzma2)
+#if (defined _CompressPlugin_lzma)
     size_t      dictSize=0;
 #endif
 #ifdef _CompressPlugin_zlib
@@ -223,18 +219,10 @@ static int _checkSetCompress(hdiff_TCompress** out_compressPlugin,
         _zlibCompressPlugin.compress_level=(int)compressLevel;
         *out_compressPlugin=&_zlibCompressPlugin.base; }
 #endif
-#ifdef _CompressPlugin_bz2
-    _options_check(_tryGetCompressSet(&isMatchedType,
-                                      ptype,ptypeEnd,"bzip2","bz2",&compressLevel,1,9,9),"-c-bzip2-?");
-    if ((isMatchedType)&&(0==strcmp(isMatchedType,"bzip2"))){
-        static TCompressPlugin_bz2 _bz2CompressPlugin=bz2CompressPlugin;
-        _bz2CompressPlugin.compress_level=(int)compressLevel;
-        *out_compressPlugin=&_bz2CompressPlugin.base; }
-#endif
 #ifdef _CompressPlugin_lzma
     _options_check(_tryGetCompressSet(&isMatchedType,
                                       ptype,ptypeEnd,"lzma",0,&compressLevel,0,9,7, &dictSize,1<<12,
-                                      (sizeof(size_t)<=4)?(1<<27):((size_t)3<<29),1<<23),"-c-lzma-?");
+                                      (sizeof(size_t)<=4)?(1<<27):((size_t)3<<29),1<<21),"-c-lzma-?");
     if ((isMatchedType)&&(0==strcmp(isMatchedType,"lzma"))){
         static TCompressPlugin_lzma _lzmaCompressPlugin=lzmaCompressPlugin;
         _lzmaCompressPlugin.compress_level=(int)compressLevel;
