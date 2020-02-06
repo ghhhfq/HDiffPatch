@@ -43,8 +43,8 @@ struct IDirSyncListener{
 
 void create_dir_sync_data(IDirSyncListener*         listener,
                           const TManifest&          newManifest,
-                          const char*               outNewSyncInfoFile, // .hsyni
-                          const char*               outNewSyncDataFile, // .hsynd
+                          const char*               out_hsyni_file, // .hsyni
+                          const char*               out_hsynd_file, // .hsynd
                           const hdiff_TCompress*    compressPlugin,
                           hpatch_TChecksum*         strongChecksumPlugin,
                           size_t                    kMaxOpenFileNumber,

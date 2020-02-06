@@ -196,18 +196,18 @@ void create_sync_data(const hpatch_TStreamInput*  newData,
 }
 
 void create_sync_data_by_file(const char* newDataFile,
-                              const char* outNewSyncInfoFile,
-                              const char* outNewSyncDataFile,
+                              const char* out_hsyni_file,
+                              const char* out_hsynd_file,
                               const hdiff_TCompress* compressPlugin,
                               hpatch_TChecksum*      strongChecksumPlugin,
                               uint32_t kMatchBlockSize,size_t threadNum,
                               const unsigned char* externData_begin,const unsigned char* externData_end){
     CFileStreamInput  newData(newDataFile);
-    CFileStreamOutput out_newSyncInfo(outNewSyncInfoFile,~(hpatch_StreamPos_t)0);
+    CFileStreamOutput out_newSyncInfo(out_hsyni_file,~(hpatch_StreamPos_t)0);
     CFileStreamOutput out_newSyncData;
     const hpatch_TStreamOutput* newDataStream=0;
-    if (outNewSyncDataFile){
-        out_newSyncData.open(outNewSyncDataFile,~(hpatch_StreamPos_t)0);
+    if (out_hsynd_file){
+        out_newSyncData.open(out_hsynd_file,~(hpatch_StreamPos_t)0);
         newDataStream=&out_newSyncData.base;
     }
     
@@ -216,11 +216,11 @@ void create_sync_data_by_file(const char* newDataFile,
 }
 
 void create_sync_data_by_file(const char* newDataFile,
-                              const char* outNewSyncInfoFile,
+                              const char* out_hsyni_file,
                               hpatch_TChecksum*      strongChecksumPlugin,
                               uint32_t kMatchBlockSize,size_t threadNum,
                               const unsigned char* externData_begin,const unsigned char* externData_end){
-    create_sync_data_by_file(newDataFile,outNewSyncInfoFile,0,0, strongChecksumPlugin,
+    create_sync_data_by_file(newDataFile,out_hsyni_file,0,0, strongChecksumPlugin,
                              kMatchBlockSize,threadNum,externData_begin,externData_end);
 }
 

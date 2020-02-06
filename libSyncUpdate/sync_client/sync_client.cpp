@@ -57,7 +57,7 @@ static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
     int _inClear=0;
     const uint32_t kBlockCount=(uint32_t)TNewDataSyncInfo_blockCount(newSyncInfo);
     const uint32_t kMatchBlockSize=newSyncInfo->kMatchBlockSize;
-    const bool     isChecksumNewSyncData=listener->checksumSet.isChecksumNewSyncData;
+    const bool     isChecksumNewSyncData=true;
     TByte*             dataBuf=0;
     TByte*             checksumSync_buf=0;
     hpatch_checksumHandle checksumSync=0;

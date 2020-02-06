@@ -75,15 +75,9 @@ typedef enum TSyncClient_resultType{
     kSyncClient_newDirPatchBeginError,
     kSyncClient_newDirPatchFinishError,
 } TNewDataSyncInfo_resultType;
-    
-typedef struct TSyncPatchChecksumSet{
-    bool    isChecksumNewSyncInfo;
-    bool    isChecksumNewSyncData;
-} TSyncPatchChecksumSet;
 
 typedef struct ISyncInfoListener{
     void*                 infoImport;
-    TSyncPatchChecksumSet checksumSet;
     hpatch_TDecompress* (*findDecompressPlugin)(ISyncInfoListener* listener,const char* compressType);
     hpatch_TChecksum*   (*findChecksumPlugin)  (ISyncInfoListener* listener,const char* strongChecksumType);
     //loadedNewSyncInfo can null

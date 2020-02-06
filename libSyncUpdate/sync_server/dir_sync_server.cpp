@@ -51,16 +51,16 @@ void _private_create_sync_data(TNewDataSyncInfo*           newSyncInfo,
 
 void create_dir_sync_data(IDirSyncListener*         listener,
                           const TManifest&          newManifest,
-                          const char*               outNewSyncInfoFile,
-                          const char*               outNewSyncDataFile,
+                          const char*               out_hsyni_file,
+                          const char*               out_hsynd_file,
                           const hdiff_TCompress*    compressPlugin,
                           hpatch_TChecksum*         strongChecksumPlugin,
                           size_t                    kMaxOpenFileNumber,
                           uint32_t kMatchBlockSize,size_t threadNum){
     assert(listener!=0);
-    assert((outNewSyncDataFile!=0)&&(strlen(outNewSyncDataFile)>0));
+    assert((out_hsynd_file!=0)&&(strlen(out_hsynd_file)>0));
     assert(kMaxOpenFileNumber>=kMaxOpenFileNumber_limit_min);
-    kMaxOpenFileNumber-=2; // for outNewSyncInfoFile & outNewSyncDataFile
+    kMaxOpenFileNumber-=2; // for out_hsyni_file & out_hsynd_file
     const std::vector<std::string>& newList=newManifest.pathList;
     std::vector<hpatch_StreamPos_t> newSizeList;
     std::vector<size_t> newExecuteList; //for linux etc
@@ -113,8 +113,8 @@ void create_dir_sync_data(IDirSyncListener*         listener,
     newDataSyncInfo.externData_begin=out_externData.data();
     newDataSyncInfo.externData_end=out_externData.data()+out_externData.size();
     
-    CFileStreamOutput out_newSyncInfo(outNewSyncInfoFile,~(hpatch_StreamPos_t)0);
-    CFileStreamOutput out_newSyncData(outNewSyncDataFile,~(hpatch_StreamPos_t)0);
+    CFileStreamOutput out_newSyncInfo(out_hsyni_file,~(hpatch_StreamPos_t)0);
+    CFileStreamOutput out_newSyncData(out_hsynd_file,~(hpatch_StreamPos_t)0);
     
     _private_create_sync_data(&newDataSyncInfo, newRefStream.stream,&out_newSyncInfo.base,
                               &out_newSyncData.base, compressPlugin,threadNum);

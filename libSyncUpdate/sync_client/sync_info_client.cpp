@@ -284,7 +284,7 @@ static int _TNewDataSyncInfo_open(TNewDataSyncInfo* self,const hpatch_TStreamInp
     TByte*             decompressBuf=0;
     _TDecompressInputSteram decompresser;
     TChecksumInputStream  checksumInputStream;
-    const bool isChecksumNewSyncInfo=listener->checksumSet.isChecksumNewSyncInfo;
+    const bool isChecksumNewSyncInfo=true;
     uint8_t isSavedSizes=0;
     const size_t kFileIOBufBetterSize=hpatch_kFileIOBufBetterSize;
     TByte* temp_cache=(TByte*)malloc(kFileIOBufBetterSize);
