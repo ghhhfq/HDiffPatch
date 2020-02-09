@@ -193,8 +193,8 @@ inline static size_t getBackZeroLen(hpatch_StreamPos_t newDataSize,uint32_t kMat
     return len;
 }
 
-static void matchRange(hpatch_StreamPos_t* out_newBlockDataInOldPoss,const TByte* partChecksums,TOldDataCache_base& oldData,
-                       const uint32_t* range_begin,const uint32_t* range_end,void* _mt=0){
+static void matchRange(hpatch_StreamPos_t* out_newBlockDataInOldPoss,const TByte* partChecksums,
+                       TOldDataCache_base& oldData,const uint32_t* range_begin,const uint32_t* range_end,void* _mt=0){
     const TByte* oldPartStrongChecksum=0;
     do {
         uint32_t newBlockIndex=*range_begin;

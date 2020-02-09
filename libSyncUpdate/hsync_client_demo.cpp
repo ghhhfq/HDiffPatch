@@ -82,12 +82,19 @@ hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin);
 #endif
 #include "../checksum_plugin_demo.h"
 
+#ifndef URL_Text
 #if (_IS_SYNC_PATCH_DEMO)
 #   define URL_Text  "test"
-#   define APP_Text  "demo"
 #else
 #   define URL_Text  "url"
+#endif
+#endif
+#ifndef APP_Text
+#if (_IS_SYNC_PATCH_DEMO)
+#   define APP_Text  "demo"
+#else
 #   define APP_Text  "http"
+#endif
 #endif
 
 static void printUsage(){
