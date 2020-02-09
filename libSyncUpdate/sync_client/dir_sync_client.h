@@ -36,10 +36,11 @@
 
 //sync patch oldDir to newFile
 //  use get_manifest(dir) to get TManifest
-int sync_patch_dir2file(ISyncPatchListener* listener,const char* outNewFile,const TManifest& oldManifest,
+int sync_patch_dir2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
+                        const char* outNewFile,const TManifest& oldManifest,
                         const char* newSyncInfoFile,size_t kMaxOpenFileNumber,int threadNum=1);
 
-struct IDirSyncPatchListener:public ISyncPatchListener{
+struct IDirSyncPatchListener:public ISyncInfoListener{
     void*       patchImport;
     hpatch_BOOL (*patchBegin) (struct IDirSyncPatchListener* listener,
                                const TNewDataSyncInfo* newSyncInfo,TNewDirOutput* newDirOutput);
@@ -49,6 +50,7 @@ struct IDirSyncPatchListener:public ISyncPatchListener{
 
 //sync patch oldPatch to newDir
 int sync_patch_fileOrDir2dir(IDirPatchListener* patchListener,IDirSyncPatchListener* syncListener,
+                             IReadSyncDataListener* syncDataListener,
                              const char* outNewDir,const TManifest& oldManifest,
                              const char* newSyncInfoFile,size_t kMaxOpenFileNumber,int threadNum=1);
 

@@ -46,12 +46,14 @@ struct _TWriteDatas {
     uint32_t                    needSyncBlockCount;
     hpatch_TDecompress*         decompressPlugin;
     hpatch_TChecksum*           strongChecksumPlugin;
-    ISyncPatchListener*         listener;
+    ISyncInfoListener*          listener;
+    IReadSyncDataListener*      syncDataListener;
 };
 
 static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
     const TNewDataSyncInfo* newSyncInfo=wd.newSyncInfo;
-    ISyncPatchListener*     listener=wd.listener;
+    ISyncInfoListener*      listener=wd.listener;
+    IReadSyncDataListener*  syncDataListener=wd.syncDataListener;
     hpatch_TChecksum*       strongChecksumPlugin=wd.strongChecksumPlugin;
     int result=kSyncClient_ok;
     int _inClear=0;
@@ -94,8 +96,8 @@ static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
                     TMt_by_queue::TAutoQueueLocker _autoLocker(mt?&mt->inputQueue:0,threadIndex,sync_i);
                     check(_autoLocker.isWaitOk,kSyncClient_readSyncDataError);
 #endif
-                    check(listener->readSyncDataListener.readSyncData(&listener->readSyncDataListener,
-                                                                      i,posInNewSyncData,syncSize,buf),
+                    check(syncDataListener->readSyncData(syncDataListener,
+                                                             i,posInNewSyncData,syncSize,buf),
                           kSyncClient_readSyncDataError);
                 }
                 if (syncSize<newDataSize){
@@ -219,8 +221,9 @@ static void getNeedSyncInfo(const hpatch_StreamPos_t* newBlockDataInOldPoss,
 } //namespace sync_private
 using namespace  sync_private;
 
-int sync_patch(ISyncPatchListener* listener,const hpatch_TStreamOutput* out_newStream,
-               const hpatch_TStreamInput*  oldStream,const TNewDataSyncInfo* newSyncInfo,int threadNum){
+int sync_patch(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
+               const hpatch_TStreamOutput* out_newStream,const hpatch_TStreamInput* oldStream,
+               const TNewDataSyncInfo* newSyncInfo,int threadNum){
     assert(listener!=0);
     hpatch_TDecompress* decompressPlugin=0;
     hpatch_TChecksum*   strongChecksumPlugin=0;
@@ -266,8 +269,8 @@ int sync_patch(ISyncPatchListener* listener,const hpatch_TStreamOutput* out_newS
     if (listener->needSyncInfo)
         listener->needSyncInfo(listener,&needSyncInfo);
     
-    if (listener->readSyncDataListener.readSyncDataBegin)
-        check(listener->readSyncDataListener.readSyncDataBegin(&listener->readSyncDataListener,&needSyncInfo),
+    if (syncDataListener->readSyncDataBegin)
+        check(syncDataListener->readSyncDataBegin(syncDataListener,&needSyncInfo),
               kSyncClient_readSyncDataBeginError);
     if (out_newStream){
         _TWriteDatas writeDatas;
@@ -282,8 +285,8 @@ int sync_patch(ISyncPatchListener* listener,const hpatch_TStreamOutput* out_newS
         result=writeToNew(writeDatas,threadNum);
     }
     
-    if (listener->readSyncDataListener.readSyncDataEnd)
-        listener->readSyncDataListener.readSyncDataEnd(&listener->readSyncDataListener);
+    if (syncDataListener->readSyncDataEnd)
+        syncDataListener->readSyncDataEnd(syncDataListener);
     check(result==kSyncClient_ok,result);
 clear:
     _inClear=1;
@@ -291,8 +294,8 @@ clear:
     return result;
 }
 
-int sync_patch_file2file(ISyncPatchListener* listener,const char* outNewFile,
-                         const char* oldFile,const char* newSyncInfoFile,int threadNum){
+int sync_patch_file2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
+                         const char* outNewFile,const char* oldFile,const char* newSyncInfoFile,int threadNum){
     int result=kSyncClient_ok;
     int _inClear=0;
     TNewDataSyncInfo         newSyncInfo;
@@ -314,7 +317,7 @@ int sync_patch_file2file(ISyncPatchListener* listener,const char* outNewFile,
         check(hpatch_TFileStreamOutput_open(&out_newData,outNewFile,(hpatch_StreamPos_t)(-1)),
               kSyncClient_newFileCreateError);
     
-    result=sync_patch(listener,outNewFile?&out_newData.base:0,oldStream,&newSyncInfo,threadNum);
+    result=sync_patch(listener,syncDataListener,outNewFile?&out_newData.base:0,oldStream,&newSyncInfo,threadNum);
 clear:
     _inClear=1;
     check(hpatch_TFileStreamOutput_close(&out_newData),kSyncClient_newFileCloseError);

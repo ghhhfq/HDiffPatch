@@ -79,7 +79,8 @@ struct CFilesStream{
 };
 
 
-int sync_patch_dir2file(ISyncPatchListener* listener,const char* outNewFile,const TManifest& oldManifest,
+int sync_patch_dir2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
+                        const char* outNewFile,const TManifest& oldManifest,
                         const char* newSyncInfoFile,size_t kMaxOpenFileNumber,int threadNum){
     assert(listener!=0);
     assert(kMaxOpenFileNumber>=kMaxOpenFileNumber_limit_min);
@@ -99,7 +100,8 @@ int sync_patch_dir2file(ISyncPatchListener* listener,const char* outNewFile,cons
                                 newSyncInfo.kMatchBlockSize), kSyncClient_oldDirFilesOpenError);
     check_r(hpatch_TFileStreamOutput_open(&out_newData,outNewFile,(hpatch_StreamPos_t)(-1)),
                                           kSyncClient_newFileCreateError);
-    result=sync_patch(listener,&out_newData.base,oldFilesStream.refStream.stream,&newSyncInfo,threadNum);
+    result=sync_patch(listener,syncDataListener,
+                      &out_newData.base,oldFilesStream.refStream.stream,&newSyncInfo,threadNum);
     check_r(oldFilesStream.closeFileHandles(),kSyncClient_oldDirFilesCloseError);
 clear:
     _inClear=1;
@@ -134,6 +136,7 @@ struct CNewDirOut{
 };
 
 int sync_patch_fileOrDir2dir(IDirPatchListener* patchListener,IDirSyncPatchListener* syncListener,
+                             IReadSyncDataListener* syncDataListener,
                              const char* outNewDir,const TManifest& oldManifest,
                              const char* newSyncInfoFile,size_t kMaxOpenFileNumber,int threadNum){
     assert((patchListener!=0)&&(syncListener!=0));
@@ -162,8 +165,8 @@ int sync_patch_fileOrDir2dir(IDirPatchListener* patchListener,IDirSyncPatchListe
     check_r(oldFilesStream.open(oldManifest.pathList,kMaxOpenFileNumber,kAlignSize),
             kSyncClient_oldDirFilesOpenError);
     
-    result=sync_patch(syncListener,out_newData,oldFilesStream.refStream.stream,
-                      &newSyncInfo,threadNum);
+    result=sync_patch(syncListener,syncDataListener, out_newData,
+                      oldFilesStream.refStream.stream,&newSyncInfo,threadNum);
     check_r(newDirOut.closeFileHandles(),kSyncClient_newDirCloseError);
     check_r(oldFilesStream.closeFileHandles(),kSyncClient_oldDirFilesCloseError);
     if (syncListener->patchFinish)

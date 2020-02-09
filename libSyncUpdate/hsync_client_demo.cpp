@@ -591,23 +591,24 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
     if (outNewFile)     { printf("\"\nout   file : \""); hpatch_printPath_utf8(outNewFile); }
     printf("\"\n");
 
-    ISyncPatchListener listener; memset(&listener,0,sizeof(listener));
+    ISyncInfoListener listener; memset(&listener,0,sizeof(listener));
+    IReadSyncDataListener syncDataListener; memset(&syncDataListener,0,sizeof(syncDataListener));
     listener.findChecksumPlugin=_findChecksumPlugin;
     listener.findDecompressPlugin=_findDecompressPlugin;
     listener.needSyncInfo=_needSyncInfo;
     if (hsynd_file_url)
-        _check3(downloadPlugin->download_part_open(&listener.readSyncDataListener,hsynd_file_url),
+        _check3(downloadPlugin->download_part_open(&syncDataListener,hsynd_file_url),
                 kSyncClient_syncDataDownloadError,"download open sync file \"",hsynd_file_url,"\"");
     int result=kSyncClient_ok;
 #if (_IS_NEED_DIR_DIFF_PATCH)
     if (oldIsDir){
-        result=sync_patch_dir2file(&listener,outNewFile,oldManifest,hsyni_file,
+        result=sync_patch_dir2file(&listener,&syncDataListener,outNewFile,oldManifest,hsyni_file,
                                    kMaxOpenFileNumber,(int)threadNum);
     }else
 #endif
     {
         assert(!oldIsDir);
-        result=sync_patch_file2file(&listener,outNewFile,oldPath,hsyni_file,(int)threadNum);
+        result=sync_patch_file2file(&listener,&syncDataListener,outNewFile,oldPath,hsyni_file,(int)threadNum);
     }
     if (isSamePath){
         // 1. patch to newTempName
@@ -627,7 +628,7 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
         }
     }
     if (hsynd_file_url)
-        _check3(downloadPlugin->download_part_close(&listener.readSyncDataListener),
+        _check3(downloadPlugin->download_part_close(&syncDataListener),
                 (result!=kSyncClient_ok)?result:kSyncClient_syncDataCloseError,
                 "close hsynd_file \"",hsynd_file_url,"\"");
     return result;
@@ -732,6 +733,7 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
     
     IDirPatchListener     defaultPatchDirlistener={0,_makeNewDir,_copySameFile,_openNewFile,_closeNewFile};
     TDirSyncPatchListener listener; memset(&listener,0,sizeof(listener));
+    IReadSyncDataListener syncDataListener; memset(&syncDataListener,0,sizeof(syncDataListener));
     listener.findChecksumPlugin=_findChecksumPlugin;
     listener.findDecompressPlugin=_findDecompressPlugin;
     listener.needSyncInfo=_needSyncInfo;
@@ -744,12 +746,12 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
     listener.patchFinish=_dirSyncPatchFinish;
     
     if (hsynd_file_url)
-        _check3(downloadPlugin->download_part_open(&listener.readSyncDataListener,hsynd_file_url),
+        _check3(downloadPlugin->download_part_open(&syncDataListener,hsynd_file_url),
                 kSyncClient_syncDataDownloadError,"download open sync file \"",hsynd_file_url,"\"");
-    int result=sync_patch_fileOrDir2dir(&defaultPatchDirlistener,&listener, outNewDir,oldManifest,
-                                        hsyni_file, kMaxOpenFileNumber,(int)threadNum);
+    int result=sync_patch_fileOrDir2dir(&defaultPatchDirlistener,&listener,&syncDataListener,
+                                         outNewDir,oldManifest,hsyni_file,kMaxOpenFileNumber,(int)threadNum);
     if (hsynd_file_url)
-        _check3(downloadPlugin->download_part_close(&listener.readSyncDataListener),
+        _check3(downloadPlugin->download_part_close(&syncDataListener),
                 (result!=kSyncClient_ok)?result:kSyncClient_syncDataCloseError,
                 "close hsynd_file \"",hsynd_file_url,"\"");
     return result;

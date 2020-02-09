@@ -31,14 +31,12 @@
 #include "sync_client_type.h"
 #include "sync_info_client.h"
 
-typedef struct ISyncPatchListener:public ISyncInfoListener{
-    IReadSyncDataListener   readSyncDataListener;
-} ISyncPatchListener;
+int sync_patch(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
+               const hpatch_TStreamOutput* out_newStream,const hpatch_TStreamInput* oldStream,
+               const TNewDataSyncInfo* newSyncInfo,int threadNum=1);
 
-int sync_patch(ISyncPatchListener* listener,const hpatch_TStreamOutput* out_newStream,
-               const hpatch_TStreamInput* oldStream,const TNewDataSyncInfo* newSyncInfo,int threadNum=1);
+int sync_patch_file2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
+                         const char* outNewFile,const char* oldFile,const char* newSyncInfoFile,int threadNum=1);
 
-int sync_patch_file2file(ISyncPatchListener* listener,const char* outNewFile,const char* oldFile,
-                         const char* newSyncInfoFile,int threadNum=1);
 
 #endif // sync_client_h
