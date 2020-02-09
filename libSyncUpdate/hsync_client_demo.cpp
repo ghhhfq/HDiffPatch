@@ -158,13 +158,13 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* hsyni_file,const char* hsynd_file_url,const char* localDiffFile,
                      const TSyncDownloadPlugin* downloadPlugin,
-                     size_t kMaxOpenFileNumber,size_t threadNum);
+                     size_t kMaxOpenFileNumber,int threadNum);
 #if (_IS_NEED_DIR_DIFF_PATCH)
 int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* hsyni_file,const char* hsynd_file_url,const char* localDiffFile,
                      const TSyncDownloadPlugin* downloadPlugin,
-                     size_t kMaxOpenFileNumber,size_t threadNum);
+                     size_t kMaxOpenFileNumber,int threadNum);
 #endif
 
 static int downloadNewSyncInfoFile(const TSyncDownloadPlugin* downloadPlugin,
@@ -532,12 +532,12 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     if (newIsDir)
         result=sync_patch_2dir(outNewPath,oldPath,isSamePath,oldIsDir,
                                ignoreOldPathList,hsyni_file,hsynd_file_url,localDiffFile,
-                               &downloadPlugin,kMaxOpenFileNumber,threadNum);
+                               &downloadPlugin,kMaxOpenFileNumber,(int)threadNum);
     else
 #endif
         result=sync_patch_2file(outNewPath,oldPath,isSamePath,oldIsDir,
                                 ignoreOldPathList,hsyni_file,hsynd_file_url,localDiffFile,
-                                &downloadPlugin,kMaxOpenFileNumber,threadNum);
+                                &downloadPlugin,kMaxOpenFileNumber,(int)threadNum);
     double time1=clock_s();
     printf("\nsync_patch_%s2%s time: %.3f s\n\n",oldIsDir?"dir":"file",newIsDir?"dir":"file",(time1-time0));
     return result;
@@ -573,7 +573,7 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* hsyni_file,const char* hsynd_file_url,const char* localDiffFile,
                      const TSyncDownloadPlugin* downloadPlugin,
-                     size_t kMaxOpenFileNumber,size_t threadNum){
+                     size_t kMaxOpenFileNumber,int threadNum){
 #if (_IS_NEED_DIR_DIFF_PATCH)
     std::string _oldPath(oldPath); if (oldIsDir) assignDirTag(_oldPath); oldPath=_oldPath.c_str();
 #endif
@@ -588,6 +588,8 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
 #endif
     printf(    "info .hsyni: \""); hpatch_printPath_utf8(hsyni_file);
     if (hsynd_file_url) { printf("\"\nsync  url  : \""); hpatch_printPath_utf8(hsynd_file_url); }
+    if (localDiffFile&&(outNewFile==0)) { printf("\"\nout   diff : \""); hpatch_printPath_utf8(localDiffFile); }
+    if (localDiffFile&&(outNewFile!=0)) { printf("\"\nin    diff : \""); hpatch_printPath_utf8(localDiffFile); }
     if (outNewFile)     { printf("\"\nout   file : \""); hpatch_printPath_utf8(outNewFile); }
     printf("\"\n");
 
@@ -602,13 +604,25 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
     int result=kSyncClient_ok;
 #if (_IS_NEED_DIR_DIFF_PATCH)
     if (oldIsDir){
-        result=sync_patch_dir2file(&listener,&syncDataListener,outNewFile,oldManifest,hsyni_file,
-                                   kMaxOpenFileNumber,(int)threadNum);
+        if (localDiffFile==0)
+            result=sync_patch_2file(&listener,&syncDataListener,oldManifest,hsyni_file,outNewFile,
+                                    kMaxOpenFileNumber,threadNum);
+        else if (outNewFile==0) //local diff
+            result=sync_local_diff_2file(&listener,&syncDataListener,oldManifest,hsyni_file,localDiffFile,
+                                         kMaxOpenFileNumber,threadNum);
+        else //local patch
+            result=sync_local_patch_2file(&listener,localDiffFile,oldManifest,hsyni_file,outNewFile,
+                                          kMaxOpenFileNumber,threadNum);
     }else
 #endif
     {
         assert(!oldIsDir);
-        result=sync_patch_file2file(&listener,&syncDataListener,outNewFile,oldPath,hsyni_file,(int)threadNum);
+        if (localDiffFile==0)
+            result=sync_patch_file2file(&listener,&syncDataListener,oldPath,hsyni_file,outNewFile,threadNum);
+        else if (outNewFile==0) //local diff
+            result=sync_local_diff_file2file(&listener,&syncDataListener,oldPath,hsyni_file,localDiffFile,threadNum);
+        else //local patch
+            result=sync_local_patch_file2file(&listener,localDiffFile,oldPath,hsyni_file,outNewFile,threadNum);
     }
     if (isSamePath){
         // 1. patch to newTempName
@@ -715,7 +729,7 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* hsyni_file,const char* hsynd_file_url,const char* localDiffFile,
                      const TSyncDownloadPlugin* downloadPlugin,
-                     size_t kMaxOpenFileNumber,size_t threadNum){
+                     size_t kMaxOpenFileNumber,int threadNum){
     std::string _outNewDir(outNewDir?outNewDir:"");
     if (outNewDir) { assignDirTag(_outNewDir); outNewDir=outNewDir?_outNewDir.c_str():0; }
     std::string _oldPath(oldPath); if (oldIsDir) assignDirTag(_oldPath); oldPath=_oldPath.c_str();
@@ -728,6 +742,8 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
     }
     printf(    "info .hsyni: \""); hpatch_printPath_utf8(hsyni_file);
     if (hsynd_file_url) { printf("\"\nsync  url  : \""); hpatch_printPath_utf8(hsynd_file_url); }
+    if (localDiffFile&&(outNewDir==0)) { printf("\"\nout   diff : \""); hpatch_printPath_utf8(localDiffFile); }
+    if (localDiffFile&&(outNewDir!=0)) { printf("\"\nin    diff : \""); hpatch_printPath_utf8(localDiffFile); }
     if (outNewDir)      { printf("\"\nout   dir  : \""); hpatch_printPath_utf8(outNewDir); }
     printf("\"\n");
     
@@ -748,8 +764,16 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
     if (hsynd_file_url)
         _check3(downloadPlugin->download_part_open(&syncDataListener,hsynd_file_url),
                 kSyncClient_syncDataDownloadError,"download open sync file \"",hsynd_file_url,"\"");
-    int result=sync_patch_fileOrDir2dir(&defaultPatchDirlistener,&listener,&syncDataListener,
-                                         outNewDir,oldManifest,hsyni_file,kMaxOpenFileNumber,(int)threadNum);
+    int result=kSyncClient_ok;
+    if (localDiffFile==0)
+        result=sync_patch_2dir(&defaultPatchDirlistener,&listener,&syncDataListener,
+                               oldManifest,hsyni_file,outNewDir,kMaxOpenFileNumber,threadNum);
+    else if (outNewDir==0) //local diff
+        result=sync_local_diff_2dir(&defaultPatchDirlistener,&listener,&syncDataListener,
+                                    oldManifest,hsyni_file,localDiffFile,kMaxOpenFileNumber,threadNum);
+    else //local patch
+        result=sync_local_patch_2dir(&defaultPatchDirlistener,&listener,localDiffFile,
+                                     oldManifest,hsyni_file,outNewDir,kMaxOpenFileNumber,threadNum);
     if (hsynd_file_url)
         _check3(downloadPlugin->download_part_close(&syncDataListener),
                 (result!=kSyncClient_ok)?result:kSyncClient_syncDataCloseError,

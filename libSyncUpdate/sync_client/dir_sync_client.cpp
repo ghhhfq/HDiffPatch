@@ -27,15 +27,16 @@
  OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "dir_sync_client.h"
-#include <stdexcept>
 #include "sync_client_type_private.h"
 #if (_IS_NEED_DIR_DIFF_PATCH)
+#include <stdexcept>
 #include "../../dirDiffPatch/dir_diff/dir_diff_tools.h"
 #include "../../dirDiffPatch/dir_patch/new_dir_output.h"
 #include "../../dirDiffPatch/dir_patch/dir_patch_tools.h"
-using namespace sync_private;
+#include "sync_client_private.h"
 using namespace hdiff_private;
 
+namespace sync_private{
 
 #define check_r(v,errorCode) \
     do{ if (!(v)) { if (result==kSyncClient_ok) result=errorCode; \
@@ -79,9 +80,9 @@ struct CFilesStream{
 };
 
 
-int sync_patch_dir2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
-                        const char* outNewFile,const TManifest& oldManifest,
-                        const char* newSyncInfoFile,size_t kMaxOpenFileNumber,int threadNum){
+static int _sync_patch_2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
+                             const TManifest& oldManifest,const char* newSyncInfoFile,const char* outNewFile,
+                             const hpatch_TStreamOutput* out_diffStream,size_t kMaxOpenFileNumber,int threadNum){
     assert(listener!=0);
     assert(kMaxOpenFileNumber>=kMaxOpenFileNumber_limit_min);
     kMaxOpenFileNumber-=2; // for newSyncInfoFile & outNewFile
@@ -98,10 +99,11 @@ int sync_patch_dir2file(ISyncInfoListener* listener,IReadSyncDataListener* syncD
     check_r(result==kSyncClient_ok,result);
     check_r(oldFilesStream.open(oldManifest.pathList,kMaxOpenFileNumber,
                                 newSyncInfo.kMatchBlockSize), kSyncClient_oldDirFilesOpenError);
-    check_r(hpatch_TFileStreamOutput_open(&out_newData,outNewFile,(hpatch_StreamPos_t)(-1)),
-                                          kSyncClient_newFileCreateError);
-    result=sync_patch(listener,syncDataListener,
-                      &out_newData.base,oldFilesStream.refStream.stream,&newSyncInfo,threadNum);
+    if (outNewFile)
+        check_r(hpatch_TFileStreamOutput_open(&out_newData,outNewFile,(hpatch_StreamPos_t)(-1)),
+                kSyncClient_newFileCreateError);
+    result=_sync_patch(listener,syncDataListener,oldFilesStream.refStream.stream,&newSyncInfo,
+                       outNewFile?&out_newData.base:0,out_diffStream,threadNum);
     check_r(oldFilesStream.closeFileHandles(),kSyncClient_oldDirFilesCloseError);
 clear:
     _inClear=1;
@@ -135,10 +137,11 @@ struct CNewDirOut{
     TNewDirOutput _newDir;
 };
 
-int sync_patch_fileOrDir2dir(IDirPatchListener* patchListener,IDirSyncPatchListener* syncListener,
-                             IReadSyncDataListener* syncDataListener,
-                             const char* outNewDir,const TManifest& oldManifest,
-                             const char* newSyncInfoFile,size_t kMaxOpenFileNumber,int threadNum){
+static int _sync_patch_2dir(IDirPatchListener* patchListener,IDirSyncPatchListener* syncListener,
+                            IReadSyncDataListener* syncDataListener,
+                            const TManifest& oldManifest,const char* newSyncInfoFile,
+                            const char* outNewDir,const hpatch_TStreamOutput* out_diffStream,
+                            size_t kMaxOpenFileNumber,int threadNum){
     assert((patchListener!=0)&&(syncListener!=0));
     assert(kMaxOpenFileNumber>=kMaxOpenFileNumber_limit_min);
     kMaxOpenFileNumber-=2; // for newSyncInfoFile & outNewFile
@@ -165,8 +168,8 @@ int sync_patch_fileOrDir2dir(IDirPatchListener* patchListener,IDirSyncPatchListe
     check_r(oldFilesStream.open(oldManifest.pathList,kMaxOpenFileNumber,kAlignSize),
             kSyncClient_oldDirFilesOpenError);
     
-    result=sync_patch(syncListener,syncDataListener, out_newData,
-                      oldFilesStream.refStream.stream,&newSyncInfo,threadNum);
+    result=sync_patch(syncListener,syncDataListener,
+                      oldFilesStream.refStream.stream,&newSyncInfo,out_newData,threadNum);
     check_r(newDirOut.closeFileHandles(),kSyncClient_newDirCloseError);
     check_r(oldFilesStream.closeFileHandles(),kSyncClient_oldDirFilesCloseError);
     if (syncListener->patchFinish)
@@ -179,5 +182,79 @@ clear:
     return result;
 }
 
+}
+using namespace sync_private;
+
+int sync_patch_2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
+                     const TManifest& oldManifest,const char* newSyncInfoFile,const char* outNewFile,
+                     size_t kMaxOpenFileNumber,int threadNum){
+    return _sync_patch_2file(listener,syncDataListener,oldManifest,newSyncInfoFile,
+                             outNewFile,0,kMaxOpenFileNumber,threadNum);
+}
+
+int sync_local_diff_2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
+                          const TManifest& oldManifest,const char* newSyncInfoFile,const char* outDiffFile,
+                          size_t kMaxOpenFileNumber,int threadNum){
+    int result=kSyncClient_ok;
+    int _inClear=0;
+    hpatch_TFileStreamOutput out_diffData;
+    hpatch_TFileStreamOutput_init(&out_diffData);
+    check_r(hpatch_TFileStreamOutput_open(&out_diffData,outDiffFile,(hpatch_StreamPos_t)(-1)),
+            kSyncClient_diffFileCreateError);
+    result=_sync_patch_2file(listener,syncDataListener,oldManifest,newSyncInfoFile,0,&out_diffData.base,
+                             kMaxOpenFileNumber,threadNum);
+clear:
+    _inClear=1;
+    check_r(hpatch_TFileStreamOutput_close(&out_diffData),kSyncClient_diffFileCloseError);
+    return result;
+}
+
+int sync_local_patch_2file(ISyncInfoListener* listener,const char* inDiffFile,
+                           const TManifest& oldManifest,const char* newSyncInfoFile,const char* outNewFile,
+                           size_t kMaxOpenFileNumber,int threadNum){
+    int result=kSyncClient_ok;
+    int _inClear=0;
+    TSyncDiffData diffData;
+    hpatch_TFileStreamInput in_diffData;
+    hpatch_TFileStreamInput_init(&in_diffData);
+    check_r(hpatch_TFileStreamInput_open(&in_diffData,inDiffFile),
+            kSyncClient_diffFileOpenError);
+    _initSyncDiffData(&diffData,&in_diffData.base);
+    return _sync_patch_2file(listener,&diffData,oldManifest,newSyncInfoFile,outNewFile,0,
+                             kMaxOpenFileNumber,threadNum);
+clear:
+    _inClear=1;
+    check_r(hpatch_TFileStreamInput_close(&in_diffData),kSyncClient_diffFileCloseError);
+    return result;
+}
+
+
+int sync_patch_2dir(IDirPatchListener* patchListener,IDirSyncPatchListener* syncListener,
+                    IReadSyncDataListener* syncDataListener,
+                    const TManifest& oldManifest,const char* newSyncInfoFile,const char* outNewDir,
+                    size_t kMaxOpenFileNumber,int threadNum){
+    return _sync_patch_2dir(patchListener,syncListener,syncDataListener,oldManifest,newSyncInfoFile,outNewDir,0,
+                            kMaxOpenFileNumber,threadNum);
+}
+
+int sync_local_patch_2dir(IDirPatchListener* patchListener,IDirSyncPatchListener* syncListener,
+                          const char* inDiffFile,
+                          const TManifest& oldManifest,const char* newSyncInfoFile,const char* outNewDir,
+                          size_t kMaxOpenFileNumber,int threadNum){
+    int result=kSyncClient_ok;
+    int _inClear=0;
+    TSyncDiffData diffData;
+    hpatch_TFileStreamInput in_diffData;
+    hpatch_TFileStreamInput_init(&in_diffData);
+    check_r(hpatch_TFileStreamInput_open(&in_diffData,inDiffFile),
+            kSyncClient_diffFileOpenError);
+    _initSyncDiffData(&diffData,&in_diffData.base);
+    return _sync_patch_2dir(patchListener,syncListener,&diffData,oldManifest,newSyncInfoFile,outNewDir,0,
+                            kMaxOpenFileNumber,threadNum);
+clear:
+    _inClear=1;
+    check_r(hpatch_TFileStreamInput_close(&in_diffData),kSyncClient_diffFileCloseError);
+    return result;
+}
 
 #endif //_IS_NEED_DIR_DIFF_PATCH

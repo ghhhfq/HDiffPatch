@@ -36,9 +36,19 @@
 
 //sync patch oldDir to newFile
 //  use get_manifest(dir) to get TManifest
-int sync_patch_dir2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
-                        const char* outNewFile,const TManifest& oldManifest,
-                        const char* newSyncInfoFile,size_t kMaxOpenFileNumber,int threadNum=1);
+int sync_patch_2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
+                     const TManifest& oldManifest,const char* newSyncInfoFile,const char* outNewFile,
+                     size_t kMaxOpenFileNumber,int threadNum=1);
+
+//sync_patch can split to two steps: sync_local_diff + sync_local_patch
+
+int sync_local_diff_2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
+                          const TManifest& oldManifest,const char* newSyncInfoFile,const char* outDiffFile,
+                          size_t kMaxOpenFileNumber,int threadNum=1);
+
+int sync_local_patch_2file(ISyncInfoListener* listener,const char* inDiffFile,
+                           const TManifest& oldManifest,const char* newSyncInfoFile,const char* outNewFile,
+                           size_t kMaxOpenFileNumber,int threadNum=1);
 
 struct IDirSyncPatchListener:public ISyncInfoListener{
     void*       patchImport;
@@ -49,10 +59,21 @@ struct IDirSyncPatchListener:public ISyncInfoListener{
 };
 
 //sync patch oldPatch to newDir
-int sync_patch_fileOrDir2dir(IDirPatchListener* patchListener,IDirSyncPatchListener* syncListener,
-                             IReadSyncDataListener* syncDataListener,
-                             const char* outNewDir,const TManifest& oldManifest,
-                             const char* newSyncInfoFile,size_t kMaxOpenFileNumber,int threadNum=1);
+int sync_patch_2dir(IDirPatchListener* patchListener,IDirSyncPatchListener* syncListener,
+                    IReadSyncDataListener* syncDataListener,
+                    const TManifest& oldManifest,const char* newSyncInfoFile,const char* outNewDir,
+                    size_t kMaxOpenFileNumber,int threadNum=1);
+static hpatch_inline
+int sync_local_diff_2dir(IDirPatchListener*,IDirSyncPatchListener* syncListener,
+                         IReadSyncDataListener* syncDataListener,
+                         const TManifest& oldManifest,const char* newSyncInfoFile,const char* outDiffFile,
+                         size_t kMaxOpenFileNumber,int threadNum=1){
+            return sync_local_diff_2file(syncListener,syncDataListener,oldManifest,newSyncInfoFile,outDiffFile,
+                                         kMaxOpenFileNumber,threadNum); }
+int sync_local_patch_2dir(IDirPatchListener* patchListener,IDirSyncPatchListener* syncListener,
+                          const char* inDiffFile,
+                          const TManifest& oldManifest,const char* newSyncInfoFile,const char* outNewDir,
+                          size_t kMaxOpenFileNumber,int threadNum=1);
 
 #endif
 #endif // dir_sync_client_h

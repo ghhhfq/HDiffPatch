@@ -31,12 +31,30 @@
 #include "sync_client_type.h"
 #include "sync_info_client.h"
 
+//sync_patch(oldStream+syncDataListener) to out_newStream
 int sync_patch(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
-               const hpatch_TStreamOutput* out_newStream,const hpatch_TStreamInput* oldStream,
-               const TNewDataSyncInfo* newSyncInfo,int threadNum=1);
+               const hpatch_TStreamInput* oldStream,const TNewDataSyncInfo* newSyncInfo,
+               const hpatch_TStreamOutput* out_newStream,int threadNum=1);
 
 int sync_patch_file2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
-                         const char* outNewFile,const char* oldFile,const char* newSyncInfoFile,int threadNum=1);
+                         const char* oldFile,const char* newSyncInfoFile,const char* outNewFile,int threadNum=1);
 
+
+//sync_patch can split to two steps: sync_local_diff + sync_local_patch
+
+
+//download diff data from syncDataListener to out_diffStream
+int sync_local_diff(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
+                    const hpatch_TStreamInput* oldStream,const TNewDataSyncInfo* newSyncInfo,
+                    const hpatch_TStreamOutput* out_diffStream,int threadNum=1);
+//patch(oldStream+in_diffStream) to out_newStream
+int sync_local_patch(ISyncInfoListener* listener,const hpatch_TStreamInput* in_diffStream,
+                     const hpatch_TStreamInput* oldStream,const TNewDataSyncInfo* newSyncInfo,
+                     const hpatch_TStreamOutput* out_newStream,int threadNum=1);
+
+int sync_local_diff_file2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
+                              const char* oldFile,const char* newSyncInfoFile,const char* outDiffFile,int threadNum=1);
+int sync_local_patch_file2file(ISyncInfoListener* listener,const char* inDiffFile,
+                               const char* oldFile,const char* newSyncInfoFile,const char* outNewFile,int threadNum=1);
 
 #endif // sync_client_h
