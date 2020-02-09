@@ -91,6 +91,7 @@ typedef struct TNeedSyncInfos{
 
 typedef struct IReadSyncDataListener{
     void*       readSyncDataImport;
+    hpatch_BOOL isDiffData; //default hpatch_FALSE
     //readSyncDataBegin can null
     hpatch_BOOL (*readSyncDataBegin)(IReadSyncDataListener* listener,const TNeedSyncInfos* needSyncInfo);
     //download range data

@@ -223,6 +223,37 @@ static void getNeedSyncInfo(const hpatch_StreamPos_t* newBlockDataInOldPoss,
     }
 }
 
+    /*
+#define _pushV(uv,stag) \
+    do{ TByte* cur=buf; \
+        if (!hpatch_packUIntWithTag(&cur,buf+sizeof(buf),uv,stag,1)) return hpatch_FALSE; \
+        if (!out_diffStream->write(out_diffStream,pos,buf,cur)) return hpatch_FALSE; \
+        pos+=(cur-buf); \
+    }while(0)
+static hpatch_BOOL saveMatchedPoss(const hpatch_StreamPos_t* newBlockDataInOldPoss,uint32_t kBlockCount,
+                                   const hpatch_TStreamOutput* out_diffStream,hpatch_StreamPos_t* cur_pos){
+    hpatch_StreamPos_t pos=0;
+    TByte buf[hpatch_kMaxPackedUIntBytes];
+    _pushV(kBlockCount,0);
+    hpatch_StreamPos_t backv=0;
+    for (uint32_t i=0; i<kBlockCount; ++i) {
+        hpatch_StreamPos_t v=newBlockDataInOldPoss[i];
+        if (v!=kBlockType_needSync){
+            if (v>backv)
+                _pushV((hpatch_StreamPos_t)(v-backv),0);
+            else
+                _pushV((hpatch_StreamPos_t)(backv-v),1);
+            backv=v;
+        }else{
+            _pushV(0,0);
+        }
+    }
+    _pushV(pos,0);
+    *cur_pos=pos;
+    return hpatch_TRUE;
+}
+*/
+
 int _sync_patch(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
                 const hpatch_TStreamInput* oldStream,const TNewDataSyncInfo* newSyncInfo,
                 const hpatch_TStreamOutput* out_newStream,const hpatch_TStreamOutput* out_diffStream,int threadNum){
@@ -268,6 +299,12 @@ int _sync_patch(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListe
     }
     check(result==kSyncClient_ok,result);
     getNeedSyncInfo(newBlockDataInOldPoss,newSyncInfo,&needSyncInfo);
+    /*
+    if (out_diffStream){
+        hpatch_StreamPos_t pos=0;
+        saveMatchedPoss(newBlockDataInOldPoss,kBlockCount,out_diffStream,&pos);
+    }*/
+    
     if (listener->needSyncInfo)
         listener->needSyncInfo(listener,&needSyncInfo);
     
