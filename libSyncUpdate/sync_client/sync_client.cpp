@@ -269,17 +269,18 @@ int sync_patch(ISyncPatchListener* listener,const hpatch_TStreamOutput* out_newS
     if (listener->readSyncDataListener.readSyncDataBegin)
         check(listener->readSyncDataListener.readSyncDataBegin(&listener->readSyncDataListener,&needSyncInfo),
               kSyncClient_readSyncDataBeginError);
-    
-    _TWriteDatas writeDatas;
-    writeDatas.out_newStream=out_newStream;
-    writeDatas.newSyncInfo=newSyncInfo;
-    writeDatas.newBlockDataInOldPoss=newBlockDataInOldPoss;
-    writeDatas.needSyncBlockCount=needSyncInfo.needSyncBlockCount;
-    writeDatas.oldStream=oldStream;
-    writeDatas.decompressPlugin=decompressPlugin;
-    writeDatas.strongChecksumPlugin=strongChecksumPlugin;
-    writeDatas.listener=listener;
-    result=writeToNew(writeDatas,threadNum);
+    if (out_newStream){
+        _TWriteDatas writeDatas;
+        writeDatas.out_newStream=out_newStream;
+        writeDatas.newSyncInfo=newSyncInfo;
+        writeDatas.newBlockDataInOldPoss=newBlockDataInOldPoss;
+        writeDatas.needSyncBlockCount=needSyncInfo.needSyncBlockCount;
+        writeDatas.oldStream=oldStream;
+        writeDatas.decompressPlugin=decompressPlugin;
+        writeDatas.strongChecksumPlugin=strongChecksumPlugin;
+        writeDatas.listener=listener;
+        result=writeToNew(writeDatas,threadNum);
+    }
     
     if (listener->readSyncDataListener.readSyncDataEnd)
         listener->readSyncDataListener.readSyncDataEnd(&listener->readSyncDataListener);
@@ -309,10 +310,11 @@ int sync_patch_file2file(ISyncPatchListener* listener,const char* outNewFile,
     if (!isOldPathInputEmpty)
         check(hpatch_TFileStreamInput_open(&oldData,oldFile),kSyncClient_oldFileOpenError);
     oldStream=&oldData.base;
-    check(hpatch_TFileStreamOutput_open(&out_newData,outNewFile,(hpatch_StreamPos_t)(-1)),
-          kSyncClient_newFileCreateError);
+    if (outNewFile)
+        check(hpatch_TFileStreamOutput_open(&out_newData,outNewFile,(hpatch_StreamPos_t)(-1)),
+              kSyncClient_newFileCreateError);
     
-    result=sync_patch(listener,&out_newData.base,oldStream,&newSyncInfo,threadNum);
+    result=sync_patch(listener,outNewFile?&out_newData.base:0,oldStream,&newSyncInfo,threadNum);
 clear:
     _inClear=1;
     check(hpatch_TFileStreamOutput_close(&out_newData),kSyncClient_newFileCloseError);

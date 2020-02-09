@@ -96,10 +96,11 @@ int sync_patch_dir2file(ISyncPatchListener* listener,const char* outNewFile,cons
     result=TNewDataSyncInfo_open_by_file(&newSyncInfo,newSyncInfoFile,listener);
     check_r(result==kSyncClient_ok,result);
     check_r(oldFilesStream.open(oldManifest.pathList,kMaxOpenFileNumber,
-                                newSyncInfo.kMatchBlockSize), kSyncClient_oldDirFilesError);
+                                newSyncInfo.kMatchBlockSize), kSyncClient_oldDirFilesOpenError);
     check_r(hpatch_TFileStreamOutput_open(&out_newData,outNewFile,(hpatch_StreamPos_t)(-1)),
                                           kSyncClient_newFileCreateError);
     result=sync_patch(listener,&out_newData.base,oldFilesStream.refStream.stream,&newSyncInfo,threadNum);
+    check_r(oldFilesStream.closeFileHandles(),kSyncClient_oldDirFilesCloseError);
 clear:
     _inClear=1;
     check_r(hpatch_TFileStreamOutput_close(&out_newData),kSyncClient_newFileCloseError);
@@ -152,18 +153,19 @@ int sync_patch_fileOrDir2dir(IDirPatchListener* patchListener,IDirSyncPatchListe
     check_r(result==kSyncClient_ok,result);
     check_r(newSyncInfo.isDirSyncInfo,kSyncClient_newSyncInfoTypeError);
     kAlignSize=newSyncInfo.kMatchBlockSize;
-    check_r(newDirOut.openDir(&newSyncInfo,outNewDir,patchListener,&out_newData,kAlignSize),
-            kSyncClient_newDirOpenError);
+    if (outNewDir)
+        check_r(newDirOut.openDir(&newSyncInfo,outNewDir,patchListener,&out_newData,kAlignSize),
+                kSyncClient_newDirOpenError);
     if (syncListener->patchBegin)
         check_r(syncListener->patchBegin(syncListener,&newSyncInfo,&newDirOut._newDir),
                 kSyncClient_newDirPatchBeginError);
     check_r(oldFilesStream.open(oldManifest.pathList,kMaxOpenFileNumber,kAlignSize),
-            kSyncClient_oldDirFilesError);
+            kSyncClient_oldDirFilesOpenError);
     
     result=sync_patch(syncListener,out_newData,oldFilesStream.refStream.stream,
                       &newSyncInfo,threadNum);
     check_r(newDirOut.closeFileHandles(),kSyncClient_newDirCloseError);
-    check_r(oldFilesStream.closeFileHandles(),kSyncClient_oldDirFilesError);
+    check_r(oldFilesStream.closeFileHandles(),kSyncClient_oldDirFilesCloseError);
     if (syncListener->patchFinish)
         check_r(syncListener->patchFinish(syncListener,result==kSyncClient_ok,&newSyncInfo,
                                           &newDirOut._newDir), kSyncClient_newDirPatchFinishError);

@@ -85,3 +85,30 @@ hpatch_BOOL downloadEmulation_close(IReadSyncDataListener* emulation){
     return result;
 }
 
+#define  check(value) { if (!(value)){ fprintf(stderr,"check "#value" error!\n");  \
+                            result=hpatch_FALSE; goto clear; } }
+
+hpatch_BOOL downloadEmulation_download_file(const char* file_url,const hpatch_TStreamOutput* out_stream,
+                                            hpatch_StreamPos_t continueDownloadPos){
+    //copy file_url file data to out_stream
+    const size_t _tempCacheSize=hpatch_kStreamCacheSize*4;
+    hpatch_BOOL result=hpatch_TRUE;
+    TByte        temp_cache[_tempCacheSize];
+    hpatch_StreamPos_t pos=continueDownloadPos;
+    hpatch_TFileStreamInput   oldFile;
+    hpatch_TFileStreamInput_init(&oldFile);
+    
+    check(hpatch_TFileStreamInput_open(&oldFile,file_url)); //local file!
+    while (pos<oldFile.base.streamSize) {
+        size_t copyLen=_tempCacheSize;
+        if (pos+copyLen>oldFile.base.streamSize)
+            copyLen=(size_t)(oldFile.base.streamSize-pos);
+        check(oldFile.base.read(&oldFile.base,pos,temp_cache,temp_cache+copyLen));
+        check(out_stream->write(out_stream,pos,temp_cache,temp_cache+copyLen));
+        pos+=copyLen;
+    }
+    check(!oldFile.fileError);
+clear:
+    hpatch_TFileStreamInput_close(&oldFile);
+    return result;
+}

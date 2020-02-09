@@ -54,7 +54,7 @@
 hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin){
     out_downloadPlugin->download_part_open=downloadEmulation_open_by_file;
     out_downloadPlugin->download_part_close=downloadEmulation_close;
-    out_downloadPlugin->download_file=0; //demo not need, because newSyncInfoFile is local file
+    out_downloadPlugin->download_file=downloadEmulation_download_file;
     return hpatch_TRUE;
 }
 #else
@@ -80,18 +80,20 @@ hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin);
 //===== select needs checksum plugins or change to your plugin=====
 #   define _ChecksumPlugin_md5
 #endif
-
 #include "../checksum_plugin_demo.h"
 
-static void printUsage(){
 #if (_IS_SYNC_PATCH_DEMO)
-    printf("sync  patch: [options] oldPath hsyni_file hsynd_file_test outNewPath\n"
-           "local  diff: [options] oldPath hsyni_file hsynd_file_test -diff#outDiffFile\n"
+#   define URL_Text  "test"
+#   define APP_Text  "demo"
 #else
-    printf("sync  patch: [options] oldPath [-dl#hsyni_file_url] hsyni_file hsynd_file_url outNewPath\n"
-           "download   : [options] -dl#hsyni_file_url hsyni_file\n"
-           "local  diff: [options] oldPath hsyni_file hsynd_file_url -diff#diffFile\n"
+#   define URL_Text  "url"
+#   define APP_Text  "http"
 #endif
+
+static void printUsage(){
+    printf("sync  patch: [options] oldPath [-dl#hsyni_file_" URL_Text "] hsyni_file hsynd_file_" URL_Text " outNewPath\n"
+           "download   : [options] -dl#hsyni_file_" URL_Text " hsyni_file\n"
+           "local  diff: [options] oldPath hsyni_file hsynd_file_" URL_Text " -diff#diffFile\n"
            "local patch: [options] oldPath hsyni_file -patch#diffFile outNewPath\n"
            "sync  infos: [options] oldPath hsyni_file\n"
 #if (_IS_NEED_DIR_DIFF_PATCH)
@@ -99,17 +101,10 @@ static void printUsage(){
 #endif
            "  if oldPath is empty input parameter \"\" )\n"
            "options:\n"
-#if (_IS_SYNC_PATCH_DEMO)
-#else
-           "  -dl#hsyni_file_url\n"
-           "    http download hsyni_file from hsyni_file_url befor sync patch;\n"
-#endif
+           "  -dl#hsyni_file_" URL_Text "       (or -download#...)\n"
+           "    download hsyni_file from hsyni_file_" URL_Text " befor sync patch;\n"
            "  -diff#outDiffFile\n"
-#if (_IS_SYNC_PATCH_DEMO)
-           "    create diffFile from part of hsyni_file_test befor local patch;\n"
-#else
-           "    http download diffFile from part of hsyni_file_url befor local patch;\n"
-#endif
+           "    create diffFile from part of hsynd_file_" URL_Text " befor local patch;\n"
            "  -patch#diffFile\n"
            "    local patch(oldPath+diffFile) to outNewPath;\n"
 #if (_IS_USED_MULTITHREAD)
@@ -161,22 +156,19 @@ int sync_client_cmd_line(int argc, const char * argv[]);
 
 int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
-                     const char* hsyni_file,const char* hsynd_file_url,
+                     const char* hsyni_file,const char* hsynd_file_url,const char* localDiffFile,
                      const TSyncDownloadPlugin* downloadPlugin,
                      size_t kMaxOpenFileNumber,size_t threadNum);
 #if (_IS_NEED_DIR_DIFF_PATCH)
 int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
-                     const char* hsyni_file,const char* hsynd_file_url,
+                     const char* hsyni_file,const char* hsynd_file_url,const char* localDiffFile,
                      const TSyncDownloadPlugin* downloadPlugin,
                      size_t kMaxOpenFileNumber,size_t threadNum);
 #endif
-           
-#if (_IS_SYNC_PATCH_DEMO)
-#else
+
 static int downloadNewSyncInfoFile(const TSyncDownloadPlugin* downloadPlugin,
                                    const char* hsyni_file_url,const char* out_hsyni_file);
-#endif
 
 
 #if (_IS_NEED_MAIN)
@@ -257,9 +249,11 @@ static void _needSyncInfo(ISyncInfoListener* listener,const TNeedSyncInfos* need
 #define _options_check(value,errorInfo) do{ \
     if (!(value)) { fprintf(stderr,"options " errorInfo " ERROR!\n\n"); \
                     printUsage(); return kSyncClient_optionsError; } }while(0)
-#define _printErr(fmt,errorInfo) do{ fprintf(stderr,fmt " ERROR!\n",errorInfo); }while(0)
-#define _return_check(value,exitCode,fmt,errorInfo) do{ \
-    if (!(value)) { _printErr(fmt,errorInfo); return exitCode; } }while(0)
+#define _pferr(errorInfo) do{ hpatch_printStdErrPath_utf8(errorInfo); }while(0)
+#define _check(value,exitCode,errInfo) do{ \
+    if (!(value)) { _pferr(errInfo); fprintf(stderr," ERROR!\n"); return exitCode; } }while(0)
+#define _check3(value,exitCode,errInfo0,errInfo1,errInfo2) do{ \
+if (!(value)) { _pferr(errInfo0); _pferr(errInfo1); _pferr(errInfo2); fprintf(stderr," ERROR!\n"); return exitCode; } }while(0)
 
 #define _kNULL_VALUE    (-1)
 #define _kNULL_SIZE     (~(size_t)0)
@@ -285,6 +279,8 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     hpatch_BOOL isOutputVersion=_kNULL_VALUE;
     hpatch_BOOL isOldPathInputEmpty=_kNULL_VALUE;
     const char* hsyni_file_url=0;
+    const char* diff_to_diff_file=0;
+    const char* patch_by_diff_file=0;
 //_IS_NEED_DIR_DIFF_PATCH
     size_t                      kMaxOpenFileNumber=_kNULL_SIZE; //only used in oldPath is dir
     std::vector<std::string>    ignoreOldPathList;
@@ -308,22 +304,41 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
             continue;
         }
         switch (op[1]) {
-#if (_IS_USED_MULTITHREAD)
             case 'p':{
-                _options_check((threadNum==_THREAD_NUMBER_NULL)&&(op[2]=='-'),"-p-?");
-                const char* pnum=op+3;
-                _options_check(a_to_size(pnum,strlen(pnum),&threadNum),"-p-?");
-                _options_check(threadNum>=_THREAD_NUMBER_MIN,"-p-?");
-            } break;
+                if (strstr(op,"-patch#")==op){
+                    const char* pfname=op+7;
+                    _options_check((patch_by_diff_file==0)&&(strlen(pfname)>0),"-patch#?");
+                    patch_by_diff_file=pfname;
+#if (_IS_USED_MULTITHREAD)
+                }else if (strstr(op,"-p-")==op){
+                    _options_check((threadNum==_THREAD_NUMBER_NULL)&&(op[2]=='-'),"-p-?");
+                    const char* pnum=op+3;
+                    _options_check(a_to_size(pnum,strlen(pnum),&threadNum),"-p-?");
+                    _options_check(threadNum>=_THREAD_NUMBER_MIN,"-p-?");
 #endif
-#if (_IS_SYNC_PATCH_DEMO)
+                }else{
+#if (_IS_USED_MULTITHREAD)
+                    _options_check(false,"-patch#? or -p-?");
 #else
-            case 'U':{
-                const char* purl=op+3;
-                _options_check((hsyni_file_url==0)&&(op[2]=='#')&&(strlen(purl)>0),"-U#?");
-                hsyni_file_url=purl;
-            } break;
+                    _options_check(false,"-patch#?");
 #endif
+                }
+            } break;
+            case 'd':{
+                if (strstr(op,"-diff#")==op){
+                    const char* pfname=op+6;
+                    _options_check((diff_to_diff_file==0)&&(strlen(pfname)>0),"-diff#?");
+                    diff_to_diff_file=pfname;
+                }else{
+                    size_t l=0;
+                    if (strstr(op,"-dl#")==op) l=4;
+                    else if (strstr(op,"-download#")==op) l=10;
+                    else _options_check(false,"-dl#? or -diff#?");
+                    const char* purl=op+l;
+                    _options_check((hsyni_file_url==0)&&(strlen(purl)>0),"-dl#?");
+                    hsyni_file_url=purl;
+                }
+            } break;
 #if (_IS_NEED_DIR_DIFF_PATCH)
             case 'n':{
                 const char* pnum=op+3;
@@ -382,105 +397,146 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
         isOldPathInputEmpty=hpatch_FALSE;
     
     if (isOutputHelp||isOutputVersion){
-#if (_IS_SYNC_PATCH_DEMO)
-        printf("HDiffPatch::hsync_client_demo v" HDIFFPATCH_VERSION_STRING "\n\n");
-#else
-        printf("HDiffPatch::hsync_client_http v" HDIFFPATCH_VERSION_STRING "\n\n");
-#endif
+        printf("HDiffPatch::hsync_client_" APP_Text " v" HDIFFPATCH_VERSION_STRING "\n\n");
         if (isOutputHelp)
             printUsage();
         if (arg_values.empty())
             return kSyncClient_ok; //ok
     }
+    if (threadNum>1)
+        printf("muti-thread parallel: opened, threadNum: %d\n",(int)threadNum);
+    else
+        printf("muti-thread parallel: closed\n");
 
+    _options_check((hsyni_file_url?1:0)+(diff_to_diff_file?1:0)+(patch_by_diff_file?1:0)<=1,
+                   "-dl,-diff,-patch can't be used at the same time");
+
+    const char* oldPath        =0; // input old
+    const char* hsyni_file     =0; // .hsyni
+    const char* hsynd_file_url =0; // .hsynd or newFile's url
+    const char* outNewPath     =0; // output new
     TRunAsType runAs=kRunAs_unknown;
-    
-    const bool isOnlyDownload=(hsyni_file_url!=0) && (arg_values.size()==1);
-    _options_check((arg_values.size()==4)||isOnlyDownload,"input count");
-    const char* oldPath             =isOnlyDownload?            0:arg_values[0];
-    const char* hsyni_file     =isOnlyDownload?arg_values[0]:arg_values[1]; // .hsyni
-    const char* hsynd_file_url =isOnlyDownload?            0:arg_values[2]; // .hsynd
-    const char* outNewPath          =isOnlyDownload?            0:arg_values[3];
+    if ((hsyni_file_url!=0)&&(arg_values.size()==1)){
+        runAs=kRunAs_download;
+        printf("run as: download\n");
+        hsyni_file      =arg_values[0];
+    }else if (diff_to_diff_file!=0){
+        _options_check(arg_values.size()==3,"local diff input count");
+        runAs=kRunAs_local_diff;
+        printf("run as: local diff\n");
+        oldPath         =arg_values[0];
+        hsyni_file      =arg_values[1];
+        hsynd_file_url  =arg_values[2];
+    }else if (patch_by_diff_file!=0){
+        _options_check(arg_values.size()==3,"local diff input count");
+        runAs=kRunAs_local_patch;
+        printf("run as: local patch\n");
+        oldPath         =arg_values[0];
+        hsyni_file      =arg_values[1];
+        outNewPath      =arg_values[2];
+    }else if (arg_values.size()==2){
+        runAs=kRunAs_sync_infos;
+        printf("run as: show sync infos\n");
+        oldPath         =arg_values[0];
+        hsyni_file      =arg_values[1];
+    }else if (arg_values.size()==4){
+        runAs=kRunAs_sync_patch;
+        printf("run as: sync patch\n");
+        oldPath         =arg_values[0];
+        hsyni_file      =arg_values[1];
+        hsynd_file_url  =arg_values[2];
+        outNewPath      =arg_values[3];
+    }else{
+        _options_check(false,"input count");
+    }
     
     TSyncDownloadPlugin downloadPlugin; memset(&downloadPlugin,0,sizeof(downloadPlugin));
-    _return_check(getSyncDownloadPlugin(&downloadPlugin),kSyncClient_getSyncDownloadPluginError,
-                  "getSyncDownloadPlugin()%s","");
-#if (_IS_SYNC_PATCH_DEMO)
-#else
+    if (hsyni_file_url||hsynd_file_url)
+        _check(getSyncDownloadPlugin(&downloadPlugin),
+               kSyncClient_getSyncDownloadPluginError,"getSyncDownloadPlugin()");
     if (hsyni_file_url){
         if (!isForceOverwrite)
-            _return_check(_isPathNotExist(hsyni_file),kSyncClient_overwritehsyni_fileError,
-                          "%s already exists, overwrite",hsyni_file);
+            _check3(_isPathNotExist(hsyni_file),kSyncClient_overwritePathError,
+                    "file \"",hsyni_file,"\" already exists, overwrite");
         double dtime0=clock_s();
         printf(    "download .hsyni: \""); hpatch_printPath_utf8(hsyni_file);
         printf("\"\n       from URL: \""); hpatch_printPath_utf8(hsyni_file_url);
         printf("\"\n");
         int result=downloadNewSyncInfoFile(&downloadPlugin,hsyni_file_url,hsyni_file);
-        _return_check(result==kSyncClient_ok,result,"download from url:%s",hsyni_file_url);
+        _check3(result==kSyncClient_ok,result,"download from url: \"",hsyni_file_url,"\"");
         double dtime1=clock_s();
         printf(    "  download time: %.3f s\n\n",(dtime1-dtime0));
-        if (isOnlyDownload)
+        if (runAs==kRunAs_download)
             return result;
         //else continue sync patch
     }
-#endif
     double time0=clock_s();
     
-    const bool isSamePath=hpatch_getIsSamePath(oldPath,outNewPath)!=0;
-    hpatch_TPathType   outNewPathType;
-    _return_check(hpatch_getPathStat(outNewPath,&outNewPathType,0),
-                  kSyncClient_newPathTypeError,"get %s type",outNewPath);
-    if (!isForceOverwrite){
-        _return_check(outNewPathType==kPathType_notExist,
-                      kSyncClient_overwriteNewPathError,"%s already exists, overwrite",outNewPath);
-    }
+    const bool isSamePath=(outNewPath!=0)&&(hpatch_getIsSamePath(oldPath,outNewPath)!=0);
+    hpatch_TPathType   outNewPathType=kPathType_notExist;
+    if (outNewPath)
+        _check3(hpatch_getPathStat(outNewPath,&outNewPathType,0),
+                kSyncClient_pathTypeError,"get outNewPath \"",outNewPath,"\" type");
+    if (!isForceOverwrite)
+        _check3(outNewPathType==kPathType_notExist,kSyncClient_overwritePathError,
+                "outNewPath \"",outNewPath,"\" already exists, overwrite");
     if (isSamePath)
-        _return_check(isForceOverwrite,kSyncClient_overwriteNewPathError,
-                      "%s same path, overwrite","oldPath outNewPath");
-    if (threadNum>1)
-        printf("muti-thread parallel: opened, threadNum: %d\n",(int)threadNum);
-    else
-        printf("muti-thread parallel: closed\n");
+        _check3(isForceOverwrite,kSyncClient_overwritePathError,
+               "oldPath outNewPath same path \"",outNewPath,"\", overwrite");
     
     hpatch_TPathType oldPathType;
     if (0!=strcmp(oldPath,"")){ // isOldPathInputEmpty
-        _return_check(hpatch_getPathStat(oldPath,&oldPathType,0),
-                      kSyncClient_oldPathTypeError,"get oldPath %s type",oldPath);
-        _return_check((oldPathType!=kPathType_notExist),
-                      kSyncClient_oldPathTypeError,"oldPath %s not exist",oldPath);
+        _check3(hpatch_getPathStat(oldPath,&oldPathType,0),kSyncClient_pathTypeError,
+               "get oldPath \"",oldPath,"\" type");
+        _check3((oldPathType!=kPathType_notExist),kSyncClient_pathTypeError,
+                "oldPath \"",oldPath,"\" not exist");
     }else{ //same as empty file
         oldPathType=kPathType_file;
     }
     const bool oldIsDir=(oldPathType==kPathType_dir);
     
+    const char* localDiffFile=diff_to_diff_file?diff_to_diff_file:patch_by_diff_file;
+    if (localDiffFile){
+        hpatch_TPathType diffFileType;
+        _check3(hpatch_getPathStat(localDiffFile,&diffFileType,0),kSyncClient_pathTypeError,
+                      "get diffFile \"",localDiffFile,"\" type");
+        if (diff_to_diff_file&&(!isForceOverwrite))
+            _check3((diffFileType==kPathType_notExist),kSyncClient_overwritePathError,
+                   "diffFile \"",localDiffFile,"\" already exists, overwrite");
+        if (patch_by_diff_file)
+            _check3((diffFileType==kPathType_file),kSyncClient_pathTypeError,
+                    "diffFile \"",localDiffFile,"\" must exists file, type");
+    }
+    
     int result=kSyncClient_ok;
     hpatch_BOOL newIsDir=hpatch_FALSE;
     result=checkNewSyncInfoType_by_file(hsyni_file,&newIsDir);
-    _return_check(result==kSyncClient_ok,result,"check hsyni_file:%s ",hsyni_file);
-    if (!newIsDir)
-        _return_check(!hpatch_getIsDirName(outNewPath),
-                      kSyncClient_newPathTypeError,"outNewPath must fileName:%s ",outNewPath);
+    _check3(result==kSyncClient_ok,result,
+            "check hsyni_file \"",hsyni_file,"\" type");
+    if (outNewPath&&(!newIsDir))
+        _check3(!hpatch_getIsDirName(outNewPath),kSyncClient_pathTypeError,
+                "outNewPath \"",outNewPath,"\" must file, type");
     
     char _newTempName[hpatch_kPathMaxSize];
     if (isSamePath){
-        if (oldIsDir) _return_check(newIsDir,kSyncClient_overwriteNewPathError,
-                                    "can not use file overwrite oldDirectory%s", "");
-        if (!oldIsDir) _return_check(!newIsDir,kSyncClient_overwriteNewPathError,
-                                     "can not use directory overwrite oldFile%s", "");
-        _return_check(hpatch_getTempPathName(outNewPath,_newTempName,_newTempName+sizeof(_newTempName)),
-                      kSyncClient_tempFileError,"getTempPathName(\"%s\")",outNewPath);
+        if (oldIsDir) _check(newIsDir,kSyncClient_overwritePathError,
+                             "can not use file overwrite oldDirectory");
+        if (!oldIsDir) _check(!newIsDir,kSyncClient_overwritePathError,
+                              "can not use directory overwrite oldFile");
+        _check3(hpatch_getTempPathName(outNewPath,_newTempName,_newTempName+sizeof(_newTempName)),
+                kSyncClient_tempFileError,"getTempPathName(\"",outNewPath,"\")");
         printf("NOTE: temp outNewPath will be move to oldPath after sync_patch!\n");
         outNewPath=_newTempName;
     }
 #if (_IS_NEED_DIR_DIFF_PATCH)
     if (newIsDir)
         result=sync_patch_2dir(outNewPath,oldPath,isSamePath,oldIsDir,
-                               ignoreOldPathList,hsyni_file,hsynd_file_url,
+                               ignoreOldPathList,hsyni_file,hsynd_file_url,localDiffFile,
                                &downloadPlugin,kMaxOpenFileNumber,threadNum);
     else
 #endif
         result=sync_patch_2file(outNewPath,oldPath,isSamePath,oldIsDir,
-                                ignoreOldPathList,hsyni_file,hsynd_file_url,
+                                ignoreOldPathList,hsyni_file,hsynd_file_url,localDiffFile,
                                 &downloadPlugin,kMaxOpenFileNumber,threadNum);
     double time1=clock_s();
     printf("\nsync_patch_%s2%s time: %.3f s\n\n",oldIsDir?"dir":"file",newIsDir?"dir":"file",(time1-time0));
@@ -515,7 +571,7 @@ bool getManifest(TManifest& out_manifest,const char* _rootPath,bool rootPathIsDi
 
 int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
-                     const char* hsyni_file,const char* hsynd_file_url,
+                     const char* hsyni_file,const char* hsynd_file_url,const char* localDiffFile,
                      const TSyncDownloadPlugin* downloadPlugin,
                      size_t kMaxOpenFileNumber,size_t threadNum){
 #if (_IS_NEED_DIR_DIFF_PATCH)
@@ -525,22 +581,23 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
 #if (_IS_NEED_DIR_DIFF_PATCH)
     TManifest oldManifest;
     if (oldIsDir){
-        _return_check(getManifest(oldManifest,oldPath,oldIsDir,ignoreOldPathList),
-                      kSyncClient_oldDirFilesError,"open oldPath: %s",oldPath);
+        _check3(getManifest(oldManifest,oldPath,oldIsDir,ignoreOldPathList),
+                kSyncClient_oldDirOpenError,"open oldPath \"",oldPath,"\"");
         _oldPath=oldManifest.rootPath.c_str();
     }
 #endif
     printf(    "info .hsyni: \""); hpatch_printPath_utf8(hsyni_file);
-    printf("\"\nurl  .hsynd: \""); hpatch_printPath_utf8(hsynd_file_url);
-    printf("\"\nout   file : \""); hpatch_printPath_utf8(outNewFile);
+    if (hsynd_file_url) { printf("\"\nsync  url  : \""); hpatch_printPath_utf8(hsynd_file_url); }
+    if (outNewFile)     { printf("\"\nout   file : \""); hpatch_printPath_utf8(outNewFile); }
     printf("\"\n");
 
     ISyncPatchListener listener; memset(&listener,0,sizeof(listener));
     listener.findChecksumPlugin=_findChecksumPlugin;
     listener.findDecompressPlugin=_findDecompressPlugin;
     listener.needSyncInfo=_needSyncInfo;
-    _return_check(downloadPlugin->download_part_open(&listener.readSyncDataListener,hsynd_file_url),
-                  kSyncClient_openSyncDataError,"open hsynd_file: %s",hsynd_file_url);
+    if (hsynd_file_url)
+        _check3(downloadPlugin->download_part_open(&listener.readSyncDataListener,hsynd_file_url),
+                kSyncClient_syncDataDownloadError,"download open sync file \"",hsynd_file_url,"\"");
     int result=kSyncClient_ok;
 #if (_IS_NEED_DIR_DIFF_PATCH)
     if (oldIsDir){
@@ -557,10 +614,10 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
         // 2. if patch ok    then  { delelte oldPath; rename newTempName to oldPath; }
         //    if patch error then  { delelte newTempName; }
         if (result==kSyncClient_ok){
-            _return_check(hpatch_removeFile(oldPath),kSyncClient_deleteFileError,
-                          "remove oldFile \"%s\"",oldPath);
-            _return_check(hpatch_renamePath(outNewFile,oldPath),kSyncClient_renameFileError,
-                          "rename \"%s\" to oldFile",outNewFile);
+            _check3(hpatch_removeFile(oldPath),kSyncClient_deleteFileError,
+                    "remove oldFile \"",oldPath,"\"");
+            _check3(hpatch_renamePath(outNewFile,oldPath),kSyncClient_renameFileError,
+                    "rename \"",outNewFile,"\" to oldFile");
             printf("outNewPath temp file renamed to oldPath name!\n");
         }else{ //fail
             if (!hpatch_removeFile(outNewFile)){
@@ -569,9 +626,10 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
             }
         }
     }
-    _return_check(downloadPlugin->download_part_close(&listener.readSyncDataListener),
-                  (result!=kSyncClient_ok)?result:kSyncClient_closeSyncDataError,
-                  "close hsynd_file: %s",hsynd_file_url);
+    if (hsynd_file_url)
+        _check3(downloadPlugin->download_part_close(&listener.readSyncDataListener),
+                (result!=kSyncClient_ok)?result:kSyncClient_syncDataCloseError,
+                "close hsynd_file \"",hsynd_file_url,"\"");
     return result;
 }
 
@@ -654,21 +712,22 @@ static hpatch_BOOL _dirSyncPatchFinish(IDirSyncPatchListener* listener,hpatch_BO
 
 int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
-                     const char* hsyni_file,const char* hsynd_file_url,
+                     const char* hsyni_file,const char* hsynd_file_url,const char* localDiffFile,
                      const TSyncDownloadPlugin* downloadPlugin,
                      size_t kMaxOpenFileNumber,size_t threadNum){
-    std::string _outNewDir(outNewDir); assignDirTag(_outNewDir); outNewDir=_outNewDir.c_str();
+    std::string _outNewDir(outNewDir?outNewDir:"");
+    if (outNewDir) { assignDirTag(_outNewDir); outNewDir=outNewDir?_outNewDir.c_str():0; }
     std::string _oldPath(oldPath); if (oldIsDir) assignDirTag(_oldPath); oldPath=_oldPath.c_str();
     printf(  "\nin old %s: \"",oldIsDir?"dir ":"file"); hpatch_printPath_utf8(oldPath); printf("\"\n");
     TManifest oldManifest;
-    if (oldIsDir){
-        _return_check(getManifest(oldManifest,oldPath,oldIsDir,ignoreOldPathList),
-                      kSyncClient_oldDirFilesError,"open oldPath: %s",oldPath);
+    {
+        _check3(getManifest(oldManifest,oldPath,oldIsDir,ignoreOldPathList),
+                kSyncClient_oldDirOpenError,"open oldPath \"",oldPath,"\"");
         _oldPath=oldManifest.rootPath.c_str();
     }
     printf(    "info .hsyni: \""); hpatch_printPath_utf8(hsyni_file);
-    printf("\"\nurl  .hsynd: \""); hpatch_printPath_utf8(hsynd_file_url);
-    printf("\"\nout   dir  : \""); hpatch_printPath_utf8(outNewDir);
+    if (hsynd_file_url) { printf("\"\nsync  url  : \""); hpatch_printPath_utf8(hsynd_file_url); }
+    if (outNewDir)      { printf("\"\nout   dir  : \""); hpatch_printPath_utf8(outNewDir); }
     printf("\"\n");
     
     IDirPatchListener     defaultPatchDirlistener={0,_makeNewDir,_copySameFile,_openNewFile,_closeNewFile};
@@ -679,43 +738,42 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
     
     listener.patchImport=&listener;
     listener.isPatchToNewTempDir=isSamePath;
-    listener.newDirRoot=&_outNewDir;
+    listener.newDirRoot=outNewDir?&_outNewDir:0;
     listener.oldManifest=&oldManifest;
     listener.patchBegin=0;
     listener.patchFinish=_dirSyncPatchFinish;
     
-    _return_check(downloadPlugin->download_part_open(&listener.readSyncDataListener,hsynd_file_url),
-                  kSyncClient_openSyncDataError,"open hsynd_file: %s",hsynd_file_url);
+    if (hsynd_file_url)
+        _check3(downloadPlugin->download_part_open(&listener.readSyncDataListener,hsynd_file_url),
+                kSyncClient_syncDataDownloadError,"download open sync file \"",hsynd_file_url,"\"");
     int result=sync_patch_fileOrDir2dir(&defaultPatchDirlistener,&listener, outNewDir,oldManifest,
                                         hsyni_file, kMaxOpenFileNumber,(int)threadNum);
-    _return_check(downloadPlugin->download_part_close(&listener.readSyncDataListener),
-                  (result!=kSyncClient_ok)?result:kSyncClient_closeSyncDataError,
-                  "close hsynd_file: %s",hsynd_file_url);
+    if (hsynd_file_url)
+        _check3(downloadPlugin->download_part_close(&listener.readSyncDataListener),
+                (result!=kSyncClient_ok)?result:kSyncClient_syncDataCloseError,
+                "close hsynd_file \"",hsynd_file_url,"\"");
     return result;
 }
 #endif
 
-           
-#if (_IS_SYNC_PATCH_DEMO)
-#else
+
 static int downloadNewSyncInfoFile(const TSyncDownloadPlugin* downloadPlugin,
                                    const char* hsyni_file_url,const char* out_hsyni_file){
     int result=kSyncClient_ok;
     hpatch_TFileStreamOutput out_stream;
     hpatch_TFileStreamOutput_init(&out_stream);
     if (!hpatch_TFileStreamOutput_open(&out_stream,out_hsyni_file,(hpatch_StreamPos_t)(-1)))
-        return kSyncClient_hsyni_fileCreateError;
+        return kSyncClient_newSyncInfoCreateError;
     hpatch_TFileStreamOutput_setRandomOut(&out_stream,hpatch_TRUE);
     //todo: hpatch_TFileStreamOutput_reopen & set continueDownloadPos=out_stream.out_length
     hpatch_StreamPos_t continueDownloadPos=0;
     if (downloadPlugin->download_file(hsyni_file_url,&out_stream.base,continueDownloadPos))
         out_stream.base.streamSize=out_stream.out_length;
     else
-        result=kSyncClient_hsyni_fileDownloadError;
+        result=kSyncClient_newSyncInfoDownloadError;
     if (!hpatch_TFileStreamOutput_close(&out_stream)){
         if (result==kSyncClient_ok)
-            result=kSyncClient_hsyni_fileCloseError;
+            result=kSyncClient_newSyncInfoCloseError;
     }
     return result;
 }
-#endif
