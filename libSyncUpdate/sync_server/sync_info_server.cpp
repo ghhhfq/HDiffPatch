@@ -190,7 +190,7 @@ void TNewDataSyncInfo_saveTo(TNewDataSyncInfo* self,const hpatch_TStreamOutput* 
                                     + privateExternDataSize + externDataSize + buf.size();
             self->newSyncInfoSize +=(rollHashSize(self)+kPartStrongChecksumByteSize)
                                     *(TNewDataSyncInfo_blockCount(self)-self->samePairCount);
-            self->newSyncInfoSize += kPartStrongChecksumByteSize;
+            self->newSyncInfoSize += self->kStrongChecksumByteSize;
         }
         pushUInt(head,self->newSyncInfoSize);
         //end head info
@@ -211,10 +211,11 @@ void TNewDataSyncInfo_saveTo(TNewDataSyncInfo* self,const hpatch_TStreamOutput* 
     savePartStrongChecksums(out_stream,outPos,(uint32_t)kBlockCount,self->partChecksums,
                             self->samePairList,self->samePairCount,checksumInfo);
     
-    {// out infoPartChecksum
+    {// out infoFullChecksum
         checksumInfo.appendEnd();
-        toSyncPartChecksum(self->infoPartChecksum,checksumInfo.checksum.data(),checksumInfo.checksum.size());
-        writeStream(out_stream,outPos,self->infoPartChecksum,kPartStrongChecksumByteSize);
+        assert(checksumInfo.checksum.size()==self->kStrongChecksumByteSize);
+        memcpy(self->infoFullChecksum,checksumInfo.checksum.data(),checksumInfo.checksum.size());
+        writeStream(out_stream,outPos,self->infoFullChecksum,checksumInfo.checksum.size());
         assert(outPos==self->newSyncInfoSize);
     }
 }
@@ -239,12 +240,12 @@ CNewDataSyncInfo::CNewDataSyncInfo(hpatch_TChecksum* strongChecksumPlugin,const 
                                             +sizeof(TSameNewBlockPair)+kPartStrongChecksumByteSize
                                             +(this->is32Bit_rollHash?sizeof(uint32_t):sizeof(uint64_t))
                                             +(compressPlugin?sizeof(uint32_t):0));
-    memSize+=kPartStrongChecksumByteSize;
+    memSize+=this->kStrongChecksumByteSize;
     checkv(memSize==(size_t)memSize);
     _mem.realloc((size_t)memSize);
     TByte* curMem=_mem.data();
     
-    this->infoPartChecksum=curMem; curMem+=kPartStrongChecksumByteSize;
+    this->infoFullChecksum=curMem; curMem+=this->kStrongChecksumByteSize;
     this->partChecksums=curMem; curMem+=kBlockCount*kPartStrongChecksumByteSize;
     this->samePairCount=0;
     this->samePairList=(TSameNewBlockPair*)curMem; curMem+=kBlockCount*sizeof(TSameNewBlockPair);

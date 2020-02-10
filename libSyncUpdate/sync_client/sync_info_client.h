@@ -68,7 +68,7 @@ typedef enum TSyncClient_resultType{
     kSyncClient_diffFileCloseError,
     kSyncClient_diffFileOpenError,
     
-//_IS_NEED_DIR_DIFF_PATCH
+    //_IS_NEED_DIR_DIFF_PATCH
     kSyncClient_oldDirOpenError=50,
     kSyncClient_oldDirFilesOpenError,
     kSyncClient_oldDirFilesCloseError,

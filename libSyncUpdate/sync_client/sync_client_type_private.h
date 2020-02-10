@@ -86,6 +86,29 @@ void toSyncPartChecksum(unsigned char* out_partChecksum,
     memcpy(out_partChecksum,&v,kPartStrongChecksumByteSize);
 }
 
+static hpatch_inline
+uint32_t checkChecksumByteSize(uint32_t kStrongChecksumByteSize){
+    return kStrongChecksumByteSize*2; }
+static hpatch_inline
+uint32_t _readUInt32(const unsigned char* src){ return src[0] | (src[1]<<8) | (src[2]<<16)| (src[3]<<24); }
+static hpatch_inline
+void _writeUInt32(unsigned char* dst,uint32_t v){
+        dst[0]=(unsigned char)v;       dst[1]=(unsigned char)(v>>8);
+        dst[2]=(unsigned char)(v>>16); dst[3]=(unsigned char)(v>>24); }
+static hpatch_inline
+void checkChecksumAppendData(unsigned char* newDataCheckChecksum,uint32_t blockIndex,
+                             const unsigned char* strongChecksum,uint32_t kStrongChecksumByteSize){
+    const unsigned char* src=strongChecksum;
+    const unsigned char* srcEnd=strongChecksum+kStrongChecksumByteSize;
+    unsigned char* d_sum=newDataCheckChecksum;
+    unsigned char* d_xor=newDataCheckChecksum+kStrongChecksumByteSize;
+    for (;src<srcEnd;src+=sizeof(uint32_t),d_sum+=sizeof(uint32_t),d_xor+=sizeof(uint32_t),blockIndex>>=2){
+        uint32_t src_v = _readUInt32(src);
+        _writeUInt32(d_sum,_readUInt32(d_sum) + (src_v^blockIndex));
+        _writeUInt32(d_xor,_readUInt32(d_xor) ^ (src_v+blockIndex));
+    }
+}
+
 hpatch_inline static unsigned int upper_ilog2(long double v){
     unsigned int bit=0;
     long double p=1;
