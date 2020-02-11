@@ -58,7 +58,8 @@ typedef struct TNewDataSyncInfo{
     hpatch_StreamPos_t      newDataSize;      // newData version size;
     hpatch_StreamPos_t      newSyncDataSize;  // .hsynd size ,saved newData or complessed newData
     hpatch_StreamPos_t      newSyncInfoSize;  // .hsyni size ,saved newData's info
-    unsigned char*          infoPartChecksum; // this info data's strongChecksum
+    unsigned char*          newDataCheckChecksum; // out new data's strongChecksum's checksum
+    unsigned char*          infoFullChecksum; // this info data's strongChecksum
     TSameNewBlockPair*      samePairList;
     uint32_t*               savedSizes;
     void*                   rollHashs;

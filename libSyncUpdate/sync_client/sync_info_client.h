@@ -62,13 +62,14 @@ typedef enum TSyncClient_resultType{
     kSyncClient_strongChecksumByteSizeError,
     kSyncClient_strongChecksumOpenError,
     kSyncClient_checksumSyncDataError,
+    kSyncClient_newDataCheckChecksumError,
     kSyncClient_noDecompressPluginError,
     kSyncClient_decompressError,
     kSyncClient_diffFileCreateError,
     kSyncClient_diffFileCloseError,
     kSyncClient_diffFileOpenError,
     
-//_IS_NEED_DIR_DIFF_PATCH
+    //_IS_NEED_DIR_DIFF_PATCH
     kSyncClient_oldDirOpenError=50,
     kSyncClient_oldDirFilesOpenError,
     kSyncClient_oldDirFilesCloseError,
