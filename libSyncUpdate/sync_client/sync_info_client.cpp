@@ -335,6 +335,7 @@ static int _TNewDataSyncInfo_open(TNewDataSyncInfo* self,const hpatch_TStreamInp
         check(_clip_unpackUIntTo(&compressDataSize,&clip),kSyncClient_newSyncInfoDataError);
         check((compressDataSize==0)||(compressDataSize<uncompressDataSize),kSyncClient_newSyncInfoDataError);
         if (compressDataSize>0) check(decompressPlugin!=0, kSyncClient_newSyncInfoDataError);
+        
 #if (_IS_NEED_DIR_DIFF_PATCH)
         if (self->isDirSyncInfo){
             check(_clip_unpackToSize_t(&dir_newPathSumCharSize,&clip),kSyncClient_newSyncInfoDataError);
@@ -349,12 +350,13 @@ static int _TNewDataSyncInfo_open(TNewDataSyncInfo* self,const hpatch_TStreamInp
     }
     {//mem
         TByte* curMem=0;
-        hpatch_StreamPos_t memSize=strlen(compressType)+1+strlen(checksumType)+1
-                                   +self->kStrongChecksumByteSize + externDataSize;
+        hpatch_StreamPos_t memSize=strlen(compressType)+1+strlen(checksumType)+1 + externDataSize
+                        +self->kStrongChecksumByteSize+checkChecksumBufByteSize(self->kStrongChecksumByteSize);
         memSize+=(rollHashSize(self)+kPartStrongChecksumByteSize)*(hpatch_StreamPos_t)kBlockCount;
         memSize+=self->samePairCount*sizeof(TSameNewBlockPair);
         if (decompressPlugin)
             memSize+=sizeof(uint32_t)*(hpatch_StreamPos_t)kBlockCount;
+
 #if (_IS_NEED_DIR_DIFF_PATCH)
         if (self->isDirSyncInfo){
             self->dir_newNameList_isCString=hpatch_TRUE;
@@ -373,6 +375,8 @@ static int _TNewDataSyncInfo_open(TNewDataSyncInfo* self,const hpatch_TStreamInp
         curMem+=kPartStrongChecksumByteSize*(size_t)kBlockCount;
         self->infoFullChecksum=curMem;
         curMem+=self->kStrongChecksumByteSize;
+        self->newDataCheckChecksum=curMem;
+        curMem+=checkChecksumBufByteSize(self->kStrongChecksumByteSize);
 #if (_IS_NEED_DIR_DIFF_PATCH)
         if (self->isDirSyncInfo){
             self->dir_newSizeList=(hpatch_StreamPos_t*)curMem;
@@ -418,6 +422,10 @@ static int _TNewDataSyncInfo_open(TNewDataSyncInfo* self,const hpatch_TStreamInp
                                temp_cache,kFileIOBufBetterSize);
         check(_TStreamCacheClip_skipData(&clip,headEndPos), //checksum head data[0--headEndPos)
               kSyncClient_newSyncInfoDataError);
+    }
+    {//load saved newDataCheckChecksum
+        check(_TStreamCacheClip_readDataTo(&clip,self->newDataCheckChecksum,self->newDataCheckChecksum
+                                           +self->kStrongChecksumByteSize),kSyncClient_newSyncInfoDataError);
     }
     if (privateExternDataSize>0){
         check(_TStreamCacheClip_skipData(&clip,privateExternDataSize), //reserved ,now unknow

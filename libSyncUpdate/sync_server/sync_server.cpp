@@ -86,8 +86,6 @@ static void mt_create_sync_data(_TCreateDatas& cd,void* _mt=0,int threadIndex=0)
         checksumBlockData.appendBegin();
         checksumBlockData.append(buf.data(),buf.data()+kMatchBlockSize);
         checksumBlockData.appendEnd();
-        toSyncPartChecksum(checksumBlockData.checksum.data(),
-                           checksumBlockData.checksum.data(),checksumByteSize);
         //compress
         size_t compressedSize=0;
         if (compressPlugin){
@@ -108,6 +106,11 @@ static void mt_create_sync_data(_TCreateDatas& cd,void* _mt=0,int threadIndex=0)
                 ((uint32_t*)out_newSyncInfo->rollHashs)[i]=(uint32_t)rollHash;
             else
                 ((uint64_t*)out_newSyncInfo->rollHashs)[i]=rollHash;
+            
+            checkChecksumAppendData(cd.out_newSyncInfo->newDataCheckChecksum,i,
+                                    checksumBlockData.checksum.data(),checksumByteSize);
+            toSyncPartChecksum(checksumBlockData.checksum.data(),
+                               checksumBlockData.checksum.data(),checksumByteSize);
             memcpy(out_newSyncInfo->partChecksums+i*(size_t)kPartStrongChecksumByteSize,
                    checksumBlockData.checksum.data(),kPartStrongChecksumByteSize);
             if (compressPlugin){
@@ -161,6 +164,9 @@ void _private_create_sync_data(TNewDataSyncInfo*           newSyncInfo,
     checkv(kMatchBlockSize>=kMatchBlockSize_min);
     if (createDatas.compressPlugin) checkv(createDatas.out_newSyncData!=0);
     
+    checkChecksumInit(createDatas.out_newSyncInfo->newDataCheckChecksum,
+                      createDatas.out_newSyncInfo->kStrongChecksumByteSize);
+    
 #if (_IS_USED_MULTITHREAD)
     if (threadNum>1){
         const uint32_t kBlockCount=(uint32_t)getSyncBlockCount(createDatas.out_newSyncInfo->newDataSize,
@@ -175,6 +181,8 @@ void _private_create_sync_data(TNewDataSyncInfo*           newSyncInfo,
     {
         mt_create_sync_data(createDatas);
     }
+    checkChecksumEnd(createDatas.out_newSyncInfo->newDataCheckChecksum,
+                      createDatas.out_newSyncInfo->kStrongChecksumByteSize);
     matchNewDataInNew(createDatas.out_newSyncInfo);
     //save to out_newSyncInfo_stream
     TNewDataSyncInfo_saveTo(newSyncInfo,out_newSyncInfo,compressPlugin);
