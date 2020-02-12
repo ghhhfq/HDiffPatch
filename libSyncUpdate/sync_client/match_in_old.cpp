@@ -33,6 +33,7 @@
 #include "../../libHDiffPatch/HDiff/private_diff/mem_buf.h"
 #include "../../libHDiffPatch/HDiff/private_diff/limit_mem_diff/bloom_filter.h"
 #include "mt_by_queue.h"
+#include "sync_diff_data.h"
 using namespace hdiff_private;
 namespace sync_private{
 
@@ -261,7 +262,6 @@ static void _rollMatch(_TMatchDatas& rd,hpatch_StreamPos_t oldRollBegin,
             matchRange(rd.out_newBlockDataInOldPoss,range.first,range.second,oldData,
                        rd.newSyncInfo->partChecksums,rd.newSyncInfo->newDataCheckChecksum,_mt);
         }
-            
     }
 }
 
@@ -343,6 +343,7 @@ static void tm_matchNewDataInOld(_TMatchDatas& matchDatas,int threadNum){
     }
 }
 
+    
 void matchNewDataInOld(hpatch_StreamPos_t* out_newBlockDataInOldPoss,const TNewDataSyncInfo* newSyncInfo,
                        const hpatch_TStreamInput* oldStream,hpatch_TChecksum* strongChecksumPlugin,int threadNum){
     uint32_t kBlockCount=(uint32_t)TNewDataSyncInfo_blockCount(newSyncInfo);

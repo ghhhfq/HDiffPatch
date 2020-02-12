@@ -31,6 +31,7 @@
 #include "sync_client_type.h"
 namespace sync_private{
 
+struct TSyncDiffLocalPoss;
 static const hpatch_StreamPos_t kBlockType_needSync =~(hpatch_StreamPos_t)0; //download, default
 
 //matchNewDataInOld()
@@ -38,9 +39,8 @@ static const hpatch_StreamPos_t kBlockType_needSync =~(hpatch_StreamPos_t)0; //d
 //result value in out_newBlockDataInOldPoss:
 // value==kBlockType_needSync : this block need download from server;
 // 0<=value<oldDataSize : this block read from oldStream,starting at value in oldStream;
-void matchNewDataInOld(hpatch_StreamPos_t* out_newBlockDataInOldPoss,
-                       const TNewDataSyncInfo* newSyncInfo,const hpatch_TStreamInput* oldStream,
-                       hpatch_TChecksum* strongChecksumPlugin,int threadNum=1);
+void matchNewDataInOld(hpatch_StreamPos_t* out_newBlockDataInOldPoss,const TNewDataSyncInfo* newSyncInfo,
+                       const hpatch_TStreamInput* oldStream,hpatch_TChecksum* strongChecksumPlugin,int threadNum=1);
 
 } //namespace sync_private
 #endif // match_in_old_h

@@ -36,46 +36,47 @@ typedef enum TSyncClient_resultType{
     kSyncClient_memError,
     kSyncClient_tempFileError,
     kSyncClient_pathTypeError,
-    kSyncClient_overwritePathError,
+    kSyncClient_overwritePathError, // 5
     kSyncClient_deleteFileError,
     kSyncClient_renameFileError,
     kSyncClient_getSyncDownloadPluginError,
     kSyncClient_newSyncInfoCreateError,
-    kSyncClient_newSyncInfoCloseError,
+    kSyncClient_newSyncInfoCloseError, // 10
     kSyncClient_newSyncInfoDownloadError,
     kSyncClient_newSyncInfoOpenError,
     kSyncClient_newSyncInfoDataError,
     kSyncClient_newSyncInfoChecksumError,
-    kSyncClient_newSyncInfoTypeError,
+    kSyncClient_newSyncInfoTypeError, // 15
     kSyncClient_oldFileOpenError,
     kSyncClient_oldFileCloseError,
     kSyncClient_readOldDataError,
     kSyncClient_newFileCreateError,
-    kSyncClient_newFileCloseError,
+    kSyncClient_newFileCloseError, // 20
     kSyncClient_writeNewDataError,
     kSyncClient_matchNewDataInOldError,
     kSyncClient_syncDataDownloadError,
     kSyncClient_syncDataCloseError,
-    kSyncClient_readSyncDataBeginError,
+    kSyncClient_readSyncDataBeginError, // 25
     kSyncClient_readSyncDataError,
     kSyncClient_noStrongChecksumPluginError,
     kSyncClient_strongChecksumByteSizeError,
     kSyncClient_strongChecksumOpenError,
-    kSyncClient_checksumSyncDataError,
+    kSyncClient_checksumSyncDataError, // 30
     kSyncClient_newDataCheckChecksumError,
     kSyncClient_noDecompressPluginError,
     kSyncClient_decompressError,
     kSyncClient_diffFileCreateError,
-    kSyncClient_diffFileCloseError,
+    kSyncClient_diffFileCloseError, // 35
     kSyncClient_diffFileOpenError,
     kSyncClient_saveDiffError,
+    kSyncClient_loadDiffError,
     
     //_IS_NEED_DIR_DIFF_PATCH
-    kSyncClient_oldDirOpenError=50,
+    kSyncClient_oldDirOpenError=51,
     kSyncClient_oldDirFilesOpenError,
     kSyncClient_oldDirFilesCloseError,
     kSyncClient_newDirOpenError,
-    kSyncClient_newDirCloseError,
+    kSyncClient_newDirCloseError, // 55
     kSyncClient_newDirPatchBeginError,
     kSyncClient_newDirPatchFinishError,
 } TNewDataSyncInfo_resultType;

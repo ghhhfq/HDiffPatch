@@ -35,12 +35,6 @@ namespace sync_private{
                     const hpatch_TStreamInput* oldStream,const TNewDataSyncInfo* newSyncInfo,
                     const hpatch_TStreamOutput* out_newStream,const hpatch_TStreamOutput* out_diffStream,
                     int threadNum);
-    struct TSyncDiffData:public IReadSyncDataListener{
-        const hpatch_TStreamInput*  in_diffStream;
-        hpatch_StreamPos_t          readedPos;
-        hpatch_StreamPos_t          inNewPosEnd; //for check
-    };
-    void _initSyncDiffData(TSyncDiffData* diffData,const hpatch_TStreamInput* in_diffStream);
 }
 
 

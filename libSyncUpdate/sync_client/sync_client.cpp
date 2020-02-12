@@ -30,6 +30,7 @@
 #include "../../file_for_patch.h"
 #include "match_in_old.h"
 #include "mt_by_queue.h"
+#include "sync_diff_data.h"
 #include <stdexcept>
 namespace sync_private{
 
@@ -49,6 +50,20 @@ struct _TWriteDatas {
     hpatch_TChecksum*           strongChecksumPlugin;
     IReadSyncDataListener*      syncDataListener;
 };
+    
+#define _checkSumNewDataBuf() { \
+    if (newDataSize<kMatchBlockSize)/*for backZeroLen*/ \
+        memset(dataBuf+newDataSize,0,kMatchBlockSize-newDataSize);  \
+    strongChecksumPlugin->begin(checksumSync);  \
+    strongChecksumPlugin->append(checksumSync,dataBuf,dataBuf+kMatchBlockSize); \
+    strongChecksumPlugin->end(checksumSync,checksumSync_buf+kPartStrongChecksumByteSize,    \
+                              checksumSync_buf+kPartStrongChecksumByteSize+newSyncInfo->kStrongChecksumByteSize);\
+    toSyncPartChecksum(checksumSync_buf,checksumSync_buf+kPartStrongChecksumByteSize,   \
+                       newSyncInfo->kStrongChecksumByteSize);   \
+    check(0==memcmp(checksumSync_buf,   \
+                    newSyncInfo->partChecksums+i*(size_t)kPartStrongChecksumByteSize,   \
+                    kPartStrongChecksumByteSize),kSyncClient_checksumSyncDataError);    \
+}
 
 static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
     const TNewDataSyncInfo* newSyncInfo=wd.newSyncInfo;
@@ -105,24 +120,9 @@ static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
                     outDiffDataPos+=syncSize;
                 }
             }
-            if (wd.out_newStream){
-                if (syncSize<newDataSize){// need deccompress?
-                    check(hpatch_deccompress_mem(wd.decompressPlugin,buf,buf+syncSize,
-                                                 dataBuf,dataBuf+newDataSize),kSyncClient_decompressError);
-                }
-                { //checksum
-                    if (newDataSize<kMatchBlockSize)//for backZeroLen
-                        memset(dataBuf+newDataSize,0,kMatchBlockSize-newDataSize);
-                    strongChecksumPlugin->begin(checksumSync);
-                    strongChecksumPlugin->append(checksumSync,dataBuf,dataBuf+kMatchBlockSize);
-                    strongChecksumPlugin->end(checksumSync,checksumSync_buf+kPartStrongChecksumByteSize,
-                            checksumSync_buf+kPartStrongChecksumByteSize+newSyncInfo->kStrongChecksumByteSize);
-                    toSyncPartChecksum(checksumSync_buf,checksumSync_buf+kPartStrongChecksumByteSize,
-                                       newSyncInfo->kStrongChecksumByteSize);
-                    check(0==memcmp(checksumSync_buf,
-                                    newSyncInfo->partChecksums+i*(size_t)kPartStrongChecksumByteSize,
-                                    kPartStrongChecksumByteSize),kSyncClient_checksumSyncDataError);
-                }
+            if (wd.out_newStream&&(syncSize<newDataSize)){// need deccompress?
+                check(hpatch_deccompress_mem(wd.decompressPlugin,buf,buf+syncSize,
+                                             dataBuf,dataBuf+newDataSize),kSyncClient_decompressError);
             }
         }else{//copy from old
             assert(curSyncPos<oldDataSize);
@@ -135,11 +135,13 @@ static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
             }
         }
         if (wd.out_newStream){//write
+            if (isNeedSync||(wd.syncDataListener->localPatch_openOldPoss))
+                _checkSumNewDataBuf();
 #if (_IS_USED_MULTITHREAD)
             TMt_by_queue::TAutoQueueLocker _autoLocker(mt?&mt->outputQueue:0,threadIndex,i);
             check(_autoLocker.isWaitOk,kSyncClient_writeNewDataError);
 #endif
-            if (isNeedSync)
+            if (isNeedSync||(wd.syncDataListener->localPatch_openOldPoss))
                 checkChecksumAppendData(newSyncInfo->newDataCheckChecksum, i,
                                         checksumSync_buf+kPartStrongChecksumByteSize,
                                         newSyncInfo->kStrongChecksumByteSize);
@@ -231,58 +233,22 @@ static void getNeedSyncInfo(const hpatch_StreamPos_t* newBlockDataInOldPoss,
     }
 }
 
-#define _pushV(vec,uv,stag) \
-    do{ TByte _buf[hpatch_kMaxPackedUIntBytes]; \
-        TByte* cur=_buf; \
-        if (!hpatch_packUIntWithTag(&cur,_buf+sizeof(_buf),uv,stag,1)) \
-            throw std::runtime_error("_packMatchedPoss() _pushV()"); \
-        vec.insert(vec.end(),_buf,cur); \
-    }while(0)
-static void _packMatchedPoss(const hpatch_StreamPos_t* newBlockDataInOldPoss,uint32_t kBlockCount,
-                             std::vector<TByte>& out_possBuf){
-    const size_t kMaxRle=127;
-    hpatch_StreamPos_t backv=0;
-    uint32_t back_i=kBlockCount;
-    for (uint32_t i=0; i<kBlockCount; ++i) {
-        hpatch_StreamPos_t v=newBlockDataInOldPoss[i];
-        if (v!=kBlockType_needSync){
-            if (v>=backv)
-                _pushV(out_possBuf,(hpatch_StreamPos_t)(v-backv),1);
+    static bool _loadOldPoss(hpatch_StreamPos_t* out_newBlockDataInOldPoss,uint32_t kBlockCount,
+                             IReadSyncDataListener* syncDataListener,hpatch_StreamPos_t oldDataSize){
+        TSyncDiffLocalPoss localPoss; memset(&localPoss,0,sizeof(localPoss));
+        syncDataListener->localPatch_openOldPoss(syncDataListener,&localPoss);
+        if (localPoss.kBlockCount!=kBlockCount) return false;
+        for (uint32_t i=0;i<kBlockCount; ++i){
+            hpatch_StreamPos_t pos;
+            if (!_syncDiffLocalPoss_nextOldPos(&localPoss,&pos)) return false;
+            if ((pos==kBlockType_needSync)|(pos<oldDataSize))
+                out_newBlockDataInOldPoss[i]=pos;
             else
-                _pushV(out_possBuf,(hpatch_StreamPos_t)(backv-v)+kMaxRle,0);
-            backv=v;
-        }else{
-            if ((back_i+1==i)&&(out_possBuf.back()<kMaxRle))
-                ++out_possBuf.back();  //mean needSync count-1
-            else
-                _pushV(out_possBuf,0,0);
-            back_i=i;
+                return false;
         }
+        return _syncDiffLocalPoss_isFinish(&localPoss);
     }
-}
-
-static bool saveDiffData(const hpatch_StreamPos_t* newBlockDataInOldPoss,uint32_t kBlockCount,
-                         const hpatch_TStreamOutput* out_diffStream,hpatch_StreamPos_t* outDiffDataPos){
-    const char* kSyncDiffType="HSyncDiff20";
-    try {
-        std::vector<TByte> possBuf;
-        _packMatchedPoss(newBlockDataInOldPoss,kBlockCount,possBuf);
-        
-        std::vector<TByte> headBuf;
-        headBuf.insert(headBuf.end(),kSyncDiffType,kSyncDiffType+strlen(kSyncDiffType)+1); //with '\0'
-        _pushV(headBuf,kBlockCount,0);
-        _pushV(headBuf,possBuf.size(),0);
-        if (!out_diffStream->write(out_diffStream,0,headBuf.data(),
-                                   headBuf.data()+headBuf.size())) return false;
-        if (!out_diffStream->write(out_diffStream,headBuf.size(),possBuf.data(),
-                                   possBuf.data()+possBuf.size())) return false;
-        *outDiffDataPos=(hpatch_StreamPos_t)headBuf.size()+possBuf.size();
-        return true;
-    } catch (...) {
-        return false;
-    }
-}
-
+    
 int _sync_patch(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
                 const hpatch_TStreamInput* oldStream,const TNewDataSyncInfo* newSyncInfo,
                 const hpatch_TStreamOutput* out_newStream,const hpatch_TStreamOutput* out_diffStream,int threadNum){
@@ -322,19 +288,24 @@ int _sync_patch(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListe
     //match in oldData
     newBlockDataInOldPoss=(hpatch_StreamPos_t*)malloc(kBlockCount*(size_t)sizeof(hpatch_StreamPos_t));
     check(newBlockDataInOldPoss!=0,kSyncClient_memError);
-    try{
-        matchNewDataInOld(newBlockDataInOldPoss,newSyncInfo,oldStream,strongChecksumPlugin,threadNum);
-    }catch(const std::exception& e){
-        fprintf(stderr,"matchNewDataInOld() run an error: %s",e.what());
-        result=kSyncClient_matchNewDataInOldError;
+    if (syncDataListener->localPatch_openOldPoss!=0){
+        check(_loadOldPoss(newBlockDataInOldPoss,kBlockCount,
+                           syncDataListener,oldStream->streamSize),kSyncClient_loadDiffError);
+    }else{
+        try{
+            matchNewDataInOld(newBlockDataInOldPoss,newSyncInfo,oldStream,
+                              strongChecksumPlugin,threadNum);
+        }catch(const std::exception& e){
+            fprintf(stderr,"matchNewDataInOld() run an error: %s",e.what());
+            result=kSyncClient_matchNewDataInOldError;
+        }
     }
     check(result==kSyncClient_ok,result);
     getNeedSyncInfo(newBlockDataInOldPoss,newSyncInfo,&needSyncInfo);
     
-    
     if (out_diffStream){
-        check(saveDiffData(newBlockDataInOldPoss,kBlockCount,
-                           out_diffStream,&outDiffDataPos),kSyncClient_saveDiffError);
+        check(_saveSyncDiffData(newBlockDataInOldPoss,kBlockCount,newSyncInfo->kMatchBlockSize,
+                                out_diffStream,&outDiffDataPos),kSyncClient_saveDiffError);
     }
     
     if (listener->needSyncInfo)
@@ -372,26 +343,6 @@ clear:
     _inClear=1;
     if (newBlockDataInOldPoss) free(newBlockDataInOldPoss);
     return result;
-}
-
-static hpatch_BOOL _TSyncDiffData_readSyncData(IReadSyncDataListener* listener,uint32_t blockIndex,
-                                               hpatch_StreamPos_t posInNewSyncData,
-                                               uint32_t syncDataSize,unsigned char* out_syncDataBuf){
-    TSyncDiffData* self=(TSyncDiffData*)listener->readSyncDataImport;
-    if (posInNewSyncData < self->inNewPosEnd){ assert(false); return hpatch_FALSE; }
-    hpatch_BOOL result=self->in_diffStream->read(self->in_diffStream,self->readedPos,
-                                                 out_syncDataBuf,out_syncDataBuf+syncDataSize);
-    self->readedPos+=syncDataSize;
-    self->inNewPosEnd=posInNewSyncData+syncDataSize;
-    return result;
-}
-void _initSyncDiffData(TSyncDiffData* diffData,const hpatch_TStreamInput* in_diffStream){
-    memset(diffData,0,sizeof(*diffData));
-    diffData->readSyncDataImport=diffData;
-    diffData->readSyncData=_TSyncDiffData_readSyncData;
-    diffData->in_diffStream=in_diffStream;
-    diffData->readedPos=0;
-    diffData->inNewPosEnd=0;
 }
 
 static int _sync_patch_file2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
@@ -447,7 +398,8 @@ int sync_local_diff(ISyncInfoListener* listener,IReadSyncDataListener* syncDataL
 int sync_local_patch(ISyncInfoListener* listener,const hpatch_TStreamInput* in_diffStream,
                      const hpatch_TStreamInput* oldStream,const TNewDataSyncInfo* newSyncInfo,
                      const hpatch_TStreamOutput* out_newStream,int threadNum){
-    TSyncDiffData diffData; _initSyncDiffData(&diffData,in_diffStream);
+    TSyncDiffData diffData;
+    if (!_loadSyncDiffData(&diffData,in_diffStream)) return kSyncClient_loadDiffError;
     return _sync_patch(listener,&diffData,oldStream,newSyncInfo,out_newStream,0,threadNum);
 }
 
@@ -482,7 +434,7 @@ int sync_local_patch_file2file(ISyncInfoListener* listener,const char* inDiffFil
     hpatch_TFileStreamInput_init(&in_diffData);
     check(hpatch_TFileStreamInput_open(&in_diffData,inDiffFile),
           kSyncClient_diffFileOpenError);
-    _initSyncDiffData(&diffData,&in_diffData.base);
+    check(_loadSyncDiffData(&diffData,&in_diffData.base),kSyncClient_loadDiffError);
     result=_sync_patch_file2file(listener,&diffData,oldFile,newSyncInfoFile,outNewFile,0,threadNum);
 clear:
     _inClear=1;

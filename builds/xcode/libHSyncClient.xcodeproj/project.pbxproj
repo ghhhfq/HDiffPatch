@@ -37,6 +37,8 @@
 		D68B355323EA474E0063D692 /* client_download_emulation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D68B355123EA474E0063D692 /* client_download_emulation.cpp */; };
 		D68B355423EA474E0063D692 /* client_download_emulation.h in Headers */ = {isa = PBXBuildFile; fileRef = D68B355223EA474E0063D692 /* client_download_emulation.h */; };
 		D68B356123EFD54A0063D692 /* sync_client_private.h in Headers */ = {isa = PBXBuildFile; fileRef = D68B356023EFD54A0063D692 /* sync_client_private.h */; };
+		D695FAAD23F3961B00CD3EC1 /* sync_diff_data.h in Headers */ = {isa = PBXBuildFile; fileRef = D695FAAB23F3961B00CD3EC1 /* sync_diff_data.h */; };
+		D695FAAE23F3961B00CD3EC1 /* sync_diff_data.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D695FAAC23F3961B00CD3EC1 /* sync_diff_data.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -71,6 +73,8 @@
 		D68B355123EA474E0063D692 /* client_download_emulation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = client_download_emulation.cpp; sourceTree = "<group>"; };
 		D68B355223EA474E0063D692 /* client_download_emulation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = client_download_emulation.h; sourceTree = "<group>"; };
 		D68B356023EFD54A0063D692 /* sync_client_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sync_client_private.h; sourceTree = "<group>"; };
+		D695FAAB23F3961B00CD3EC1 /* sync_diff_data.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sync_diff_data.h; sourceTree = "<group>"; };
+		D695FAAC23F3961B00CD3EC1 /* sync_diff_data.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sync_diff_data.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -159,6 +163,8 @@
 				D68B356023EFD54A0063D692 /* sync_client_private.h */,
 				D688CB4C23E1D51F006427D4 /* sync_client.h */,
 				D688CB4F23E1D51F006427D4 /* sync_client.cpp */,
+				D695FAAB23F3961B00CD3EC1 /* sync_diff_data.h */,
+				D695FAAC23F3961B00CD3EC1 /* sync_diff_data.cpp */,
 				D688CB4A23E1D51F006427D4 /* dir_sync_client.h */,
 				D688CB5123E1D51F006427D4 /* dir_sync_client.cpp */,
 				D688CB4923E1D51F006427D4 /* sync_info_client.h */,
@@ -182,6 +188,7 @@
 				D688CB3B23E1D4E4006427D4 /* parallel_import.h in Headers */,
 				D688CB5A23E1D51F006427D4 /* mt_by_queue.h in Headers */,
 				D68B355423EA474E0063D692 /* client_download_emulation.h in Headers */,
+				D695FAAD23F3961B00CD3EC1 /* sync_diff_data.h in Headers */,
 				D688CB5323E1D51F006427D4 /* sync_info_client.h in Headers */,
 				D688CB3D23E1D4E4006427D4 /* parallel_channel.h in Headers */,
 				D688CB5523E1D51F006427D4 /* sync_client_type.h in Headers */,
@@ -253,6 +260,7 @@
 				D688CB3E23E1D4E4006427D4 /* file_for_patch.c in Sources */,
 				D688CB5B23E1D51F006427D4 /* dir_sync_client.cpp in Sources */,
 				D688CB4623E1D4E4006427D4 /* patch.c in Sources */,
+				D695FAAE23F3961B00CD3EC1 /* sync_diff_data.cpp in Sources */,
 				D688CB4723E1D4E4006427D4 /* new_dir_output.c in Sources */,
 				D688CB4223E1D4E4006427D4 /* dir_patch_tools.c in Sources */,
 				D688CB2723E1D43F006427D4 /* md5.c in Sources */,

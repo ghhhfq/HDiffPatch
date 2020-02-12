@@ -28,6 +28,7 @@
  */
 #include "dir_sync_client.h"
 #include "sync_client_type_private.h"
+#include "sync_diff_data.h"
 #if (_IS_NEED_DIR_DIFF_PATCH)
 #include <stdexcept>
 #include "../../dirDiffPatch/dir_diff/dir_diff_tools.h"
@@ -219,7 +220,7 @@ int sync_local_patch_2file(ISyncInfoListener* listener,const char* inDiffFile,
     hpatch_TFileStreamInput_init(&in_diffData);
     check_r(hpatch_TFileStreamInput_open(&in_diffData,inDiffFile),
             kSyncClient_diffFileOpenError);
-    _initSyncDiffData(&diffData,&in_diffData.base);
+    check_r(_loadSyncDiffData(&diffData,&in_diffData.base),kSyncClient_loadDiffError);
     return _sync_patch_2file(listener,&diffData,oldManifest,newSyncInfoFile,outNewFile,0,
                              kMaxOpenFileNumber,threadNum);
 clear:
@@ -248,7 +249,7 @@ int sync_local_patch_2dir(IDirPatchListener* patchListener,IDirSyncPatchListener
     hpatch_TFileStreamInput_init(&in_diffData);
     check_r(hpatch_TFileStreamInput_open(&in_diffData,inDiffFile),
             kSyncClient_diffFileOpenError);
-    _initSyncDiffData(&diffData,&in_diffData.base);
+    check_r(_loadSyncDiffData(&diffData,&in_diffData.base),kSyncClient_loadDiffError);
     return _sync_patch_2dir(patchListener,syncListener,&diffData,oldManifest,newSyncInfoFile,outNewDir,0,
                             kMaxOpenFileNumber,threadNum);
 clear:
