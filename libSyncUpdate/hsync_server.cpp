@@ -441,10 +441,10 @@ int sync_server_cmd_line(int argc, const char * argv[]){
                                               strongChecksumPlugin,(uint32_t)kMatchBlockSize,threadNum);
     double time1=clock_s();
     if (result==SYNC_SERVER_SUCCESS){
-        _return_check(printFileInfo(out_hsyni_file,"out .hsyni fileSize"),
+        _return_check(printFileInfo(out_hsyni_file,"out .hsyni"),
                       SYNC_SERVER_OUTFILE_ERROR,"run printFileInfo(%s,)",out_hsyni_file);
         if (out_hsynd_file){
-            _return_check(printFileInfo(out_hsynd_file,"out .hsynd fileSize"),
+            _return_check(printFileInfo(out_hsynd_file,"out .hsynd"),
                           SYNC_SERVER_OUTFILE_ERROR,"run printFileInfo(%s,)",out_hsynd_file);
         }
     }
@@ -457,7 +457,7 @@ int create_sync_files_for_file(const char* newDataFile,const char* out_hsyni_fil
                                const char* out_hsynd_file,const hdiff_TCompress* compressPlugin,
                                hpatch_TChecksum* strongChecksumPlugin,uint32_t kMatchBlockSize,size_t threadNum){
     hpatch_StreamPos_t newDataSize=0;
-    _return_check(printFileInfo(newDataFile,"\nin new fileSize",&newDataSize),
+    _return_check(printFileInfo(newDataFile,"\nin new file",&newDataSize),
                   SYNC_SERVER_NEWPATH_ERROR,"run printFileInfo(%s,)",newDataFile);
     int hashClashBit=estimateHashClashBit(newDataSize,(uint32_t)kMatchBlockSize);
     _return_check(hashClashBit<=kAllowMaxHashClashBit,SYNC_SERVER_BLOCKSIZE_ERROR,

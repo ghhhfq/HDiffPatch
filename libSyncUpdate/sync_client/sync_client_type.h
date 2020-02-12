@@ -92,7 +92,7 @@ typedef struct TNeedSyncInfos{
 
 typedef struct IReadSyncDataListener{
     void*       readSyncDataImport;
-    hpatch_BOOL isDiffData; //default hpatch_FALSE
+    void*       private_localDiffData;  //default set null
     //readSyncDataBegin can null
     hpatch_BOOL (*readSyncDataBegin)(IReadSyncDataListener* listener,const TNeedSyncInfos* needSyncInfo);
     //download range data

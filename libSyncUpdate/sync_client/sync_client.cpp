@@ -40,6 +40,7 @@ namespace sync_private{
 struct _TWriteDatas {
     const hpatch_TStreamOutput* out_newStream;
     const hpatch_TStreamOutput* out_diffStream;
+    hpatch_StreamPos_t          outDiffDataPos;
     const hpatch_TStreamInput*  oldStream;
     const TNewDataSyncInfo*     newSyncInfo;
     const hpatch_StreamPos_t*   newBlockDataInOldPoss;
@@ -62,7 +63,7 @@ static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
     hpatch_checksumHandle checksumSync=0;
     hpatch_StreamPos_t posInNewSyncData=0;
     hpatch_StreamPos_t outNewDataPos=0;
-    hpatch_StreamPos_t outDiffDataPos=0;
+    hpatch_StreamPos_t outDiffDataPos=wd.outDiffDataPos;
     const hpatch_StreamPos_t oldDataSize=wd.oldStream->streamSize;
 #if (_IS_USED_MULTITHREAD)
     TMt_by_queue* mt=(TMt_by_queue*)_mt;
@@ -99,7 +100,8 @@ static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
                                                      i,posInNewSyncData,syncSize,buf),
                       kSyncClient_readSyncDataError);
                 if (wd.out_diffStream){ //out diff
-                    wd.out_diffStream->write(wd.out_diffStream,outDiffDataPos,buf,buf+syncSize);
+                    check(wd.out_diffStream->write(wd.out_diffStream,outDiffDataPos,
+                                                   buf,buf+syncSize),kSyncClient_saveDiffError);
                     outDiffDataPos+=syncSize;
                 }
             }
@@ -229,36 +231,57 @@ static void getNeedSyncInfo(const hpatch_StreamPos_t* newBlockDataInOldPoss,
     }
 }
 
-    /*
-#define _pushV(uv,stag) \
-    do{ TByte* cur=buf; \
-        if (!hpatch_packUIntWithTag(&cur,buf+sizeof(buf),uv,stag,1)) return hpatch_FALSE; \
-        if (!out_diffStream->write(out_diffStream,pos,buf,cur)) return hpatch_FALSE; \
-        pos+=(cur-buf); \
+#define _pushV(vec,uv,stag) \
+    do{ TByte _buf[hpatch_kMaxPackedUIntBytes]; \
+        TByte* cur=_buf; \
+        if (!hpatch_packUIntWithTag(&cur,_buf+sizeof(_buf),uv,stag,1)) \
+            throw std::runtime_error("_packMatchedPoss() _pushV()"); \
+        vec.insert(vec.end(),_buf,cur); \
     }while(0)
-static hpatch_BOOL saveMatchedPoss(const hpatch_StreamPos_t* newBlockDataInOldPoss,uint32_t kBlockCount,
-                                   const hpatch_TStreamOutput* out_diffStream,hpatch_StreamPos_t* cur_pos){
-    hpatch_StreamPos_t pos=0;
-    TByte buf[hpatch_kMaxPackedUIntBytes];
-    _pushV(kBlockCount,0);
+static void _packMatchedPoss(const hpatch_StreamPos_t* newBlockDataInOldPoss,uint32_t kBlockCount,
+                             std::vector<TByte>& out_possBuf){
+    const size_t kMaxRle=127;
     hpatch_StreamPos_t backv=0;
+    uint32_t back_i=kBlockCount;
     for (uint32_t i=0; i<kBlockCount; ++i) {
         hpatch_StreamPos_t v=newBlockDataInOldPoss[i];
         if (v!=kBlockType_needSync){
-            if (v>backv)
-                _pushV((hpatch_StreamPos_t)(v-backv),0);
+            if (v>=backv)
+                _pushV(out_possBuf,(hpatch_StreamPos_t)(v-backv),1);
             else
-                _pushV((hpatch_StreamPos_t)(backv-v),1);
+                _pushV(out_possBuf,(hpatch_StreamPos_t)(backv-v)+kMaxRle,0);
             backv=v;
         }else{
-            _pushV(0,0);
+            if ((back_i+1==i)&&(out_possBuf.back()<kMaxRle))
+                ++out_possBuf.back();  //mean needSync count-1
+            else
+                _pushV(out_possBuf,0,0);
+            back_i=i;
         }
     }
-    _pushV(pos,0);
-    *cur_pos=pos;
-    return hpatch_TRUE;
 }
-*/
+
+static bool saveDiffData(const hpatch_StreamPos_t* newBlockDataInOldPoss,uint32_t kBlockCount,
+                         const hpatch_TStreamOutput* out_diffStream,hpatch_StreamPos_t* outDiffDataPos){
+    const char* kSyncDiffType="HSyncDiff20";
+    try {
+        std::vector<TByte> possBuf;
+        _packMatchedPoss(newBlockDataInOldPoss,kBlockCount,possBuf);
+        
+        std::vector<TByte> headBuf;
+        headBuf.insert(headBuf.end(),kSyncDiffType,kSyncDiffType+strlen(kSyncDiffType)+1); //with '\0'
+        _pushV(headBuf,kBlockCount,0);
+        _pushV(headBuf,possBuf.size(),0);
+        if (!out_diffStream->write(out_diffStream,0,headBuf.data(),
+                                   headBuf.data()+headBuf.size())) return false;
+        if (!out_diffStream->write(out_diffStream,headBuf.size(),possBuf.data(),
+                                   possBuf.data()+possBuf.size())) return false;
+        *outDiffDataPos=(hpatch_StreamPos_t)headBuf.size()+possBuf.size();
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
 
 int _sync_patch(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
                 const hpatch_TStreamInput* oldStream,const TNewDataSyncInfo* newSyncInfo,
@@ -269,6 +292,7 @@ int _sync_patch(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListe
     const uint32_t kBlockCount=(uint32_t)TNewDataSyncInfo_blockCount(newSyncInfo);
     TNeedSyncInfosImport needSyncInfo; memset(&needSyncInfo,0,sizeof(needSyncInfo));
     hpatch_StreamPos_t* newBlockDataInOldPoss=0;
+    hpatch_StreamPos_t  outDiffDataPos=0;
     int result=kSyncClient_ok;
     int _inClear=0;
     
@@ -306,11 +330,12 @@ int _sync_patch(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListe
     }
     check(result==kSyncClient_ok,result);
     getNeedSyncInfo(newBlockDataInOldPoss,newSyncInfo,&needSyncInfo);
-    /*
+    
+    
     if (out_diffStream){
-        hpatch_StreamPos_t pos=0;
-        saveMatchedPoss(newBlockDataInOldPoss,kBlockCount,out_diffStream,&pos);
-    }*/
+        check(saveDiffData(newBlockDataInOldPoss,kBlockCount,
+                           out_diffStream,&outDiffDataPos),kSyncClient_saveDiffError);
+    }
     
     if (listener->needSyncInfo)
         listener->needSyncInfo(listener,&needSyncInfo);
@@ -322,6 +347,7 @@ int _sync_patch(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListe
         _TWriteDatas writeDatas;
         writeDatas.out_newStream=out_newStream;
         writeDatas.out_diffStream=out_diffStream;
+        writeDatas.outDiffDataPos=outDiffDataPos;
         writeDatas.oldStream=oldStream;
         writeDatas.newSyncInfo=newSyncInfo;
         writeDatas.newBlockDataInOldPoss=newBlockDataInOldPoss;
