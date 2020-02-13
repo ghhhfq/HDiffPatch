@@ -104,7 +104,7 @@ static void printUsage(){
 #endif
            "  if oldPath is empty input parameter \"\" )\n"
            "options:\n"
-           "  -dl#hsyni_file_" _NOTE_TEXT_URL "       (or -download#...)\n"
+           "  -dl#hsyni_file_" _NOTE_TEXT_URL "\n"
            "    download hsyni_file from hsyni_file_" _NOTE_TEXT_URL " befor sync patch;\n"
            "  -diff#outDiffFile\n"
            "    create diffFile from part of hsynd_file_" _NOTE_TEXT_URL " befor local patch;\n"
@@ -114,6 +114,9 @@ static void printUsage(){
            "  -p-parallelThreadNumber\n"
            "    if parallelThreadNumber>1 then open multi-thread Parallel mode;\n"
            "    DEFAULT -p-4; requires more memory!\n"
+           "  -pdl-downloadThreadNumber\n"
+           "    if downloadThreadNumber>1 then open multi-thread download mode;\n"
+           "    DEFAULT -pdl-2; requires more memory!\n"
 #endif
 #if (_IS_NEED_DIR_DIFF_PATCH)
            "  -n-maxOpenFileNumber\n"
@@ -161,13 +164,13 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* hsyni_file,const char* hsynd_file_url,const char* localDiffFile,
                      const TSyncDownloadPlugin* downloadPlugin,
-                     size_t kMaxOpenFileNumber,int threadNum);
+                     size_t kMaxOpenFileNumber,int threadNum,int downloadThreadNum);
 #if (_IS_NEED_DIR_DIFF_PATCH)
 int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* hsyni_file,const char* hsynd_file_url,const char* localDiffFile,
                      const TSyncDownloadPlugin* downloadPlugin,
-                     size_t kMaxOpenFileNumber,int threadNum);
+                     size_t kMaxOpenFileNumber,int threadNum,int downloadThreadNum);
 #endif
 
 static int downloadNewSyncInfoFile(const TSyncDownloadPlugin* downloadPlugin,
@@ -265,6 +268,8 @@ if (!(value)) { _pferr(errInfo0); _pferr(errInfo1); _pferr(errInfo2); fprintf(st
 #define _THREAD_NUMBER_MIN      1
 #define _THREAD_NUMBER_DEFUALT  4
 #define _THREAD_NUMBER_MAX      (1<<8)
+#define _DL_THREAD_NUMBER_DEFUALT   2
+#define _DL_THREAD_NUMBER_MAX       (1<<6)
 
 enum TRunAsType{
     kRunAs_unknown =0,
@@ -277,6 +282,7 @@ enum TRunAsType{
            
 int sync_client_cmd_line(int argc, const char * argv[]) {
     size_t      threadNum = _THREAD_NUMBER_NULL;
+    size_t      downloadThreadNum = _THREAD_NUMBER_NULL;
     hpatch_BOOL isForceOverwrite=_kNULL_VALUE;
     hpatch_BOOL isOutputHelp=_kNULL_VALUE;
     hpatch_BOOL isOutputVersion=_kNULL_VALUE;
@@ -314,14 +320,19 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
                     patch_by_diff_file=pfname;
 #if (_IS_USED_MULTITHREAD)
                 }else if (strstr(op,"-p-")==op){
-                    _options_check((threadNum==_THREAD_NUMBER_NULL)&&(op[2]=='-'),"-p-?");
+                    _options_check(threadNum==_THREAD_NUMBER_NULL,"-p-?");
                     const char* pnum=op+3;
                     _options_check(a_to_size(pnum,strlen(pnum),&threadNum),"-p-?");
                     _options_check(threadNum>=_THREAD_NUMBER_MIN,"-p-?");
+                }else if (strstr(op,"-pdl-")==op){
+                    _options_check(downloadThreadNum==_THREAD_NUMBER_NULL,"-pdl-?");
+                    const char* pnum=op+5;
+                    _options_check(a_to_size(pnum,strlen(pnum),&downloadThreadNum),"-pdl-?");
+                    _options_check(downloadThreadNum>=_THREAD_NUMBER_MIN,"-pdl-?");
 #endif
                 }else{
 #if (_IS_USED_MULTITHREAD)
-                    _options_check(false,"-patch#? or -p-?");
+                    _options_check(false,"-patch#? or -p-? or -pdl-?");
 #else
                     _options_check(false,"-patch#?");
 #endif
@@ -332,14 +343,12 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
                     const char* pfname=op+6;
                     _options_check((diff_to_diff_file==0)&&(strlen(pfname)>0),"-diff#?");
                     diff_to_diff_file=pfname;
-                }else{
-                    size_t l=0;
-                    if (strstr(op,"-dl#")==op) l=4;
-                    else if (strstr(op,"-download#")==op) l=10;
-                    else _options_check(false,"-dl#? or -diff#?");
-                    const char* purl=op+l;
+                }else if (strstr(op,"-dl#")==op){
+                    const char* purl=op+4;
                     _options_check((hsyni_file_url==0)&&(strlen(purl)>0),"-dl#?");
                     hsyni_file_url=purl;
+                }else{
+                    _options_check(false,"-dl#? or -diff#?");
                 }
             } break;
 #if (_IS_NEED_DIR_DIFF_PATCH)
@@ -387,9 +396,15 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
         threadNum=_THREAD_NUMBER_DEFUALT;
     else if (threadNum>_THREAD_NUMBER_MAX)
         threadNum=_THREAD_NUMBER_MAX;
+    if (downloadThreadNum==_THREAD_NUMBER_NULL)
+        downloadThreadNum=_DL_THREAD_NUMBER_DEFUALT;
+    else if (downloadThreadNum>_DL_THREAD_NUMBER_MAX)
+        downloadThreadNum=_DL_THREAD_NUMBER_MAX;
 #else
     threadNum=1;
+    downloadThreadNum=1;
 #endif
+    
 #if (_IS_NEED_DIR_DIFF_PATCH)
     if (kMaxOpenFileNumber==_kNULL_SIZE)
         kMaxOpenFileNumber=kMaxOpenFileNumber_default_patch;
@@ -411,6 +426,10 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
         printf("muti-thread parallel: opened, threadNum: %d\n",(int)threadNum);
     else
         printf("muti-thread parallel: closed\n");
+    if (downloadThreadNum>1)
+        printf("muti-thread download: opened, threadNum: %d\n",(int)downloadThreadNum);
+    else
+        printf("muti-thread download: closed\n");
 
     _options_check((hsyni_file_url?1:0)+(diff_to_diff_file?1:0)+(patch_by_diff_file?1:0)<=1,
                    "-dl,-diff,-patch can't be used at the same time");
@@ -466,7 +485,7 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
         printf(    "download .hsyni: \""); hpatch_printPath_utf8(hsyni_file);
         printf("\"\n       from URL: \""); hpatch_printPath_utf8(hsyni_file_url);
         printf("\"\n");
-        int result=downloadNewSyncInfoFile(&downloadPlugin,hsyni_file_url,hsyni_file,(int)threadNum);
+        int result=downloadNewSyncInfoFile(&downloadPlugin,hsyni_file_url,hsyni_file,(int)downloadThreadNum);
         _check3(result==kSyncClient_ok,result,"download from url: \"",hsyni_file_url,"\"");
         double dtime1=clock_s();
         printf(    "  download time: %.3f s\n\n",(dtime1-dtime0));
@@ -536,12 +555,12 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     if (newIsDir)
         result=sync_patch_2dir(outNewPath,oldPath,isSamePath,oldIsDir,
                                ignoreOldPathList,hsyni_file,hsynd_file_url,localDiffFile,
-                               &downloadPlugin,kMaxOpenFileNumber,(int)threadNum);
+                               &downloadPlugin,kMaxOpenFileNumber,(int)threadNum,(int)downloadThreadNum);
     else
 #endif
         result=sync_patch_2file(outNewPath,oldPath,isSamePath,oldIsDir,
                                 ignoreOldPathList,hsyni_file,hsynd_file_url,localDiffFile,
-                                &downloadPlugin,kMaxOpenFileNumber,(int)threadNum);
+                                &downloadPlugin,kMaxOpenFileNumber,(int)threadNum,(int)downloadThreadNum);
     double time1=clock_s();
     printf("\nsync_patch_%s2%s time: %.3f s\n\n",oldIsDir?"dir":"file",newIsDir?"dir":"file",(time1-time0));
     return result;
@@ -597,7 +616,7 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* hsyni_file,const char* hsynd_file_url,const char* localDiffFile,
                      const TSyncDownloadPlugin* downloadPlugin,
-                     size_t kMaxOpenFileNumber,int threadNum){
+                     size_t kMaxOpenFileNumber,int threadNum,int downloadThreadNum){
 #if (_IS_NEED_DIR_DIFF_PATCH)
     std::string _oldPath(oldPath); if (oldIsDir) assignDirTag(_oldPath); oldPath=_oldPath.c_str();
 #endif
@@ -623,7 +642,7 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
     listener.findDecompressPlugin=_findDecompressPlugin;
     listener.needSyncInfo=_needSyncInfo;
     if (hsynd_file_url)
-        _check3(downloadPlugin->download_part_open(&syncDataListener,hsynd_file_url,&threadNum),
+        _check3(downloadPlugin->download_part_open(&syncDataListener,hsynd_file_url,downloadThreadNum),
                 kSyncClient_syncDataDownloadError,"download open sync file \"",hsynd_file_url,"\"");
     int result=kSyncClient_ok;
 #if (_IS_NEED_DIR_DIFF_PATCH)
@@ -755,7 +774,7 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* hsyni_file,const char* hsynd_file_url,const char* localDiffFile,
                      const TSyncDownloadPlugin* downloadPlugin,
-                     size_t kMaxOpenFileNumber,int threadNum){
+                     size_t kMaxOpenFileNumber,int threadNum,int downloadThreadNum){
     std::string _outNewDir(outNewDir?outNewDir:"");
     if (outNewDir) { assignDirTag(_outNewDir); outNewDir=outNewDir?_outNewDir.c_str():0; }
     std::string _oldPath(oldPath); if (oldIsDir) assignDirTag(_oldPath); oldPath=_oldPath.c_str();
@@ -789,7 +808,7 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
     listener.patchFinish=_dirSyncPatchFinish;
     
     if (hsynd_file_url)
-        _check3(downloadPlugin->download_part_open(&syncDataListener,hsynd_file_url,&threadNum),
+        _check3(downloadPlugin->download_part_open(&syncDataListener,hsynd_file_url,downloadThreadNum),
                 kSyncClient_syncDataDownloadError,"download open sync file \"",hsynd_file_url,"\"");
     int result=kSyncClient_ok;
     if (localDiffFile==0)

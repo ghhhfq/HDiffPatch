@@ -107,7 +107,7 @@ typedef struct IReadSyncDataListener{
 
 typedef struct TSyncDownloadPlugin{
     //download part of file
-    hpatch_BOOL (*download_part_open) (IReadSyncDataListener* out_listener,const char* file_url,int* threadNum);
+    hpatch_BOOL (*download_part_open) (IReadSyncDataListener* out_listener,const char* file_url,int threadNum);
     hpatch_BOOL (*download_part_close)(IReadSyncDataListener* listener);
     //download file
     hpatch_BOOL (*download_file)      (const char* file_url,const hpatch_TStreamOutput* out_stream,

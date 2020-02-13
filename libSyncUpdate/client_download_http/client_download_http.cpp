@@ -194,7 +194,7 @@ struct THttpRangeDownload{
     }
 };
 
-hpatch_BOOL download_part_by_http_open(IReadSyncDataListener* out_httpListener,const char* file_url,int* threadNum){
+hpatch_BOOL download_part_by_http_open(IReadSyncDataListener* out_httpListener,const char* file_url,int threadNum){
     THttpRangeDownload* self=0;
     try {
         self=new THttpRangeDownload(file_url);
