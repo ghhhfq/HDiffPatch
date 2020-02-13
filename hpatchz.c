@@ -97,8 +97,12 @@
 #include "checksum_plugin_demo.h"
 #endif
 
+static void printVersion(){
+    printf("HDiffPatch::hpatchz v" HDIFFPATCH_VERSION_STRING "\n\n");
+}
 
 static void printUsage(){
+    printVersion();
     printf("patch usage: hpatchz [options] oldPath diffFile outNewPath\n"
 #if (_IS_NEED_SFX)
            "create  SFX: hpatchz [-X-exe#selfExecuteFile] diffFile -X#outSelfExtractArchive\n"
@@ -416,9 +420,10 @@ int hpatch_cmd_line(int argc, const char * argv[]){
     }
 #endif
     if (isOutputHelp||isOutputVersion){
-        printf("HDiffPatch::hpatchz v" HDIFFPATCH_VERSION_STRING "\n\n");
         if (isOutputHelp)
-            printUsage();
+            printUsage();//with version
+        else
+            printVersion();
 #if (_IS_NEED_SFX)
         if ((arg_values_size==0)&&(!isRunSFX)&&(out_SFX==0)&&(selfExecuteFile==0))
 #else

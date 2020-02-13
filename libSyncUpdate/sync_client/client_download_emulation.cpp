@@ -62,7 +62,8 @@ hpatch_BOOL downloadEmulation_open(IReadSyncDataListener* out_emulation,
     return hpatch_TRUE;
 }
 
-hpatch_BOOL downloadEmulation_open_by_file(IReadSyncDataListener* out_emulation,const char* newSyncDataPath){
+hpatch_BOOL downloadEmulation_open_by_file(IReadSyncDataListener* out_emulation,
+                                           const char* newSyncDataPath,int* threadNum){
     assert(out_emulation->readSyncDataImport==0);
     TDownloadEmulation* self=(TDownloadEmulation*)malloc(sizeof(TDownloadEmulation));
     if (self==0) return hpatch_FALSE;
@@ -89,7 +90,7 @@ hpatch_BOOL downloadEmulation_close(IReadSyncDataListener* emulation){
                             result=hpatch_FALSE; goto clear; } }
 
 hpatch_BOOL downloadEmulation_download_file(const char* file_url,const hpatch_TStreamOutput* out_stream,
-                                            hpatch_StreamPos_t continueDownloadPos){
+                                            hpatch_StreamPos_t continueDownloadPos,int threadNum){
     //copy file_url file data to out_stream
     const size_t _tempCacheSize=hpatch_kStreamCacheSize*4;
     hpatch_BOOL result=hpatch_TRUE;

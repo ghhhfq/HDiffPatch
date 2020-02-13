@@ -34,12 +34,12 @@ extern "C" {
 #endif
 
 //download part of file by http(s)
-hpatch_BOOL download_part_by_http_open(IReadSyncDataListener* out_httpListener,const char* file_url);
+hpatch_BOOL download_part_by_http_open(IReadSyncDataListener* out_httpListener,const char* file_url,int* threadNum);
 hpatch_BOOL download_part_by_http_close(IReadSyncDataListener* httpListener);
 
 //download file by http(s)
 hpatch_BOOL download_file_by_http(const char* file_url,const hpatch_TStreamOutput* out_stream,
-                                  hpatch_StreamPos_t continueDownloadPos);
+                                  hpatch_StreamPos_t continueDownloadPos,int threadNum);
 
 #ifdef __cplusplus
 }

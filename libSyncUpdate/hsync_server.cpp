@@ -70,8 +70,12 @@
 
 #include "../checksum_plugin_demo.h"
 
+static void printVersion(){
+    printf("HDiffPatch::hsync_server v" HDIFFPATCH_VERSION_STRING "\n\n");
+}
 
 static void printUsage(){
+    printVersion();
     printf("hsync_server: [options] newDataPath out_hsyni_file [out_hsynd_file]\n"
 #if (_IS_NEED_DIR_DIFF_PATCH)
            " ( newDataPath can be file or directory(folder); )\n"
@@ -367,9 +371,10 @@ int sync_server_cmd_line(int argc, const char * argv[]){
         kMaxOpenFileNumber=kMaxOpenFileNumber_default_min;
 #endif
     if (isOutputHelp||isOutputVersion){
-        printf("HDiffPatch::hsync_server v" HDIFFPATCH_VERSION_STRING "\n\n");
         if (isOutputHelp)
-            printUsage();
+            printUsage();//with version
+        else
+            printVersion();
         if (arg_values.empty())
             return SYNC_SERVER_SUCCESS; //ok
     }

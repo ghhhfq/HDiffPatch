@@ -28,6 +28,9 @@
  */
 #define  _IS_NEED_MAIN 1
 #define  _IS_SYNC_PATCH_DEMO 0
+#define _NOTE_TEXT_URL  "url"
+#define _NOTE_TEXT_APP  "HDiffPatch::hsync_client_http"
+
 #include "hsync_client_demo.cpp" //main()
 #include "client_download_http/client_download_http.h"
 

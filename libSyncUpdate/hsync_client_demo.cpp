@@ -58,7 +58,7 @@ hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin){
     return hpatch_TRUE;
 }
 #else
-//download by http/https?  You can swap to your http pluginvoid
+//NOTE: download by tcp/udp/http/https?  You can implement your download plugin
 hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin);
 #endif
 
@@ -82,25 +82,21 @@ hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin);
 #endif
 #include "../checksum_plugin_demo.h"
 
-#ifndef URL_Text
 #if (_IS_SYNC_PATCH_DEMO)
-#   define URL_Text  "test"
-#else
-#   define URL_Text  "url"
-#endif
-#endif
-#ifndef APP_Text
-#if (_IS_SYNC_PATCH_DEMO)
-#   define APP_Text  "demo"
-#else
-#   define APP_Text  "http"
-#endif
+#   define _NOTE_TEXT_URL  "test"
+#   define _NOTE_TEXT_APP  "HDiffPatch::hsync_client_demo"
 #endif
 
+
+static void printVersion(){
+    printf(_NOTE_TEXT_APP " v" HDIFFPATCH_VERSION_STRING "\n\n");
+}
+
 static void printUsage(){
-    printf("sync  patch: [options] oldPath [-dl#hsyni_file_" URL_Text "] hsyni_file hsynd_file_" URL_Text " outNewPath\n"
-           "download   : [options] -dl#hsyni_file_" URL_Text " hsyni_file\n"
-           "local  diff: [options] oldPath hsyni_file hsynd_file_" URL_Text " -diff#diffFile\n"
+    printVersion();
+    printf("sync  patch: [options] oldPath [-dl#hsyni_file_" _NOTE_TEXT_URL "] hsyni_file hsynd_file_" _NOTE_TEXT_URL " outNewPath\n"
+           "download   : [options] -dl#hsyni_file_" _NOTE_TEXT_URL " hsyni_file\n"
+           "local  diff: [options] oldPath hsyni_file hsynd_file_" _NOTE_TEXT_URL " -diff#diffFile\n"
            "local patch: [options] oldPath hsyni_file -patch#diffFile outNewPath\n"
            "sync  infos: [options] oldPath hsyni_file\n"
 #if (_IS_NEED_DIR_DIFF_PATCH)
@@ -108,10 +104,10 @@ static void printUsage(){
 #endif
            "  if oldPath is empty input parameter \"\" )\n"
            "options:\n"
-           "  -dl#hsyni_file_" URL_Text "       (or -download#...)\n"
-           "    download hsyni_file from hsyni_file_" URL_Text " befor sync patch;\n"
+           "  -dl#hsyni_file_" _NOTE_TEXT_URL "       (or -download#...)\n"
+           "    download hsyni_file from hsyni_file_" _NOTE_TEXT_URL " befor sync patch;\n"
            "  -diff#outDiffFile\n"
-           "    create diffFile from part of hsynd_file_" URL_Text " befor local patch;\n"
+           "    create diffFile from part of hsynd_file_" _NOTE_TEXT_URL " befor local patch;\n"
            "  -patch#diffFile\n"
            "    local patch(oldPath+diffFile) to outNewPath;\n"
 #if (_IS_USED_MULTITHREAD)
@@ -175,7 +171,7 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
 #endif
 
 static int downloadNewSyncInfoFile(const TSyncDownloadPlugin* downloadPlugin,
-                                   const char* hsyni_file_url,const char* out_hsyni_file);
+                                   const char* hsyni_file_url,const char* out_hsyni_file,int threadNum);
 
 
 #if (_IS_NEED_MAIN)
@@ -404,9 +400,10 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
         isOldPathInputEmpty=hpatch_FALSE;
     
     if (isOutputHelp||isOutputVersion){
-        printf("HDiffPatch::hsync_client_" APP_Text " v" HDIFFPATCH_VERSION_STRING "\n\n");
         if (isOutputHelp)
-            printUsage();
+            printUsage();//with version
+        else
+            printVersion();
         if (arg_values.empty())
             return kSyncClient_ok; //ok
     }
@@ -469,7 +466,7 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
         printf(    "download .hsyni: \""); hpatch_printPath_utf8(hsyni_file);
         printf("\"\n       from URL: \""); hpatch_printPath_utf8(hsyni_file_url);
         printf("\"\n");
-        int result=downloadNewSyncInfoFile(&downloadPlugin,hsyni_file_url,hsyni_file);
+        int result=downloadNewSyncInfoFile(&downloadPlugin,hsyni_file_url,hsyni_file,(int)threadNum);
         _check3(result==kSyncClient_ok,result,"download from url: \"",hsyni_file_url,"\"");
         double dtime1=clock_s();
         printf(    "  download time: %.3f s\n\n",(dtime1-dtime0));
@@ -626,7 +623,7 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
     listener.findDecompressPlugin=_findDecompressPlugin;
     listener.needSyncInfo=_needSyncInfo;
     if (hsynd_file_url)
-        _check3(downloadPlugin->download_part_open(&syncDataListener,hsynd_file_url),
+        _check3(downloadPlugin->download_part_open(&syncDataListener,hsynd_file_url,&threadNum),
                 kSyncClient_syncDataDownloadError,"download open sync file \"",hsynd_file_url,"\"");
     int result=kSyncClient_ok;
 #if (_IS_NEED_DIR_DIFF_PATCH)
@@ -792,7 +789,7 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
     listener.patchFinish=_dirSyncPatchFinish;
     
     if (hsynd_file_url)
-        _check3(downloadPlugin->download_part_open(&syncDataListener,hsynd_file_url),
+        _check3(downloadPlugin->download_part_open(&syncDataListener,hsynd_file_url,&threadNum),
                 kSyncClient_syncDataDownloadError,"download open sync file \"",hsynd_file_url,"\"");
     int result=kSyncClient_ok;
     if (localDiffFile==0)
@@ -815,7 +812,7 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
 
 
 static int downloadNewSyncInfoFile(const TSyncDownloadPlugin* downloadPlugin,
-                                   const char* hsyni_file_url,const char* out_hsyni_file){
+                                   const char* hsyni_file_url,const char* out_hsyni_file,int threadNum){
     int result=kSyncClient_ok;
     hpatch_TFileStreamOutput out_stream;
     hpatch_TFileStreamOutput_init(&out_stream);
@@ -824,7 +821,7 @@ static int downloadNewSyncInfoFile(const TSyncDownloadPlugin* downloadPlugin,
     hpatch_TFileStreamOutput_setRandomOut(&out_stream,hpatch_TRUE);
     //todo: hpatch_TFileStreamOutput_reopen & set continueDownloadPos=out_stream.out_length
     hpatch_StreamPos_t continueDownloadPos=0;
-    if (downloadPlugin->download_file(hsyni_file_url,&out_stream.base,continueDownloadPos))
+    if (downloadPlugin->download_file(hsyni_file_url,&out_stream.base,continueDownloadPos,threadNum))
         out_stream.base.streamSize=out_stream.out_length;
     else
         result=kSyncClient_newSyncInfoDownloadError;

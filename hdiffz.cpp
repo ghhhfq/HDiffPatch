@@ -103,7 +103,12 @@
 #include "checksum_plugin_demo.h"
 #endif
 
+static void printVersion(){
+    printf("HDiffPatch::hdiffz v" HDIFFPATCH_VERSION_STRING "\n\n");
+}
+
 static void printUsage(){
+    printVersion();
     printf("diff    usage: hdiffz [options] oldPath newPath outDiffFile\n"
            "test    usage: hdiffz    -t     oldPath newPath testDiffFile\n"
            "resave  usage: hdiffz [-c-...]  diffFile outDiffFile\n"
@@ -724,9 +729,10 @@ int hdiff_cmd_line(int argc, const char * argv[]){
     if (isForceOverwrite==_kNULL_VALUE)
         isForceOverwrite=hpatch_FALSE;
     if (isOutputHelp||isOutputVersion){
-        printf("HDiffPatch::hdiffz v" HDIFFPATCH_VERSION_STRING "\n\n");
         if (isOutputHelp)
-            printUsage();
+            printUsage();//with version
+        else
+            printVersion();
         if (arg_values.empty())
             return 0; //ok
     }
