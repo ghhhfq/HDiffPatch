@@ -32,7 +32,7 @@
 #define _NOTE_TEXT_APP  "HDiffPatch::hsync_client_http"
 
 #include "hsync_client_demo.cpp" //main()
-#include "client_download_http/client_download_http.h"
+#include "client_download_http.h"
 
 hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin){
     out_downloadPlugin->download_part_open=download_part_by_http_open;

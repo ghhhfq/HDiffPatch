@@ -1,5 +1,5 @@
 //  client_download_http.cpp
-//  sync_client
+//  hsync_client_http: download by http(s) demo
 //  Created by housisong on 2020-01-29.
 /*
  The MIT License (MIT)
@@ -29,9 +29,9 @@
 #include "client_download_http.h"
 #include <assert.h>
 #include <vector>
-#include "../../file_for_patch.h"
-#include "../../libParallel/parallel_import.h" //this_thread_yield
-#include "../../libHDiffPatch/HDiff/private_diff/mem_buf.h"
+#include "../file_for_patch.h"
+#include "../libParallel/parallel_import.h" //this_thread_yield
+#include "../libHDiffPatch/HDiff/private_diff/mem_buf.h"
 using namespace hdiff_private;
 
 #ifndef _IsNeedIncludeDefaultMiniHttpHead
@@ -42,10 +42,13 @@ using namespace hdiff_private;
 #   include "minihttp.h" // https://github.com/sisong/minihttp
 #endif
 using namespace minihttp;
-#ifdef WIN32
-#   pragma comment(lib, "wsock32")
-#   pragma comment(lib, "Ws2_32.lib")
+#if defined(_MSC_VER)
+#if defined(_WIN32_WCE)
+#pragma comment( lib, "ws2.lib" )
+#else
+#pragma comment( lib, "ws2_32.lib" )
 #endif
+#endif /* _MSC_VER */
 
 bool doInitNetwork(){
     struct TInitNetwork {

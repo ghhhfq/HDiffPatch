@@ -108,7 +108,7 @@ public://queue
             if (isStoped) return;
             isStoped=true;
             if (isQueue){
-                for (size_t i=0;i<threadNum;++i){
+                for (int i=0;i<threadNum;++i){
                     lockerChannels[i].accept(false);
                     lockerChannels[i].close();
                 }

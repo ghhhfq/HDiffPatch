@@ -4,7 +4,7 @@
 /*
  The MIT License (MIT)
  Copyright (c) 2019-2019 HouSisong
- 
+
  Permission is hereby granted, free of charge, to any person
  obtaining a copy of this software and associated documentation
  files (the "Software"), to deal in the Software without
@@ -13,10 +13,10 @@
  copies of the Software, and to permit persons to whom the
  Software is furnished to do so, subject to the following
  conditions:
- 
+
  The above copyright notice and this permission notice shall be
  included in all copies of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -87,7 +87,7 @@ static int _sync_patch_2file(ISyncInfoListener* listener,IReadSyncDataListener* 
     assert(listener!=0);
     assert(kMaxOpenFileNumber>=kMaxOpenFileNumber_limit_min);
     kMaxOpenFileNumber-=2; // for newSyncInfoFile & outNewFile
-    
+
     int result=kSyncClient_ok;
     int _inClear=0;
     TNewDataSyncInfo         newSyncInfo;
@@ -146,7 +146,7 @@ static int _sync_patch_2dir(IDirPatchListener* patchListener,IDirSyncPatchListen
     assert((patchListener!=0)&&(syncListener!=0));
     assert(kMaxOpenFileNumber>=kMaxOpenFileNumber_limit_min);
     kMaxOpenFileNumber-=2; // for newSyncInfoFile & outNewFile
-    
+
     int result=kSyncClient_ok;
     int _inClear=0;
     TNewDataSyncInfo            newSyncInfo;
@@ -154,7 +154,7 @@ static int _sync_patch_2dir(IDirPatchListener* patchListener,IDirSyncPatchListen
     CNewDirOut                  newDirOut;
     CFilesStream                oldFilesStream;
     size_t                      kAlignSize=1;
-    
+
     TNewDataSyncInfo_init(&newSyncInfo);
     result=TNewDataSyncInfo_open_by_file(&newSyncInfo,newSyncInfoFile,syncListener);
     check_r(result==kSyncClient_ok,result);
@@ -168,7 +168,7 @@ static int _sync_patch_2dir(IDirPatchListener* patchListener,IDirSyncPatchListen
                 kSyncClient_newDirPatchBeginError);
     check_r(oldFilesStream.open(oldManifest.pathList,kMaxOpenFileNumber,kAlignSize),
             kSyncClient_oldDirFilesOpenError);
-    
+
     result=sync_patch(syncListener,syncDataListener,
                       oldFilesStream.refStream.stream,&newSyncInfo,out_newData,threadNum);
     check_r(newDirOut.closeFileHandles(),kSyncClient_newDirCloseError);

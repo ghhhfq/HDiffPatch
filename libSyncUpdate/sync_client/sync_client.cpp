@@ -246,7 +246,7 @@ static void getNeedSyncInfo(const hpatch_StreamPos_t* newBlockDataInOldPoss,
             else
                 return false;
         }
-        return _syncDiffLocalPoss_isFinish(&localPoss);
+        return 0!=_syncDiffLocalPoss_isFinish(&localPoss);
     }
     
 int _sync_patch(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,

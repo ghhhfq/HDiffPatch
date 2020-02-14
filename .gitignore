@@ -18,3 +18,9 @@ ReleaseSFX
 *.exe
 builds/android_ndk_jni_mk/libs
 builds/android_ndk_jni_mk/obj
+*.dSYM
+hdiffz
+hpatchz
+hsync_client_demo
+hsync_client_http
+hsync_server

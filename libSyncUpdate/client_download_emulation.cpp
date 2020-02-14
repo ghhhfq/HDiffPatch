@@ -27,7 +27,7 @@
  OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "client_download_emulation.h"
-#include "../../file_for_patch.h"
+#include "../file_for_patch.h"
 
 struct TDownloadEmulation {
     const hpatch_TStreamInput* emulation_newSyncData;

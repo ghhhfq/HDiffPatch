@@ -455,8 +455,7 @@ int _default_setParallelThreadNumber(hdiff_TCompress* compressPlugin,int threadN
 
 #if (defined _CompressPlugin_lzma)||(defined _CompressPlugin_lzma2)
 #if (_IsNeedIncludeDefaultCompressHead)
-#   include "LzmaEnc.h" // "lzma/C/LzmaEnc.h" http://www.7-zip.org/sdk.html
-//    https://github.com/sisong/lzma/tree/pthread  support multi-thread compile in macos and linux
+#   include "LzmaEnc.h" // "lzma/C/LzmaEnc.h" https://github.com/sisong/lzma
 #   ifdef _CompressPlugin_lzma2
 #       include "Lzma2Enc.h"
 #   endif

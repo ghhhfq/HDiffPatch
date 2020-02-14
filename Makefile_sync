@@ -2,6 +2,18 @@
 DIR_DIFF := 1
 MT       := 1
 LZMA     := 0
+HTTP     := 0
+HTTPS    := 0
+
+ifeq ($(HTTPS),0)
+  ifeq ($(HTTP),0)
+    _HTTP := 0
+  else
+    _HTTP := 1
+  endif
+else
+  _HTTP := 1
+endif
 
 HDP_OBJ := \
     file_for_patch.o \
@@ -29,6 +41,7 @@ endif
 CLIENT_OBJ := \
     libSyncUpdate/sync_client/sync_client.o \
     libSyncUpdate/sync_client/sync_info_client.o \
+    libSyncUpdate/sync_client/sync_diff_data.o \
     libSyncUpdate/sync_client/match_in_old.o \
     $(HDP_OBJ)
 ifeq ($(DIR_DIFF),0)
@@ -73,6 +86,17 @@ else
     -D_IS_USED_MULTITHREAD=1 \
     -D_IS_USED_PTHREAD=1
 endif
+ifeq ($(_HTTP),0)
+else
+  HTTP_PATH := '../minihttp'
+  DEF_FLAGS += -I$(HTTP_PATH)
+endif
+ifeq ($(HTTPS),0)
+else
+  mbedtls_H := $(HTTP_PATH)'/mbedtls/include'
+  crypto_H  := $(HTTP_PATH)'/mbedtls/crypto/include'
+  DEF_FLAGS += -DMINIHTTP_USE_MBEDTLS  -I$(mbedtls_H) -I$(crypto_H)
+endif
 
 
 SYNC_LINK := -lz
@@ -86,7 +110,7 @@ CXXFLAGS += $(DEF_FLAGS)
 
 .PHONY: all clean
 
-all: md5Lib lzmaLib libsyncupdate.a hsync_server hsync_client_demo hsync_client_http
+all: md5Lib lzmaLib httpLib httpLib_md5 libsyncupdate.a hsync_server hsync_client_demo hsync_client_http
 
 MD5_OBJ     := 'md5.o'
 md5Lib      : # https://sourceforge.net/projects/libmd5-rfc  https://github.com/sisong/libmd5
@@ -100,9 +124,60 @@ else
   LZMA_DEC_OBJ := 'LzmaDec.o'
   LZMA_OBJ     := 'LzFind.o' 'LzmaEnc.o'  $(LZMA_DEC_OBJ)
   LZMA_SRC     := '../lzma/C/LzFind.c' '../lzma/C/LzmaDec.c' '../lzma/C/LzmaEnc.c'
-  lzmaLib: # https://www.7-zip.org/sdk.html  https://github.com/sisong/lzma
+  lzmaLib: # https://github.com/sisong/lzma
 	$(CC) -c $(CFLAGS) $(LZMA_SRC)
 endif
+
+ifeq ($(_HTTP),0)
+  HTTP_OBJ    :=
+  httpLib     :
+  httpLib_md5 :
+else
+  HTTP_OBJ := 'minihttp.o'
+  HTTP_SRC := $(HTTP_PATH)'/minihttp.cpp'
+  ifeq ($(HTTPS),0)
+    httpLib_md5:
+  else
+    mbedtls_C := $(HTTP_PATH)'/mbedtls/library'
+    crypto_C  := $(HTTP_PATH)'/mbedtls/crypto/library'
+    HTTP_OBJ += 'certs.o' 'debug.o' 'net_sockets.o' \
+                'ssl_cli.o' 'ssl_ciphersuites.o' \
+                'ssl_msg.o' 'ssl_srv.o' 'ssl_tls.o' \
+                'x509.o' 'x509_crt.o' \
+                'aes.o' 'aesni.o' 'arc4.o' 'asn1parse.o' \
+                'asn1write.o' 'base64.o' 'bignum.o' 'blowfish.o' \
+                'camellia.o' 'ccm.o' 'chacha20.o' 'chachapoly.o' \
+                'cipher_wrap.o' 'cipher.o' 'ctr_drbg.o' 'des.o' \
+                'dhm.o' 'ecdh.o' 'ecdsa.o' 'ecp.o' \
+                'ecp_curves.o' 'entropy_poll.o' 'entropy.o' 'gcm.o' \
+                'hmac_drbg.o' 'md.o' 'oid.o' \
+                'pem.o' 'platform_util.o' 'pk.o' 'pk_wrap.o' \
+                'pkcs12.o' 'pkcs5.o' 'pkparse.o' 'poly1305.o' \
+                'ripemd160.o' 'rsa_internal.o' 'rsa.o' 'sha1.o' \
+                'sha256.o' 'sha512.o' 'timing.o'
+    HTTP_SRC += $(mbedtls_C)/'certs.c'    $(mbedtls_C)/'debug.c'    $(mbedtls_C)/'net_sockets.c' \
+                $(mbedtls_C)/'ssl_cli.c'  $(mbedtls_C)/'ssl_ciphersuites.c' \
+                $(mbedtls_C)/'ssl_msg.c'  $(mbedtls_C)/'ssl_srv.c'  $(mbedtls_C)/'ssl_tls.c' \
+                $(mbedtls_C)/'x509.c'     $(mbedtls_C)/'x509_crt.c' \
+                $(crypto_C)/'aes.c' $(crypto_C)/'aesni.c' $(crypto_C)/'arc4.c' $(crypto_C)/'asn1parse.c' \
+                $(crypto_C)/'asn1write.c' $(crypto_C)/'base64.c' $(crypto_C)/'bignum.c' $(crypto_C)/'blowfish.c' \
+                $(crypto_C)/'camellia.c' $(crypto_C)/'ccm.c' $(crypto_C)/'chacha20.c' $(crypto_C)/'chachapoly.c' \
+                $(crypto_C)/'cipher_wrap.c' $(crypto_C)/'cipher.c' $(crypto_C)/'ctr_drbg.c' $(crypto_C)/'des.c' \
+                $(crypto_C)/'dhm.c' $(crypto_C)/'ecdh.c' $(crypto_C)/'ecdsa.c' $(crypto_C)/'ecp.c' \
+                $(crypto_C)/'ecp_curves.c' $(crypto_C)/'entropy_poll.c' $(crypto_C)/'entropy.c' $(crypto_C)/'gcm.c' \
+                $(crypto_C)/'hmac_drbg.c' $(crypto_C)/'md.c' $(crypto_C)/'oid.c' \
+                $(crypto_C)/'pem.c' $(crypto_C)/'platform_util.c' $(crypto_C)/'pk.c' $(crypto_C)/'pk_wrap.c' \
+                $(crypto_C)/'pkcs12.c' $(crypto_C)/'pkcs5.c' $(crypto_C)/'pkparse.c' $(crypto_C)/'poly1305.c' \
+                $(crypto_C)/'ripemd160.c' $(crypto_C)/'rsa_internal.c' $(crypto_C)/'rsa.c' $(crypto_C)/'sha1.c' \
+                $(crypto_C)/'sha256.c' $(crypto_C)/'sha512.c' $(crypto_C)/'timing.c'
+    HTTP_OBJ += 'crypto_md5.o'
+    httpLib_md5:
+	$(CC) -c $(CFLAGS) $(crypto_C)/'md5.c' -o 'crypto_md5.o'
+  endif
+  httpLib: # https://github.com/sisong/minihttp
+	$(CC) -c $(CFLAGS) $(HTTP_SRC)
+endif
+
 
 libsyncupdate.a: $(SERVER_OBJ) $(CLIENT_OBJ)
 	$(AR) rcs $@ $^
@@ -111,13 +186,17 @@ hsync_server:
 	$(CXX)	libSyncUpdate/hsync_server.cpp \
 		$(SERVER_OBJ) $(MD5_OBJ) $(LZMA_OBJ) $(CXXFLAGS) $(SYNC_LINK) -o hsync_server
 hsync_client_demo: 
-	$(CXX)	libSyncUpdate/hsync_client_demo.cpp libSyncUpdate/client_download_demo.cpp \
+	$(CXX)	libSyncUpdate/hsync_client_demo.cpp libSyncUpdate/client_download_emulation.cpp \
 		$(CLIENT_OBJ) $(MD5_OBJ) $(LZMA_DEC_OBJ) $(CXXFLAGS) $(SYNC_LINK) -o hsync_client_demo
-hsync_client_http: 
-	$(CXX)	libSyncUpdate/hsync_client_http.cpp libSyncUpdate/client_download_http/client_download_http.cpp \
+ifeq ($(_HTTP),0)
+  hsync_client_http: 
+else
+  hsync_client_http: 
+	$(CXX)	libSyncUpdate/hsync_client_http.cpp libSyncUpdate/client_download_http.cpp $(HTTP_OBJ) \
 		$(CLIENT_OBJ) $(MD5_OBJ) $(LZMA_DEC_OBJ) $(CXXFLAGS) $(SYNC_LINK) -o hsync_client_http
+endif
 
 RM := rm -f
 clean:
 	$(RM)	libsyncupdate.a hsync_server hsync_client_demo hsync_client_http \
-		$(SERVER_OBJ) $(CLIENT_OBJ) $(MD5_OBJ) $(LZMA_OBJ)
+		$(SERVER_OBJ) $(CLIENT_OBJ) $(MD5_OBJ) $(LZMA_OBJ) $(HTTP_OBJ)

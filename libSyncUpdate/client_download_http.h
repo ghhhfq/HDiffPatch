@@ -1,5 +1,5 @@
 //  client_download_http.h
-//  sync_client
+//  hsync_client_http: download by http(s) demo
 //  Created by housisong on 2020-01-29.
 /*
  The MIT License (MIT)
@@ -28,7 +28,7 @@
  */
 #ifndef client_download_http_h
 #define client_download_http_h
-#include "../sync_client/sync_client_type.h"
+#include "sync_client/sync_client_type.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -3,7 +3,23 @@ DIR_DIFF := 1
 MT       := 1
 LZMA     := 1
 MD5      := 0
-SYNC     := 0
+SYNC        := 0
+SYNC_HTTP   := 0
+SYNC_HTTPS  := 0
+
+ifeq ($(SYNC_HTTPS),0)
+  ifeq ($(SYNC_HTTP),0)
+    ifeq ($(SYNC),0)
+      _SYNC := 0
+    else
+      _SYNC := 1
+    endif
+  else
+    _SYNC := 1
+  endif
+else
+  _SYNC := 1
+endif
 
 
 HPATCH_OBJ := \
@@ -95,7 +111,6 @@ else
   DIFF_LINK += -lpthread
 endif
 
-
 CFLAGS   += $(DEF_FLAGS) 
 CXXFLAGS += $(DEF_FLAGS)
 
@@ -121,7 +136,7 @@ ifeq ($(LZMA),0)
   LZMA_DEC_OBJ :=
   LZMA_OBJ     :=
   lzmaLib      :
-else   # download LZMA from https://github.com/sisong/lzma/tree/pthread
+else  
   LZMA_DEC_OBJ := 'LzmaDec.o' 'Lzma2Dec.o' 
   LZMA_OBJ     := 'LzFind.o' 'LzmaEnc.o' 'Lzma2Enc.o' $(LZMA_DEC_OBJ)
   LZMA_SRC     := '../lzma/C/LzFind.c' '../lzma/C/LzmaDec.c' '../lzma/C/LzmaEnc.c' \
@@ -132,7 +147,7 @@ else   # download LZMA from https://github.com/sisong/lzma/tree/pthread
     LZMA_SRC += '../lzma/C/LzFindMt.c' '../lzma/C/MtCoder.c' \
 		   '../lzma/C/MtDec.c' '../lzma/C/ThreadsP.c' 
   endif
-  lzmaLib:
+  lzmaLib: # https://github.com/sisong/lzma
 	$(CC) -c $(CFLAGS) $(LZMA_SRC)
 endif
 
@@ -147,11 +162,11 @@ hpatchz:
 
 MAKE = make
 
-ifeq ($(SYNC),0)
+ifeq ($(_SYNC),0)
   make_sync:
 else
   make_sync:
-	$(MAKE) -f Makefile_sync DIR_DIFF=$(DIR_DIFF) LZMA=$(LZMA) MT=$(MT)
+	$(MAKE) -f Makefile_sync DIR_DIFF=$(DIR_DIFF) MT=$(MT) LZMA=$(LZMA) HTTP=$(SYNC_HTTP) HTTPS=$(SYNC_HTTPS)
 endif
 
 RM := rm -f

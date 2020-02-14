@@ -50,7 +50,7 @@
 
 #if (_IS_SYNC_PATCH_DEMO)
 //simple file demo plugin
-#   include "sync_client/client_download_emulation.h"
+#   include "client_download_emulation.h"
 hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin){
     out_downloadPlugin->download_part_open=downloadEmulation_open_by_file;
     out_downloadPlugin->download_part_close=downloadEmulation_close;

@@ -19,10 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{96EB12E1-3577-4E9F-8C78-FDB403F07288}</ProjectGuid>
+    <ProjectGuid>{8141E9CE-8FBA-47F7-8768-1EC549DB5A3B}</ProjectGuid>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <Keyword>ManagedCProj</Keyword>
-    <RootNamespace>sync_server</RootNamespace>
+    <RootNamespace>hsync_client_demo</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -91,6 +91,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_7ZIP_ST;_IS_USED_MULTITHREAD=1;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalOptions>/wd4819 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -104,6 +105,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_7ZIP_ST;_IS_USED_MULTITHREAD=1;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalOptions>/wd4819 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -116,6 +118,8 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;_7ZIP_ST;_IS_USED_MULTITHREAD=1;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalOptions>/wd4819 %(AdditionalOptions)</AdditionalOptions>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -128,6 +132,8 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;_7ZIP_ST;_IS_USED_MULTITHREAD=1;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalOptions>/wd4819 %(AdditionalOptions)</AdditionalOptions>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -136,44 +142,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
+    <ClCompile Include="..\..\libSyncUpdate\client_download_emulation.cpp" />
+    <ClCompile Include="..\..\libSyncUpdate\hsync_client_demo.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\libmd5\md5.c" />
-    <ClCompile Include="..\..\..\lzma\C\Alloc.c" />
-    <ClCompile Include="..\..\..\lzma\C\LzFind.c" />
-    <ClCompile Include="..\..\..\lzma\C\LzmaDec.c" />
-    <ClCompile Include="..\..\..\lzma\C\LzmaEnc.c" />
-    <ClCompile Include="..\..\..\zlib\adler32.c" />
-    <ClCompile Include="..\..\..\zlib\compress.c" />
-    <ClCompile Include="..\..\..\zlib\crc32.c" />
-    <ClCompile Include="..\..\..\zlib\deflate.c" />
-    <ClCompile Include="..\..\..\zlib\infback.c" />
-    <ClCompile Include="..\..\..\zlib\inffast.c" />
-    <ClCompile Include="..\..\..\zlib\inflate.c" />
-    <ClCompile Include="..\..\..\zlib\inftrees.c" />
-    <ClCompile Include="..\..\..\zlib\trees.c" />
-    <ClCompile Include="..\..\..\zlib\uncompr.c" />
-    <ClCompile Include="..\..\..\zlib\zutil.c" />
-    <ClCompile Include="..\..\dirDiffPatch\dir_diff\dir_diff_tools.cpp" />
-    <ClCompile Include="..\..\dirDiffPatch\dir_diff\dir_manifest.cpp" />
-    <ClCompile Include="..\..\dirDiffPatch\dir_patch\dir_patch_tools.c" />
-    <ClCompile Include="..\..\dirDiffPatch\dir_patch\new_dir_output.c" />
-    <ClCompile Include="..\..\dirDiffPatch\dir_patch\new_stream.c" />
-    <ClCompile Include="..\..\dirDiffPatch\dir_patch\ref_stream.c" />
-    <ClCompile Include="..\..\dirDiffPatch\dir_patch\res_handle_limit.c" />
-    <ClCompile Include="..\..\file_for_patch.c" />
-    <ClCompile Include="..\..\libHDiffPatch\HDiff\private_diff\limit_mem_diff\adler_roll.c" />
-    <ClCompile Include="..\..\libHDiffPatch\HPatch\patch.c" />
-    <ClCompile Include="..\..\libParallel\parallel_channel.cpp" />
-    <ClCompile Include="..\..\libParallel\parallel_import.cpp" />
-    <ClCompile Include="..\..\libSyncUpdate\hsync_server.cpp" />
-    <ClCompile Include="..\..\libSyncUpdate\sync_server\dir_sync_server.cpp" />
-    <ClCompile Include="..\..\libSyncUpdate\sync_server\match_in_new.cpp" />
-    <ClCompile Include="..\..\libSyncUpdate\sync_server\sync_info_server.cpp" />
-    <ClCompile Include="..\..\libSyncUpdate\sync_server\sync_server.cpp" />
+    <ClInclude Include="..\..\libSyncUpdate\client_download_emulation.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="libHSyncClient.vcxproj">
+      <Project>{ef87aac9-545b-4af6-a695-d7fc9d1670c2}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

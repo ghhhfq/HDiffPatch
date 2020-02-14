@@ -28,7 +28,7 @@
  */
 #ifndef client_download_emulation_h
 #define client_download_emulation_h
-#include "sync_client_type.h"
+#include "sync_client/sync_client_type.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

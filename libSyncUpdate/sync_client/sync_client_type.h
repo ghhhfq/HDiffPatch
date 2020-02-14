@@ -31,6 +31,7 @@
 #include "../../libHDiffPatch/HPatch/patch_types.h"
 #include "../../libHDiffPatch/HPatch/checksum_plugin.h"
 #include "../../dirDiffPatch/dir_patch/dir_patch_types.h"
+#include <stdint.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

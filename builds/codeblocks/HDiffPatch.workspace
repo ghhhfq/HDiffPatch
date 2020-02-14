@@ -3,8 +3,8 @@
 	<Workspace title="HDiffPatch_Workspace">
 		<Project filename="hdiffz.cbp" />
 		<Project filename="hpatchz.cbp" />
-		<Project filename="sync_server.cbp" />
-		<Project filename="sync_client_test.cbp" />
+		<Project filename="hsync_server.cbp" />
+		<Project filename="hsync_client_demo.cbp" />
 		<Project filename="unitTest.cbp" />
 	</Workspace>
 </CodeBlocks_workspace_file>

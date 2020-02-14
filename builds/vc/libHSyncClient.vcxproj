@@ -19,37 +19,35 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{63934A83-25F5-4161-B19D-DFBAB1C257F1}</ProjectGuid>
+    <ProjectGuid>{EF87AAC9-545B-4AF6-A695-D7FC9D1670C2}</ProjectGuid>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <Keyword>ManagedCProj</Keyword>
-    <RootNamespace>hdiffz</RootNamespace>
+    <RootNamespace>libHSyncClient</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CLRSupport>false</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CLRSupport>false</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CLRSupport>false</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CLRSupport>false</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -69,34 +67,27 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\..\..\zlib;..\..\..\bzip2;..\..\..\zstd\lib;..\..\..\zstd\lib\common;..\..\..\zstd\lib\compress;..\..\..\zstd\lib\decompress;..\..\..\lz4\lib;..\..\..\lzma\C;$(IncludePath)</IncludePath>
-    <ReferencePath>$(ReferencePath)</ReferencePath>
+    <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\..\..\zlib;..\..\..\bzip2;..\..\..\zstd\lib;..\..\..\zstd\lib\common;..\..\..\zstd\lib\compress;..\..\..\zstd\lib\decompress;..\..\..\lz4\lib;..\..\..\lzma\C;$(IncludePath)</IncludePath>
-    <ReferencePath>$(ReferencePath)</ReferencePath>
+    <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <IncludePath>..\..\..\zlib;..\..\..\bzip2;..\..\..\zstd\lib;..\..\..\zstd\lib\common;..\..\..\zstd\lib\compress;..\..\..\zstd\lib\decompress;..\..\..\lz4\lib;..\..\..\lzma\C;$(IncludePath)</IncludePath>
-    <ReferencePath>$(ReferencePath)</ReferencePath>
+    <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <IncludePath>..\..\..\zlib;..\..\..\bzip2;..\..\..\zstd\lib;..\..\..\zstd\lib\common;..\..\..\zstd\lib\compress;..\..\..\zstd\lib\decompress;..\..\..\lz4\lib;..\..\..\lzma\C;$(IncludePath)</IncludePath>
-    <ReferencePath>$(ReferencePath)</ReferencePath>
+    <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <CompileAs>Default</CompileAs>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalOptions>/wd4819 %(AdditionalOptions)</AdditionalOptions>
-      <ObjectFileName>$(IntDir)/obj/_/_/_/%(RelativeDir)/</ObjectFileName>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -109,9 +100,8 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <CompileAs>Default</CompileAs>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalOptions>/wd4819 %(AdditionalOptions)</AdditionalOptions>
-      <ObjectFileName>$(IntDir)/obj/_/_/_/%(RelativeDir)/</ObjectFileName>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -123,21 +113,11 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <CompileAs>Default</CompileAs>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <OmitFramePointers>true</OmitFramePointers>
-      <WholeProgramOptimization>true</WholeProgramOptimization>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
-      <FloatingPointModel>Fast</FloatingPointModel>
-      <FloatingPointExceptions>false</FloatingPointExceptions>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalOptions>/wd4819 %(AdditionalOptions)</AdditionalOptions>
-      <ObjectFileName>$(IntDir)/obj/_/_/_/%(RelativeDir)/</ObjectFileName>
     </ClCompile>
     <Link>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>
       </AdditionalDependencies>
     </Link>
@@ -146,82 +126,43 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <CompileAs>Default</CompileAs>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <OmitFramePointers>true</OmitFramePointers>
-      <WholeProgramOptimization>true</WholeProgramOptimization>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <FloatingPointModel>Fast</FloatingPointModel>
-      <FloatingPointExceptions>false</FloatingPointExceptions>
-      <CallingConvention>FastCall</CallingConvention>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalOptions>/wd4819 %(AdditionalOptions)</AdditionalOptions>
-      <ObjectFileName>$(IntDir)/obj/_/_/_/%(RelativeDir)/</ObjectFileName>
     </ClCompile>
     <Link>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>
       </AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\bzip2\blocksort.c" />
-    <ClCompile Include="..\..\..\bzip2\bzlib.c" />
-    <ClCompile Include="..\..\..\bzip2\compress.c" />
-    <ClCompile Include="..\..\..\bzip2\crctable.c" />
-    <ClCompile Include="..\..\..\bzip2\decompress.c" />
-    <ClCompile Include="..\..\..\bzip2\huffman.c" />
-    <ClCompile Include="..\..\..\bzip2\randtable.c" />
-    <ClCompile Include="..\..\..\lzma\C\Alloc.c" />
-    <ClCompile Include="..\..\..\lzma\C\LzFind.c" />
-    <ClCompile Include="..\..\..\lzma\C\LzFindMt.c" />
-    <ClCompile Include="..\..\..\lzma\C\Lzma2Dec.c" />
-    <ClCompile Include="..\..\..\lzma\C\Lzma2DecMt.c" />
-    <ClCompile Include="..\..\..\lzma\C\Lzma2Enc.c" />
+    <ClCompile Include="..\..\..\libmd5\md5.c" />
     <ClCompile Include="..\..\..\lzma\C\LzmaDec.c" />
-    <ClCompile Include="..\..\..\lzma\C\LzmaEnc.c" />
-    <ClCompile Include="..\..\..\lzma\C\MtCoder.c" />
-    <ClCompile Include="..\..\..\lzma\C\MtDec.c" />
-    <ClCompile Include="..\..\..\lzma\C\Threads.c" />
     <ClCompile Include="..\..\..\zlib\adler32.c" />
     <ClCompile Include="..\..\..\zlib\crc32.c" />
-    <ClCompile Include="..\..\..\zlib\deflate.c" />
     <ClCompile Include="..\..\..\zlib\infback.c" />
     <ClCompile Include="..\..\..\zlib\inffast.c" />
     <ClCompile Include="..\..\..\zlib\inflate.c" />
     <ClCompile Include="..\..\..\zlib\inftrees.c" />
     <ClCompile Include="..\..\..\zlib\trees.c" />
     <ClCompile Include="..\..\..\zlib\zutil.c" />
-    <ClCompile Include="..\..\compress_parallel.cpp" />
-    <ClCompile Include="..\..\dirDiffPatch\dir_diff\dir_diff.cpp" />
     <ClCompile Include="..\..\dirDiffPatch\dir_diff\dir_diff_tools.cpp" />
     <ClCompile Include="..\..\dirDiffPatch\dir_diff\dir_manifest.cpp" />
-    <ClCompile Include="..\..\dirDiffPatch\dir_patch\dir_patch.c" />
     <ClCompile Include="..\..\dirDiffPatch\dir_patch\dir_patch_tools.c" />
     <ClCompile Include="..\..\dirDiffPatch\dir_patch\new_dir_output.c" />
     <ClCompile Include="..\..\dirDiffPatch\dir_patch\new_stream.c" />
     <ClCompile Include="..\..\dirDiffPatch\dir_patch\ref_stream.c" />
     <ClCompile Include="..\..\dirDiffPatch\dir_patch\res_handle_limit.c" />
     <ClCompile Include="..\..\file_for_patch.c" />
-    <ClCompile Include="..\..\hdiffz.cpp" />
-    <ClCompile Include="..\..\libHDiffPatch\HDiff\diff.cpp" />
-    <ClCompile Include="..\..\libHDiffPatch\HDiff\private_diff\bytes_rle.cpp" />
-    <ClCompile Include="..\..\libHDiffPatch\HDiff\private_diff\compress_detect.cpp" />
-    <ClCompile Include="..\..\libHDiffPatch\HDiff\private_diff\libdivsufsort\divsufsort.c" />
-    <ClCompile Include="..\..\libHDiffPatch\HDiff\private_diff\libdivsufsort\divsufsort64.c" />
     <ClCompile Include="..\..\libHDiffPatch\HDiff\private_diff\limit_mem_diff\adler_roll.c" />
-    <ClCompile Include="..\..\libHDiffPatch\HDiff\private_diff\limit_mem_diff\digest_matcher.cpp" />
-    <ClCompile Include="..\..\libHDiffPatch\HDiff\private_diff\limit_mem_diff\stream_serialize.cpp" />
-    <ClCompile Include="..\..\libHDiffPatch\HDiff\private_diff\suffix_string.cpp" />
     <ClCompile Include="..\..\libHDiffPatch\HPatch\patch.c" />
     <ClCompile Include="..\..\libParallel\parallel_channel.cpp" />
     <ClCompile Include="..\..\libParallel\parallel_import.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\libHDiffPatch\HDiff\diff.h" />
-    <ClInclude Include="..\..\libHDiffPatch\HPatch\patch.h" />
+    <ClCompile Include="..\..\libSyncUpdate\sync_client\dir_sync_client.cpp" />
+    <ClCompile Include="..\..\libSyncUpdate\sync_client\match_in_old.cpp" />
+    <ClCompile Include="..\..\libSyncUpdate\sync_client\sync_client.cpp" />
+    <ClCompile Include="..\..\libSyncUpdate\sync_client\sync_diff_data.cpp" />
+    <ClCompile Include="..\..\libSyncUpdate\sync_client\sync_info_client.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

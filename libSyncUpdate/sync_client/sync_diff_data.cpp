@@ -27,7 +27,9 @@
  OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "sync_diff_data.h"
+#include <stdlib.h>
 #include <vector>
+#include <stdexcept>
 #include "match_in_old.h"
 #include "../../libHDiffPatch/HPatch/patch_private.h"
 typedef unsigned char TByte;
@@ -195,7 +197,7 @@ bool _loadSyncDiffData(TSyncDiffData* self,const hpatch_TStreamInput* in_diffStr
     self->localPatch_openOldPoss=_TSyncDiffData_openOldPoss;
     self->in_diffStream=in_diffStream;
     self->readedPos=0;
-    return _loadPoss(&self->localPoss,in_diffStream,&self->readedPos);
+    return 0!=_loadPoss(&self->localPoss,in_diffStream,&self->readedPos);
 }
 
 } //namespace sync_private
