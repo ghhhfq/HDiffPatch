@@ -50,8 +50,8 @@ static hpatch_BOOL _TRefStream_read_do(hpatch_TRefStream* self,hpatch_StreamPos_
         return hpatch_TRUE;
     }
     if (readPos+needOutSize>ref->streamSize){
-        memset(out_data+(ref->streamSize-readPos),0,(readPos+needOutSize)-ref->streamSize);
-        needOutSize=(ref->streamSize-readPos);
+        memset(out_data+(ref->streamSize-readPos),0,(size_t)((readPos+needOutSize)-ref->streamSize));
+        needOutSize=(size_t)(ref->streamSize-readPos);
     }
     return ref->read(ref,readPos,out_data,out_data+needOutSize);
 }

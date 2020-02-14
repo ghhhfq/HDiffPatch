@@ -175,7 +175,7 @@ INSTALL_BIN := $(DESTDIR)/usr/local/bin
 
 clean:
 	$(RM) libhdiffpatch.a hdiffz hpatchz $(HDIFF_OBJ) $(MD5_OBJ) $(LZMA_OBJ)
-	$(MAKE) -f Makefile_sync clean
+	$(MAKE) -f Makefile_sync DIR_DIFF=$(DIR_DIFF) MT=$(MT) LZMA=$(LZMA) HTTP=$(SYNC_HTTP) HTTPS=$(SYNC_HTTPS) clean
 
 install: all
 	$(INSTALL_X) hdiffz $(INSTALL_BIN)/hdiffz

@@ -29,9 +29,6 @@
 #ifndef client_download_http_h
 #define client_download_http_h
 #include "sync_client/sync_client_type.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 //download part of file by http(s)
 hpatch_BOOL download_part_by_http_open(IReadSyncDataListener* out_httpListener,const char* file_url,int threadNum);
@@ -40,9 +37,5 @@ hpatch_BOOL download_part_by_http_close(IReadSyncDataListener* httpListener);
 //download file by http(s)
 hpatch_BOOL download_file_by_http(const char* file_url,const hpatch_TStreamOutput* out_stream,
                                   hpatch_StreamPos_t continueDownloadPos,int threadNum);
-
-#ifdef __cplusplus
-}
-#endif
         
 #endif // client_download_http_h

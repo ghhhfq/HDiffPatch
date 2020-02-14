@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="hsync_client_http" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/hsync_client_http" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+				<Linker>
+					<Add library="bin/Debug/libHSyncClient.a" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/hsync_client_http" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-fomit-frame-pointer" />
+					<Add option="-O3" />
+					<Add option="-Wno-error=format-security" />
+					<Add option="-fvisibility=hidden -fvisibility-inlines-hidden" />
+					<Add option="-ffunction-sections -fdata-sections" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="-Wl,--gc-sections" />
+					<Add library="bin/Release/libHSyncClient.a" />
+				</Linker>
+			</Target>
+			<Target title="Release_x86">
+				<Option output="bin/Release_x86/hsync_client_http" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release_x86/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-march=i386" />
+					<Add option="-fomit-frame-pointer" />
+					<Add option="-O3" />
+					<Add option="-m32" />
+					<Add option="-Wno-error=format-security" />
+					<Add option="-fvisibility=hidden -fvisibility-inlines-hidden" />
+					<Add option="-ffunction-sections -fdata-sections" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="-m32" />
+					<Add option="-Wl,--gc-sections" />
+					<Add library="bin/Release_x86/libHSyncClient.a" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-fexceptions" />
+			<Add option="-D_FILE_OFFSET_BITS=64" />
+			<Add option="-D_7ZIP_ST" />
+			<Add option="-D_IS_USED_PTHREAD=1" />
+			<Add option="-DMINIHTTP_USE_MBEDTLS" />
+			<Add directory="../../../lzma/C/" />
+			<Add directory="../../../libmd5/" />
+			<Add directory="../../../minihttp" />
+			<Add directory="../../../minihttp/mbedtls/include" />
+			<Add directory="../../../minihttp/mbedtls/crypto/include" />
+		</Compiler>
+		<Linker>
+			<Add library="pthread" />
+		</Linker>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/aes.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/aesni.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/arc4.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/asn1parse.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/asn1write.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/base64.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/bignum.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/blowfish.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/camellia.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/ccm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/chacha20.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/chachapoly.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/cipher.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/cipher_wrap.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/ctr_drbg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/des.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/dhm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/ecdh.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/ecdsa.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/ecp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/ecp_curves.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/entropy.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/entropy_poll.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/gcm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/hmac_drbg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/md.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/md5.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/oid.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/padlock.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/pem.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/pk.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/pk_wrap.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/pkcs12.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/pkcs5.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/pkparse.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/platform_util.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/poly1305.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/ripemd160.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/rsa.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/rsa_internal.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/sha1.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/sha256.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/sha512.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/crypto/library/timing.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/library/certs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/library/debug.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/library/net_sockets.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/library/ssl_ciphersuites.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/library/ssl_cli.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/library/ssl_msg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/library/ssl_srv.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/library/ssl_tls.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/library/x509.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/mbedtls/library/x509_crt.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../minihttp/minihttp.cpp" />
+		<Unit filename="../../libSyncUpdate/client_download_http.cpp" />
+		<Unit filename="../../libSyncUpdate/hsync_client_http.cpp" />
+		<Extensions>
+			<envvars />
+			<code_completion />
+			<lib_finder disable_auto="1" />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

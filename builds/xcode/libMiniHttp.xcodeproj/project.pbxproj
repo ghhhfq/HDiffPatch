@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D694F9A323F6CC1E00D41FD7 /* padlock.c in Sources */ = {isa = PBXBuildFile; fileRef = D694F9A223F6CC1E00D41FD7 /* padlock.c */; };
 		D6C378D523F53A4F009A11D7 /* minihttp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D6C378D323F53A4F009A11D7 /* minihttp.cpp */; };
 		D6C378D623F53A4F009A11D7 /* minihttp.h in Headers */ = {isa = PBXBuildFile; fileRef = D6C378D423F53A4F009A11D7 /* minihttp.h */; };
 		D6C378E023F577F8009A11D7 /* x509_crt.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378DF23F577F8009A11D7 /* x509_crt.c */; };
@@ -65,6 +66,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		D694F9A223F6CC1E00D41FD7 /* padlock.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = padlock.c; path = ../../../minihttp/mbedtls/crypto/library/padlock.c; sourceTree = "<group>"; };
 		D6C378C623F538FE009A11D7 /* libMiniHttp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libMiniHttp.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		D6C378D323F53A4F009A11D7 /* minihttp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = minihttp.cpp; path = ../../../minihttp/minihttp.cpp; sourceTree = "<group>"; };
 		D6C378D423F53A4F009A11D7 /* minihttp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = minihttp.h; path = ../../../minihttp/minihttp.h; sourceTree = "<group>"; };
@@ -155,6 +157,7 @@
 		D6C378D923F541FF009A11D7 /* mbedtls */ = {
 			isa = PBXGroup;
 			children = (
+				D6C378DA23F5422E009A11D7 /* crypto */,
 				D6C3794723F5848C009A11D7 /* certs.c */,
 				D6C3792723F5806A009A11D7 /* debug.c */,
 				D6C3793F23F582A9009A11D7 /* net_sockets.c */,
@@ -165,7 +168,6 @@
 				D6C3791523F57EF2009A11D7 /* ssl_tls.c */,
 				D6C378EF23F57A1F009A11D7 /* x509.c */,
 				D6C378DF23F577F8009A11D7 /* x509_crt.c */,
-				D6C378DA23F5422E009A11D7 /* crypto */,
 			);
 			name = mbedtls;
 			sourceTree = "<group>";
@@ -201,6 +203,7 @@
 				D6C378FF23F57CC6009A11D7 /* md.c */,
 				D6C378E523F578D8009A11D7 /* md5.c */,
 				D6C378F323F57B36009A11D7 /* oid.c */,
+				D694F9A223F6CC1E00D41FD7 /* padlock.c */,
 				D6C378E323F578AF009A11D7 /* pem.c */,
 				D6C3791323F57E96009A11D7 /* platform_util.c */,
 				D6C378E123F57872009A11D7 /* pk.c */,
@@ -315,6 +318,7 @@
 				D6C378F823F57B9A009A11D7 /* ecp.c in Sources */,
 				D6C3792C23F580C6009A11D7 /* ssl_cli.c in Sources */,
 				D6C378F223F57AFC009A11D7 /* asn1parse.c in Sources */,
+				D694F9A323F6CC1E00D41FD7 /* padlock.c in Sources */,
 				D6C378F423F57B36009A11D7 /* oid.c in Sources */,
 				D6C3791023F57E0F009A11D7 /* sha256.c in Sources */,
 				D6C3792E23F580F4009A11D7 /* ssl_ciphersuites.c in Sources */,

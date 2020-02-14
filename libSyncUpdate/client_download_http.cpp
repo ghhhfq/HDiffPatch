@@ -43,11 +43,14 @@ using namespace hdiff_private;
 #endif
 using namespace minihttp;
 #if defined(_MSC_VER)
-#if defined(_WIN32_WCE)
-#pragma comment( lib, "ws2.lib" )
-#else
-#pragma comment( lib, "ws2_32.lib" )
-#endif
+#	ifdef MINIHTTP_USE_MBEDTLS
+#		pragma comment( lib, "Advapi32.lib" )
+#	endif
+#	if defined(_WIN32_WCE)
+#		pragma comment( lib, "ws2.lib" )
+#	else
+#		pragma comment( lib, "ws2_32.lib" )
+#	endif
 #endif /* _MSC_VER */
 
 bool doInitNetwork(){
@@ -101,6 +104,7 @@ struct THttpRangeDownload{
         hd.SetUserAgent(kHttpUserAgent);
         hd.SetKeepAlive(1);
     }
+    const std::string _file_url;
     THttpDownload   hd;
     TAutoMem        cache;
     size_t          readedSize;
@@ -108,7 +112,6 @@ struct THttpRangeDownload{
     const TNeedSyncInfos* nsi;
     virtual ~THttpRangeDownload(){}
     
-    const std::string _file_url;
     static hpatch_BOOL readSyncDataBegin(IReadSyncDataListener* listener,
                                          const TNeedSyncInfos* needSyncInfo){
         THttpRangeDownload* self=(THttpRangeDownload*)listener->readSyncDataImport;

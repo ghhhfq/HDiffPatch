@@ -150,7 +150,7 @@ else
                 'cipher_wrap.o' 'cipher.o' 'ctr_drbg.o' 'des.o' \
                 'dhm.o' 'ecdh.o' 'ecdsa.o' 'ecp.o' \
                 'ecp_curves.o' 'entropy_poll.o' 'entropy.o' 'gcm.o' \
-                'hmac_drbg.o' 'md.o' 'oid.o' \
+                'hmac_drbg.o' 'md.o' 'oid.o' 'padlock.o'\
                 'pem.o' 'platform_util.o' 'pk.o' 'pk_wrap.o' \
                 'pkcs12.o' 'pkcs5.o' 'pkparse.o' 'poly1305.o' \
                 'ripemd160.o' 'rsa_internal.o' 'rsa.o' 'sha1.o' \
@@ -165,7 +165,7 @@ else
                 $(crypto_C)/'cipher_wrap.c' $(crypto_C)/'cipher.c' $(crypto_C)/'ctr_drbg.c' $(crypto_C)/'des.c' \
                 $(crypto_C)/'dhm.c' $(crypto_C)/'ecdh.c' $(crypto_C)/'ecdsa.c' $(crypto_C)/'ecp.c' \
                 $(crypto_C)/'ecp_curves.c' $(crypto_C)/'entropy_poll.c' $(crypto_C)/'entropy.c' $(crypto_C)/'gcm.c' \
-                $(crypto_C)/'hmac_drbg.c' $(crypto_C)/'md.c' $(crypto_C)/'oid.c' \
+                $(crypto_C)/'hmac_drbg.c' $(crypto_C)/'md.c' $(crypto_C)/'oid.c' $(crypto_C)/'padlock.c' \
                 $(crypto_C)/'pem.c' $(crypto_C)/'platform_util.c' $(crypto_C)/'pk.c' $(crypto_C)/'pk_wrap.c' \
                 $(crypto_C)/'pkcs12.c' $(crypto_C)/'pkcs5.c' $(crypto_C)/'pkparse.c' $(crypto_C)/'poly1305.c' \
                 $(crypto_C)/'ripemd160.c' $(crypto_C)/'rsa_internal.c' $(crypto_C)/'rsa.c' $(crypto_C)/'sha1.c' \

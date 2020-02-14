@@ -3,8 +3,16 @@
 	<Workspace title="HDiffPatch_Workspace">
 		<Project filename="hdiffz.cbp" />
 		<Project filename="hpatchz.cbp" />
-		<Project filename="hsync_server.cbp" />
-		<Project filename="hsync_client_demo.cbp" />
+		<Project filename="hsync_server.cbp">
+			<Depends filename="libHSyncClient.cbp" />
+		</Project>
+		<Project filename="hsync_client_demo.cbp">
+			<Depends filename="libHSyncClient.cbp" />
+		</Project>
+		<Project filename="hsync_client_http.cbp">
+			<Depends filename="libHSyncClient.cbp" />
+		</Project>
+		<Project filename="libHSyncClient.cbp" />
 		<Project filename="unitTest.cbp" />
 	</Workspace>
 </CodeBlocks_workspace_file>

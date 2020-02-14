@@ -14,6 +14,9 @@
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
+				<Linker>
+					<Add library="bin/Debug/libHSyncClient.a" />
+				</Linker>
 			</Target>
 			<Target title="Release">
 				<Option output="bin/Release/hsync_server" prefix_auto="1" extension_auto="1" />
@@ -30,6 +33,7 @@
 				<Linker>
 					<Add option="-s" />
 					<Add option="-Wl,--gc-sections" />
+					<Add library="bin/Release/libHSyncClient.a" />
 				</Linker>
 			</Target>
 			<Target title="Release_x86">
@@ -50,6 +54,7 @@
 					<Add option="-s" />
 					<Add option="-m32" />
 					<Add option="-Wl,--gc-sections" />
+					<Add library="bin/Release_x86/libHSyncClient.a" />
 				</Linker>
 			</Target>
 		</Build>
@@ -65,70 +70,16 @@
 		<Linker>
 			<Add library="pthread" />
 		</Linker>
-		<Unit filename="../../../libmd5/md5.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="../../../lzma/C/LzFind.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../../lzma/C/LzmaEnc.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../zlib/adler32.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../zlib/compress.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../zlib/crc32.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="../../../zlib/deflate.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../zlib/inffast.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../zlib/inflate.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../zlib/inftrees.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../zlib/trees.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../zlib/zutil.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../dirDiffPatch/dir_diff/dir_diff_tools.cpp" />
-		<Unit filename="../../dirDiffPatch/dir_diff/dir_manifest.cpp" />
-		<Unit filename="../../dirDiffPatch/dir_patch/dir_patch_tools.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../dirDiffPatch/dir_patch/new_dir_output.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../dirDiffPatch/dir_patch/new_stream.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../dirDiffPatch/dir_patch/ref_stream.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../dirDiffPatch/dir_patch/res_handle_limit.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../file_for_patch.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../libHDiffPatch/HDiff/private_diff/limit_mem_diff/adler_roll.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../libHDiffPatch/HPatch/patch.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../libParallel/parallel_channel.cpp" />
-		<Unit filename="../../libParallel/parallel_import.cpp" />
+		<Unit filename="../../compress_parallel.cpp" />
 		<Unit filename="../../libSyncUpdate/hsync_server.cpp" />
 		<Unit filename="../../libSyncUpdate/sync_server/dir_sync_server.cpp" />
 		<Unit filename="../../libSyncUpdate/sync_server/match_in_new.cpp" />

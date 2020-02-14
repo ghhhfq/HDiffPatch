@@ -18,36 +18,92 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\aes.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\aesni.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\arc4.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\asn1parse.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\asn1write.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\base64.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\bignum.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\blowfish.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\camellia.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\ccm.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\chacha20.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\chachapoly.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\cipher.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\cipher_wrap.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\ctr_drbg.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\des.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\dhm.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\ecdh.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\ecdsa.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\ecp.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\ecp_curves.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\entropy.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\entropy_poll.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\gcm.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\hmac_drbg.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\md.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\md5.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\oid.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\padlock.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\pem.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\pk.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\pkcs12.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\pkcs5.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\pkparse.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\pk_wrap.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\platform.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\platform_util.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\poly1305.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\ripemd160.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\rsa.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\rsa_internal.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\sha1.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\sha256.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\sha512.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\crypto\library\timing.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\library\certs.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\library\debug.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\library\net_sockets.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\library\ssl_ciphersuites.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\library\ssl_cli.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\library\ssl_msg.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\library\ssl_srv.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\library\ssl_tls.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\library\x509.c" />
+    <ClCompile Include="..\..\..\minihttp\mbedtls\library\x509_crt.c" />
+    <ClCompile Include="..\..\..\minihttp\minihttp.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{96EB12E1-3577-4E9F-8C78-FDB403F07288}</ProjectGuid>
+    <ProjectGuid>{C42DF744-5AF5-3049-5D78-C073D5A745C2}</ProjectGuid>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <Keyword>ManagedCProj</Keyword>
-    <RootNamespace>hsync_server</RootNamespace>
+    <RootNamespace>libMiniHttp</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CLRSupport>false</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
-    <WholeProgramOptimization>false</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CLRSupport>false</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
-    <WholeProgramOptimization>false</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CLRSupport>false</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CLRSupport>false</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
@@ -71,35 +127,37 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\..\..\zlib;..\..\..\lzma\C;..\..\..\libmd5;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
+    <TargetExt>.lib</TargetExt>
+    <IncludePath>..\..\..\minihttp\mbedtls\include;..\..\..\minihttp\mbedtls\crypto\include;$(IncludePath)</IncludePath>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(Configuration)\$(Platform)\obj\</IntDir>
+    <IntDir>$(Configuration)\$(Platform)\libobj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\..\..\zlib;..\..\..\lzma\C;..\..\..\libmd5;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
+    <TargetExt>.lib</TargetExt>
+    <IncludePath>..\..\..\minihttp\mbedtls\include;..\..\..\minihttp\mbedtls\crypto\include;$(IncludePath)</IncludePath>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(Configuration)\$(Platform)\obj\</IntDir>
+    <IntDir>$(Configuration)\$(Platform)\libobj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <IncludePath>..\..\..\zlib;..\..\..\lzma\C;..\..\..\libmd5;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
+    <TargetExt>.lib</TargetExt>
+    <IncludePath>..\..\..\minihttp\mbedtls\include;..\..\..\minihttp\mbedtls\crypto\include;$(IncludePath)</IncludePath>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(Configuration)\$(Platform)\obj\</IntDir>
+    <IntDir>$(Configuration)\$(Platform)\libobj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <IncludePath>..\..\..\zlib;..\..\..\lzma\C;..\..\..\libmd5;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
+    <TargetExt>.lib</TargetExt>
+    <IncludePath>..\..\..\minihttp\mbedtls\include;..\..\..\minihttp\mbedtls\crypto\include;$(IncludePath)</IncludePath>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(Configuration)\$(Platform)\obj\</IntDir>
+    <IntDir>$(Configuration)\$(Platform)\libobj\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_7ZIP_ST;_IS_USED_MULTITHREAD=1;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;MINIHTTP_USE_MBEDTLS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalOptions>/wd4819 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -113,7 +171,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_7ZIP_ST;_IS_USED_MULTITHREAD=1;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;MINIHTTP_USE_MBEDTLS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalOptions>/wd4819 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -126,9 +184,10 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;_7ZIP_ST;_IS_USED_MULTITHREAD=1;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;MINIHTTP_USE_MBEDTLS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalOptions>/wd4819 %(AdditionalOptions)</AdditionalOptions>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -139,9 +198,10 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;_7ZIP_ST;_IS_USED_MULTITHREAD=1;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;MINIHTTP_USE_MBEDTLS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalOptions>/wd4819 %(AdditionalOptions)</AdditionalOptions>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -149,22 +209,6 @@
       </AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\..\lzma\C\Alloc.c" />
-    <ClCompile Include="..\..\..\lzma\C\LzFind.c" />
-    <ClCompile Include="..\..\..\lzma\C\LzmaEnc.c" />
-    <ClCompile Include="..\..\..\zlib\deflate.c" />
-    <ClCompile Include="..\..\libSyncUpdate\hsync_server.cpp" />
-    <ClCompile Include="..\..\libSyncUpdate\sync_server\dir_sync_server.cpp" />
-    <ClCompile Include="..\..\libSyncUpdate\sync_server\match_in_new.cpp" />
-    <ClCompile Include="..\..\libSyncUpdate\sync_server\sync_info_server.cpp" />
-    <ClCompile Include="..\..\libSyncUpdate\sync_server\sync_server.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="libHSyncClient.vcxproj">
-      <Project>{ef87aac9-545b-4af6-a695-d7fc9d1670c2}</Project>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
