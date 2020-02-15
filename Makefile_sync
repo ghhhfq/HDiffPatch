@@ -95,7 +95,7 @@ ifeq ($(HTTPS),0)
 else
   mbedtls_H := $(HTTP_PATH)'/mbedtls/include'
   crypto_H  := $(HTTP_PATH)'/mbedtls/crypto/include'
-  DEF_FLAGS += -DMINIHTTP_USE_MBEDTLS  -I$(mbedtls_H) -I$(crypto_H)
+  DEF_FLAGS += -I$(mbedtls_H) -I$(crypto_H)
 endif
 
 
@@ -110,7 +110,8 @@ CXXFLAGS += $(DEF_FLAGS)
 
 .PHONY: all clean
 
-all: md5Lib lzmaLib httpLib httpLib_md5 libsyncupdate.a hsync_server hsync_client_demo hsync_client_http
+all: md5Lib lzmaLib httpLib httpsLib httpsLib_mini httpsLib_md5 libsyncupdate.a \
+	hsync_server hsync_client_demo hsync_client_http hsync_client_https
 
 MD5_OBJ     := 'md5.o'
 md5Lib      : # https://sourceforge.net/projects/libmd5-rfc  https://github.com/sisong/libmd5
@@ -130,17 +131,25 @@ endif
 
 ifeq ($(_HTTP),0)
   HTTP_OBJ    :=
+  HTTPS_OBJ   :=
   httpLib     :
-  httpLib_md5 :
+  httpsLib    :
+  httpsLib_md5:
+  httpsLib_mini:
 else
   HTTP_OBJ := 'minihttp.o'
   HTTP_SRC := $(HTTP_PATH)'/minihttp.cpp'
+  httpLib: # https://github.com/sisong/minihttp
+	$(CC) -c $(CXXFLAGS) $(HTTP_SRC)
   ifeq ($(HTTPS),0)
-    httpLib_md5:
+    HTTPS_OBJ   := $(HTTP_OBJ)
+    httpsLib    :
+    httpsLib_md5:
+    httpsLib_mini:
   else
     mbedtls_C := $(HTTP_PATH)'/mbedtls/library'
     crypto_C  := $(HTTP_PATH)'/mbedtls/crypto/library'
-    HTTP_OBJ += 'certs.o' 'debug.o' 'net_sockets.o' \
+    HTTPS_OBJ :='certs.o' 'debug.o' 'net_sockets.o' \
                 'ssl_cli.o' 'ssl_ciphersuites.o' \
                 'ssl_msg.o' 'ssl_srv.o' 'ssl_tls.o' \
                 'x509.o' 'x509_crt.o' \
@@ -155,7 +164,7 @@ else
                 'pkcs12.o' 'pkcs5.o' 'pkparse.o' 'poly1305.o' \
                 'ripemd160.o' 'rsa_internal.o' 'rsa.o' 'sha1.o' \
                 'sha256.o' 'sha512.o' 'timing.o'
-    HTTP_SRC += $(mbedtls_C)/'certs.c'    $(mbedtls_C)/'debug.c'    $(mbedtls_C)/'net_sockets.c' \
+    HTTPS_SRC :=$(mbedtls_C)/'certs.c'    $(mbedtls_C)/'debug.c'    $(mbedtls_C)/'net_sockets.c' \
                 $(mbedtls_C)/'ssl_cli.c'  $(mbedtls_C)/'ssl_ciphersuites.c' \
                 $(mbedtls_C)/'ssl_msg.c'  $(mbedtls_C)/'ssl_srv.c'  $(mbedtls_C)/'ssl_tls.c' \
                 $(mbedtls_C)/'x509.c'     $(mbedtls_C)/'x509_crt.c' \
@@ -170,16 +179,18 @@ else
                 $(crypto_C)/'pkcs12.c' $(crypto_C)/'pkcs5.c' $(crypto_C)/'pkparse.c' $(crypto_C)/'poly1305.c' \
                 $(crypto_C)/'ripemd160.c' $(crypto_C)/'rsa_internal.c' $(crypto_C)/'rsa.c' $(crypto_C)/'sha1.c' \
                 $(crypto_C)/'sha256.c' $(crypto_C)/'sha512.c' $(crypto_C)/'timing.c'
-    HTTP_OBJ += 'crypto_md5.o'
-    httpLib_md5:
+    HTTPS_OBJ +='crypto_md5.o' 'minihttps.o'
+    httpsLib_md5:
 	$(CC) -c $(CFLAGS) $(crypto_C)/'md5.c' -o 'crypto_md5.o'
+    httpsLib_mini:
+	$(CC) -c $(CXXFLAGS) -DMINIHTTP_USE_MBEDTLS $(HTTP_SRC) -DMINIHTTP_USE_MBEDTLS -o 'minihttps.o'
+    httpsLib: # https://github.com/sisong/minihttp
+	$(CC) -c $(CFLAGS) $(HTTPS_SRC)
   endif
-  httpLib: # https://github.com/sisong/minihttp
-	$(CC) -c $(CFLAGS) $(HTTP_SRC)
 endif
 
 
-libsyncupdate.a: $(SERVER_OBJ) $(CLIENT_OBJ)
+libsyncupdate.a: $(SERVER_OBJ)
 	$(AR) rcs $@ $^
 
 hsync_server: 
@@ -195,8 +206,15 @@ else
 	$(CXX)	libSyncUpdate/hsync_client_http.cpp libSyncUpdate/client_download_http.cpp $(HTTP_OBJ) \
 		$(CLIENT_OBJ) $(MD5_OBJ) $(LZMA_DEC_OBJ) $(CXXFLAGS) $(SYNC_LINK) -o hsync_client_http
 endif
+ifeq ($(HTTPS),0)
+  hsync_client_https: 
+else
+  hsync_client_https: 
+	$(CXX)	libSyncUpdate/hsync_client_http.cpp libSyncUpdate/client_download_http.cpp $(HTTPS_OBJ) \
+		$(CLIENT_OBJ) $(MD5_OBJ) $(LZMA_DEC_OBJ) $(CXXFLAGS) $(SYNC_LINK) -o hsync_client_https
+endif
 
 RM := rm -f
 clean:
-	$(RM)	libsyncupdate.a hsync_server hsync_client_demo hsync_client_http \
-		$(SERVER_OBJ) $(CLIENT_OBJ) $(MD5_OBJ) $(LZMA_OBJ) $(HTTP_OBJ)
+	$(RM)	libsyncupdate.a hsync_server hsync_client_demo hsync_client_http hsync_client_https \
+		$(SERVER_OBJ) $(MD5_OBJ) $(LZMA_OBJ) $(HTTPS_OBJ)

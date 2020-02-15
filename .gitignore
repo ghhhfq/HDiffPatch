@@ -24,3 +24,5 @@ hpatchz
 hsync_client_demo
 hsync_client_http
 hsync_server
+hsync_client_https
+builds/vc/Release_https

@@ -30,12 +30,19 @@ script:
 - git clone https://github.com/sisong/libmd5.git ../libmd5
 - make DIR_DIFF=0 LZMA=0 MD5=1 MT=0 SYNC=1
 - make clean
-
 - make DIR_DIFF=1 LZMA=1 MD5=1 MT=1 SYNC=1
+- make clean
+
+- git clone https://github.com/sisong/minihttp.git --recursive ../minihttp
+- make DIR_DIFF=1 LZMA=1 MD5=1 MT=1 SYNC_HTTP=1
+- make clean
+- make DIR_DIFF=1 LZMA=1 MD5=1 MT=1 SYNC_HTTPS=1
 
 - if [[ $TRAVIS_OS_NAME == osx ]]; then xcodebuild -workspace builds/xcode/HDiffPatch.xcworkspace -scheme hdiffz -configuration Release OBJROOT=$PWD/bin SYMROOT=$PWD/bin; fi
 - if [[ $TRAVIS_OS_NAME == osx ]]; then xcodebuild -workspace builds/xcode/HDiffPatch.xcworkspace -scheme hpatchz -configuration Release OBJROOT=$PWD/bin SYMROOT=$PWD/bin; fi
 - if [[ $TRAVIS_OS_NAME == osx ]]; then xcodebuild -workspace builds/xcode/HDiffPatch.xcworkspace -scheme unitTest -configuration Release OBJROOT=$PWD/bin SYMROOT=$PWD/bin; fi
 - if [[ $TRAVIS_OS_NAME == osx ]]; then xcodebuild -workspace builds/xcode/HDiffPatch.xcworkspace -scheme hsync_server -configuration Release OBJROOT=$PWD/bin SYMROOT=$PWD/bin; fi
-- if [[ $TRAVIS_OS_NAME == osx ]]; then xcodebuild -workspace builds/xcode/HDiffPatch.xcworkspace -scheme hsync_client_test -configuration Release OBJROOT=$PWD/bin SYMROOT=$PWD/bin; fi
+- if [[ $TRAVIS_OS_NAME == osx ]]; then xcodebuild -workspace builds/xcode/HDiffPatch.xcworkspace -scheme hsync_client_demo -configuration Release OBJROOT=$PWD/bin SYMROOT=$PWD/bin; fi
+- if [[ $TRAVIS_OS_NAME == osx ]]; then xcodebuild -workspace builds/xcode/HDiffPatch.xcworkspace -scheme hsync_client_http -configuration Release OBJROOT=$PWD/bin SYMROOT=$PWD/bin; fi
+- if [[ $TRAVIS_OS_NAME == osx ]]; then xcodebuild -workspace builds/xcode/HDiffPatch.xcworkspace -scheme hsync_client_https -configuration Release OBJROOT=$PWD/bin SYMROOT=$PWD/bin; fi
 

@@ -7,66 +7,69 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D694F9A323F6CC1E00D41FD7 /* padlock.c in Sources */ = {isa = PBXBuildFile; fileRef = D694F9A223F6CC1E00D41FD7 /* padlock.c */; };
+		D694F9A623F7C0E400D41FD7 /* minihttp.h in Headers */ = {isa = PBXBuildFile; fileRef = D6C378D423F53A4F009A11D7 /* minihttp.h */; };
+		D694F9A823F7C0E400D41FD7 /* chacha20.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3792123F57FFC009A11D7 /* chacha20.c */; };
+		D694F9A923F7C0E400D41FD7 /* pem.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378E323F578AF009A11D7 /* pem.c */; };
+		D694F9AA23F7C0E400D41FD7 /* pkparse.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378F523F57B6C009A11D7 /* pkparse.c */; };
+		D694F9AB23F7C0E400D41FD7 /* camellia.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3793123F58164009A11D7 /* camellia.c */; };
+		D694F9AC23F7C0E400D41FD7 /* debug.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3792723F5806A009A11D7 /* debug.c */; };
+		D694F9AD23F7C0E400D41FD7 /* asn1write.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3790523F57D3E009A11D7 /* asn1write.c */; };
+		D694F9AE23F7C0E400D41FD7 /* md5.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378E523F578D8009A11D7 /* md5.c */; };
+		D694F9AF23F7C0E400D41FD7 /* ecp_curves.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3790923F57DA5009A11D7 /* ecp_curves.c */; };
+		D694F9B023F7C0E400D41FD7 /* des.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378EB23F579B7009A11D7 /* des.c */; };
+		D694F9B123F7C0E400D41FD7 /* ctr_drbg.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3793D23F5826E009A11D7 /* ctr_drbg.c */; };
+		D694F9B223F7C0E400D41FD7 /* ecdsa.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3790323F57D17009A11D7 /* ecdsa.c */; };
+		D694F9B323F7C0E400D41FD7 /* pkcs5.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3794523F5842E009A11D7 /* pkcs5.c */; };
+		D694F9B423F7C0E400D41FD7 /* pk_wrap.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378FD23F57C9B009A11D7 /* pk_wrap.c */; };
+		D694F9B523F7C0E400D41FD7 /* entropy_poll.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3793923F58203009A11D7 /* entropy_poll.c */; };
+		D694F9B623F7C0E400D41FD7 /* entropy.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3793723F581DD009A11D7 /* entropy.c */; };
+		D694F9B723F7C0E400D41FD7 /* certs.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3794723F5848C009A11D7 /* certs.c */; };
+		D694F9B823F7C0E400D41FD7 /* hmac_drbg.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3790723F57D6B009A11D7 /* hmac_drbg.c */; };
+		D694F9B923F7C0E400D41FD7 /* ccm.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3791B23F57F7C009A11D7 /* ccm.c */; };
+		D694F9BA23F7C0E400D41FD7 /* bignum.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378F923F57BCB009A11D7 /* bignum.c */; };
+		D694F9BB23F7C0E400D41FD7 /* platform_util.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3791323F57E96009A11D7 /* platform_util.c */; };
+		D694F9BC23F7C0E400D41FD7 /* pk.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378E123F57872009A11D7 /* pk.c */; };
+		D694F9BD23F7C0E400D41FD7 /* base64.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378ED23F579EA009A11D7 /* base64.c */; };
+		D694F9BE23F7C0E400D41FD7 /* cipher_wrap.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3792F23F58135009A11D7 /* cipher_wrap.c */; };
+		D694F9BF23F7C0E400D41FD7 /* ripemd160.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3791123F57E30009A11D7 /* ripemd160.c */; };
+		D694F9C023F7C0E400D41FD7 /* sha1.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3790B23F57DCF009A11D7 /* sha1.c */; };
+		D694F9C123F7C0E400D41FD7 /* ecp.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378F723F57B9A009A11D7 /* ecp.c */; };
+		D694F9C223F7C0E400D41FD7 /* ssl_cli.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3792B23F580C6009A11D7 /* ssl_cli.c */; };
+		D694F9C323F7C0E400D41FD7 /* asn1parse.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378F123F57AFC009A11D7 /* asn1parse.c */; };
+		D694F9C423F7C0E400D41FD7 /* padlock.c in Sources */ = {isa = PBXBuildFile; fileRef = D694F9A223F6CC1E00D41FD7 /* padlock.c */; };
+		D694F9C523F7C0E400D41FD7 /* oid.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378F323F57B36009A11D7 /* oid.c */; };
+		D694F9C623F7C0E400D41FD7 /* sha256.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3790F23F57E0F009A11D7 /* sha256.c */; };
+		D694F9C723F7C0E400D41FD7 /* ssl_ciphersuites.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3792D23F580F4009A11D7 /* ssl_ciphersuites.c */; };
+		D694F9C823F7C0E400D41FD7 /* poly1305.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3791F23F57FC9009A11D7 /* poly1305.c */; };
+		D694F9C923F7C0E400D41FD7 /* x509.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378EF23F57A1F009A11D7 /* x509.c */; };
+		D694F9CA23F7C0E400D41FD7 /* aes.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378E723F5791A009A11D7 /* aes.c */; };
+		D694F9CB23F7C0E400D41FD7 /* net_sockets.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3793F23F582A9009A11D7 /* net_sockets.c */; };
+		D694F9CC23F7C0E400D41FD7 /* blowfish.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3793323F58195009A11D7 /* blowfish.c */; };
+		D694F9CD23F7C0E400D41FD7 /* chachapoly.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3791D23F57FA6009A11D7 /* chachapoly.c */; };
+		D694F9CE23F7C0E400D41FD7 /* timing.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3793B23F58232009A11D7 /* timing.c */; };
+		D694F9CF23F7C0E400D41FD7 /* ecdh.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3792923F5808A009A11D7 /* ecdh.c */; };
+		D694F9D023F7C0E400D41FD7 /* pkcs12.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3794323F58413009A11D7 /* pkcs12.c */; };
+		D694F9D123F7C0E400D41FD7 /* rsa.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378FB23F57BFA009A11D7 /* rsa.c */; };
+		D694F9D223F7C0E400D41FD7 /* sha512.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3790D23F57DF2009A11D7 /* sha512.c */; };
+		D694F9D323F7C0E400D41FD7 /* minihttp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D6C378D323F53A4F009A11D7 /* minihttp.cpp */; };
+		D694F9D423F7C0E400D41FD7 /* x509_crt.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378DF23F577F8009A11D7 /* x509_crt.c */; };
+		D694F9D523F7C0E400D41FD7 /* ssl_tls.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3791523F57EF2009A11D7 /* ssl_tls.c */; };
+		D694F9D623F7C0E400D41FD7 /* dhm.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3792523F5803D009A11D7 /* dhm.c */; };
+		D694F9D723F7C0E400D41FD7 /* md.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378FF23F57CC6009A11D7 /* md.c */; };
+		D694F9D823F7C0E400D41FD7 /* rsa_internal.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3790123F57CED009A11D7 /* rsa_internal.c */; };
+		D694F9D923F7C0E400D41FD7 /* arc4.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3793523F581B3009A11D7 /* arc4.c */; };
+		D694F9DA23F7C0E400D41FD7 /* ssl_msg.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3791723F57F2F009A11D7 /* ssl_msg.c */; };
+		D694F9DB23F7C0E400D41FD7 /* gcm.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3792323F5801C009A11D7 /* gcm.c */; };
+		D694F9DC23F7C0E400D41FD7 /* cipher.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3791923F57F57009A11D7 /* cipher.c */; };
+		D694F9DD23F7C0E400D41FD7 /* ssl_srv.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3794123F582D9009A11D7 /* ssl_srv.c */; };
+		D694F9DE23F7C0E400D41FD7 /* aesni.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378E923F5793D009A11D7 /* aesni.c */; };
 		D6C378D523F53A4F009A11D7 /* minihttp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D6C378D323F53A4F009A11D7 /* minihttp.cpp */; };
 		D6C378D623F53A4F009A11D7 /* minihttp.h in Headers */ = {isa = PBXBuildFile; fileRef = D6C378D423F53A4F009A11D7 /* minihttp.h */; };
-		D6C378E023F577F8009A11D7 /* x509_crt.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378DF23F577F8009A11D7 /* x509_crt.c */; };
-		D6C378E223F57872009A11D7 /* pk.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378E123F57872009A11D7 /* pk.c */; };
-		D6C378E423F578AF009A11D7 /* pem.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378E323F578AF009A11D7 /* pem.c */; };
-		D6C378E623F578D8009A11D7 /* md5.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378E523F578D8009A11D7 /* md5.c */; };
-		D6C378E823F5791A009A11D7 /* aes.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378E723F5791A009A11D7 /* aes.c */; };
-		D6C378EA23F5793D009A11D7 /* aesni.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378E923F5793D009A11D7 /* aesni.c */; };
-		D6C378EC23F579B7009A11D7 /* des.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378EB23F579B7009A11D7 /* des.c */; };
-		D6C378EE23F579EA009A11D7 /* base64.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378ED23F579EA009A11D7 /* base64.c */; };
-		D6C378F023F57A1F009A11D7 /* x509.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378EF23F57A1F009A11D7 /* x509.c */; };
-		D6C378F223F57AFC009A11D7 /* asn1parse.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378F123F57AFC009A11D7 /* asn1parse.c */; };
-		D6C378F423F57B36009A11D7 /* oid.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378F323F57B36009A11D7 /* oid.c */; };
-		D6C378F623F57B6C009A11D7 /* pkparse.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378F523F57B6C009A11D7 /* pkparse.c */; };
-		D6C378F823F57B9A009A11D7 /* ecp.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378F723F57B9A009A11D7 /* ecp.c */; };
-		D6C378FA23F57BCB009A11D7 /* bignum.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378F923F57BCB009A11D7 /* bignum.c */; };
-		D6C378FC23F57BFA009A11D7 /* rsa.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378FB23F57BFA009A11D7 /* rsa.c */; };
-		D6C378FE23F57C9B009A11D7 /* pk_wrap.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378FD23F57C9B009A11D7 /* pk_wrap.c */; };
-		D6C3790023F57CC6009A11D7 /* md.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C378FF23F57CC6009A11D7 /* md.c */; };
-		D6C3790223F57CED009A11D7 /* rsa_internal.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3790123F57CED009A11D7 /* rsa_internal.c */; };
-		D6C3790423F57D17009A11D7 /* ecdsa.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3790323F57D17009A11D7 /* ecdsa.c */; };
-		D6C3790623F57D3F009A11D7 /* asn1write.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3790523F57D3E009A11D7 /* asn1write.c */; };
-		D6C3790823F57D6B009A11D7 /* hmac_drbg.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3790723F57D6B009A11D7 /* hmac_drbg.c */; };
-		D6C3790A23F57DA5009A11D7 /* ecp_curves.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3790923F57DA5009A11D7 /* ecp_curves.c */; };
-		D6C3790C23F57DCF009A11D7 /* sha1.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3790B23F57DCF009A11D7 /* sha1.c */; };
-		D6C3790E23F57DF2009A11D7 /* sha512.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3790D23F57DF2009A11D7 /* sha512.c */; };
-		D6C3791023F57E0F009A11D7 /* sha256.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3790F23F57E0F009A11D7 /* sha256.c */; };
-		D6C3791223F57E30009A11D7 /* ripemd160.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3791123F57E30009A11D7 /* ripemd160.c */; };
-		D6C3791423F57E96009A11D7 /* platform_util.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3791323F57E96009A11D7 /* platform_util.c */; };
-		D6C3791623F57EF2009A11D7 /* ssl_tls.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3791523F57EF2009A11D7 /* ssl_tls.c */; };
-		D6C3791823F57F2F009A11D7 /* ssl_msg.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3791723F57F2F009A11D7 /* ssl_msg.c */; };
-		D6C3791A23F57F57009A11D7 /* cipher.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3791923F57F57009A11D7 /* cipher.c */; };
-		D6C3791C23F57F7C009A11D7 /* ccm.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3791B23F57F7C009A11D7 /* ccm.c */; };
-		D6C3791E23F57FA6009A11D7 /* chachapoly.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3791D23F57FA6009A11D7 /* chachapoly.c */; };
-		D6C3792023F57FC9009A11D7 /* poly1305.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3791F23F57FC9009A11D7 /* poly1305.c */; };
-		D6C3792223F57FFC009A11D7 /* chacha20.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3792123F57FFC009A11D7 /* chacha20.c */; };
-		D6C3792423F5801C009A11D7 /* gcm.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3792323F5801C009A11D7 /* gcm.c */; };
-		D6C3792623F5803D009A11D7 /* dhm.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3792523F5803D009A11D7 /* dhm.c */; };
-		D6C3792823F5806A009A11D7 /* debug.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3792723F5806A009A11D7 /* debug.c */; };
-		D6C3792A23F5808A009A11D7 /* ecdh.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3792923F5808A009A11D7 /* ecdh.c */; };
-		D6C3792C23F580C6009A11D7 /* ssl_cli.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3792B23F580C6009A11D7 /* ssl_cli.c */; };
-		D6C3792E23F580F4009A11D7 /* ssl_ciphersuites.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3792D23F580F4009A11D7 /* ssl_ciphersuites.c */; };
-		D6C3793023F58135009A11D7 /* cipher_wrap.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3792F23F58135009A11D7 /* cipher_wrap.c */; };
-		D6C3793223F58164009A11D7 /* camellia.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3793123F58164009A11D7 /* camellia.c */; };
-		D6C3793423F58195009A11D7 /* blowfish.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3793323F58195009A11D7 /* blowfish.c */; };
-		D6C3793623F581B3009A11D7 /* arc4.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3793523F581B3009A11D7 /* arc4.c */; };
-		D6C3793823F581DD009A11D7 /* entropy.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3793723F581DD009A11D7 /* entropy.c */; };
-		D6C3793A23F58203009A11D7 /* entropy_poll.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3793923F58203009A11D7 /* entropy_poll.c */; };
-		D6C3793C23F58232009A11D7 /* timing.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3793B23F58232009A11D7 /* timing.c */; };
-		D6C3793E23F5826E009A11D7 /* ctr_drbg.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3793D23F5826E009A11D7 /* ctr_drbg.c */; };
-		D6C3794023F582A9009A11D7 /* net_sockets.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3793F23F582A9009A11D7 /* net_sockets.c */; };
-		D6C3794223F582D9009A11D7 /* ssl_srv.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3794123F582D9009A11D7 /* ssl_srv.c */; };
-		D6C3794423F58413009A11D7 /* pkcs12.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3794323F58413009A11D7 /* pkcs12.c */; };
-		D6C3794623F5842E009A11D7 /* pkcs5.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3794523F5842E009A11D7 /* pkcs5.c */; };
-		D6C3794823F5848C009A11D7 /* certs.c in Sources */ = {isa = PBXBuildFile; fileRef = D6C3794723F5848C009A11D7 /* certs.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		D694F9A223F6CC1E00D41FD7 /* padlock.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = padlock.c; path = ../../../minihttp/mbedtls/crypto/library/padlock.c; sourceTree = "<group>"; };
+		D694F9E323F7C0E400D41FD7 /* libMiniHttps.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libMiniHttps.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		D6C378C623F538FE009A11D7 /* libMiniHttp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libMiniHttp.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		D6C378D323F53A4F009A11D7 /* minihttp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = minihttp.cpp; path = ../../../minihttp/minihttp.cpp; sourceTree = "<group>"; };
 		D6C378D423F53A4F009A11D7 /* minihttp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = minihttp.h; path = ../../../minihttp/minihttp.h; sourceTree = "<group>"; };
@@ -126,6 +129,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		D694F9DF23F7C0E400D41FD7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D6C378C423F538FE009A11D7 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -150,6 +160,7 @@
 			isa = PBXGroup;
 			children = (
 				D6C378C623F538FE009A11D7 /* libMiniHttp.a */,
+				D694F9E323F7C0E400D41FD7 /* libMiniHttps.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -226,6 +237,14 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
+		D694F9A523F7C0E400D41FD7 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D694F9A623F7C0E400D41FD7 /* minihttp.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D6C378C223F538FE009A11D7 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -237,6 +256,23 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		D694F9A423F7C0E400D41FD7 /* libMiniHttps */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D694F9E023F7C0E400D41FD7 /* Build configuration list for PBXNativeTarget "libMiniHttps" */;
+			buildPhases = (
+				D694F9A523F7C0E400D41FD7 /* Headers */,
+				D694F9A723F7C0E400D41FD7 /* Sources */,
+				D694F9DF23F7C0E400D41FD7 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = libMiniHttps;
+			productName = libMiniHttp;
+			productReference = D694F9E323F7C0E400D41FD7 /* libMiniHttps.a */;
+			productType = "com.apple.product-type.library.static";
+		};
 		D6C378C523F538FE009A11D7 /* libMiniHttp */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = D6C378CA23F538FE009A11D7 /* Build configuration list for PBXNativeTarget "libMiniHttp" */;
@@ -281,76 +317,119 @@
 			projectRoot = "";
 			targets = (
 				D6C378C523F538FE009A11D7 /* libMiniHttp */,
+				D694F9A423F7C0E400D41FD7 /* libMiniHttps */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		D694F9A723F7C0E400D41FD7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D694F9A823F7C0E400D41FD7 /* chacha20.c in Sources */,
+				D694F9A923F7C0E400D41FD7 /* pem.c in Sources */,
+				D694F9AA23F7C0E400D41FD7 /* pkparse.c in Sources */,
+				D694F9AB23F7C0E400D41FD7 /* camellia.c in Sources */,
+				D694F9AC23F7C0E400D41FD7 /* debug.c in Sources */,
+				D694F9AD23F7C0E400D41FD7 /* asn1write.c in Sources */,
+				D694F9AE23F7C0E400D41FD7 /* md5.c in Sources */,
+				D694F9AF23F7C0E400D41FD7 /* ecp_curves.c in Sources */,
+				D694F9B023F7C0E400D41FD7 /* des.c in Sources */,
+				D694F9B123F7C0E400D41FD7 /* ctr_drbg.c in Sources */,
+				D694F9B223F7C0E400D41FD7 /* ecdsa.c in Sources */,
+				D694F9B323F7C0E400D41FD7 /* pkcs5.c in Sources */,
+				D694F9B423F7C0E400D41FD7 /* pk_wrap.c in Sources */,
+				D694F9B523F7C0E400D41FD7 /* entropy_poll.c in Sources */,
+				D694F9B623F7C0E400D41FD7 /* entropy.c in Sources */,
+				D694F9B723F7C0E400D41FD7 /* certs.c in Sources */,
+				D694F9B823F7C0E400D41FD7 /* hmac_drbg.c in Sources */,
+				D694F9B923F7C0E400D41FD7 /* ccm.c in Sources */,
+				D694F9BA23F7C0E400D41FD7 /* bignum.c in Sources */,
+				D694F9BB23F7C0E400D41FD7 /* platform_util.c in Sources */,
+				D694F9BC23F7C0E400D41FD7 /* pk.c in Sources */,
+				D694F9BD23F7C0E400D41FD7 /* base64.c in Sources */,
+				D694F9BE23F7C0E400D41FD7 /* cipher_wrap.c in Sources */,
+				D694F9BF23F7C0E400D41FD7 /* ripemd160.c in Sources */,
+				D694F9C023F7C0E400D41FD7 /* sha1.c in Sources */,
+				D694F9C123F7C0E400D41FD7 /* ecp.c in Sources */,
+				D694F9C223F7C0E400D41FD7 /* ssl_cli.c in Sources */,
+				D694F9C323F7C0E400D41FD7 /* asn1parse.c in Sources */,
+				D694F9C423F7C0E400D41FD7 /* padlock.c in Sources */,
+				D694F9C523F7C0E400D41FD7 /* oid.c in Sources */,
+				D694F9C623F7C0E400D41FD7 /* sha256.c in Sources */,
+				D694F9C723F7C0E400D41FD7 /* ssl_ciphersuites.c in Sources */,
+				D694F9C823F7C0E400D41FD7 /* poly1305.c in Sources */,
+				D694F9C923F7C0E400D41FD7 /* x509.c in Sources */,
+				D694F9CA23F7C0E400D41FD7 /* aes.c in Sources */,
+				D694F9CB23F7C0E400D41FD7 /* net_sockets.c in Sources */,
+				D694F9CC23F7C0E400D41FD7 /* blowfish.c in Sources */,
+				D694F9CD23F7C0E400D41FD7 /* chachapoly.c in Sources */,
+				D694F9CE23F7C0E400D41FD7 /* timing.c in Sources */,
+				D694F9CF23F7C0E400D41FD7 /* ecdh.c in Sources */,
+				D694F9D023F7C0E400D41FD7 /* pkcs12.c in Sources */,
+				D694F9D123F7C0E400D41FD7 /* rsa.c in Sources */,
+				D694F9D223F7C0E400D41FD7 /* sha512.c in Sources */,
+				D694F9D323F7C0E400D41FD7 /* minihttp.cpp in Sources */,
+				D694F9D423F7C0E400D41FD7 /* x509_crt.c in Sources */,
+				D694F9D523F7C0E400D41FD7 /* ssl_tls.c in Sources */,
+				D694F9D623F7C0E400D41FD7 /* dhm.c in Sources */,
+				D694F9D723F7C0E400D41FD7 /* md.c in Sources */,
+				D694F9D823F7C0E400D41FD7 /* rsa_internal.c in Sources */,
+				D694F9D923F7C0E400D41FD7 /* arc4.c in Sources */,
+				D694F9DA23F7C0E400D41FD7 /* ssl_msg.c in Sources */,
+				D694F9DB23F7C0E400D41FD7 /* gcm.c in Sources */,
+				D694F9DC23F7C0E400D41FD7 /* cipher.c in Sources */,
+				D694F9DD23F7C0E400D41FD7 /* ssl_srv.c in Sources */,
+				D694F9DE23F7C0E400D41FD7 /* aesni.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D6C378C323F538FE009A11D7 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D6C3792223F57FFC009A11D7 /* chacha20.c in Sources */,
-				D6C378E423F578AF009A11D7 /* pem.c in Sources */,
-				D6C378F623F57B6C009A11D7 /* pkparse.c in Sources */,
-				D6C3793223F58164009A11D7 /* camellia.c in Sources */,
-				D6C3792823F5806A009A11D7 /* debug.c in Sources */,
-				D6C3790623F57D3F009A11D7 /* asn1write.c in Sources */,
-				D6C378E623F578D8009A11D7 /* md5.c in Sources */,
-				D6C3790A23F57DA5009A11D7 /* ecp_curves.c in Sources */,
-				D6C378EC23F579B7009A11D7 /* des.c in Sources */,
-				D6C3793E23F5826E009A11D7 /* ctr_drbg.c in Sources */,
-				D6C3790423F57D17009A11D7 /* ecdsa.c in Sources */,
-				D6C3794623F5842E009A11D7 /* pkcs5.c in Sources */,
-				D6C378FE23F57C9B009A11D7 /* pk_wrap.c in Sources */,
-				D6C3793A23F58203009A11D7 /* entropy_poll.c in Sources */,
-				D6C3793823F581DD009A11D7 /* entropy.c in Sources */,
-				D6C3794823F5848C009A11D7 /* certs.c in Sources */,
-				D6C3790823F57D6B009A11D7 /* hmac_drbg.c in Sources */,
-				D6C3791C23F57F7C009A11D7 /* ccm.c in Sources */,
-				D6C378FA23F57BCB009A11D7 /* bignum.c in Sources */,
-				D6C3791423F57E96009A11D7 /* platform_util.c in Sources */,
-				D6C378E223F57872009A11D7 /* pk.c in Sources */,
-				D6C378EE23F579EA009A11D7 /* base64.c in Sources */,
-				D6C3793023F58135009A11D7 /* cipher_wrap.c in Sources */,
-				D6C3791223F57E30009A11D7 /* ripemd160.c in Sources */,
-				D6C3790C23F57DCF009A11D7 /* sha1.c in Sources */,
-				D6C378F823F57B9A009A11D7 /* ecp.c in Sources */,
-				D6C3792C23F580C6009A11D7 /* ssl_cli.c in Sources */,
-				D6C378F223F57AFC009A11D7 /* asn1parse.c in Sources */,
-				D694F9A323F6CC1E00D41FD7 /* padlock.c in Sources */,
-				D6C378F423F57B36009A11D7 /* oid.c in Sources */,
-				D6C3791023F57E0F009A11D7 /* sha256.c in Sources */,
-				D6C3792E23F580F4009A11D7 /* ssl_ciphersuites.c in Sources */,
-				D6C3792023F57FC9009A11D7 /* poly1305.c in Sources */,
-				D6C378F023F57A1F009A11D7 /* x509.c in Sources */,
-				D6C378E823F5791A009A11D7 /* aes.c in Sources */,
-				D6C3794023F582A9009A11D7 /* net_sockets.c in Sources */,
-				D6C3793423F58195009A11D7 /* blowfish.c in Sources */,
-				D6C3791E23F57FA6009A11D7 /* chachapoly.c in Sources */,
-				D6C3793C23F58232009A11D7 /* timing.c in Sources */,
-				D6C3792A23F5808A009A11D7 /* ecdh.c in Sources */,
-				D6C3794423F58413009A11D7 /* pkcs12.c in Sources */,
-				D6C378FC23F57BFA009A11D7 /* rsa.c in Sources */,
-				D6C3790E23F57DF2009A11D7 /* sha512.c in Sources */,
 				D6C378D523F53A4F009A11D7 /* minihttp.cpp in Sources */,
-				D6C378E023F577F8009A11D7 /* x509_crt.c in Sources */,
-				D6C3791623F57EF2009A11D7 /* ssl_tls.c in Sources */,
-				D6C3792623F5803D009A11D7 /* dhm.c in Sources */,
-				D6C3790023F57CC6009A11D7 /* md.c in Sources */,
-				D6C3790223F57CED009A11D7 /* rsa_internal.c in Sources */,
-				D6C3793623F581B3009A11D7 /* arc4.c in Sources */,
-				D6C3791823F57F2F009A11D7 /* ssl_msg.c in Sources */,
-				D6C3792423F5801C009A11D7 /* gcm.c in Sources */,
-				D6C3791A23F57F57009A11D7 /* cipher.c in Sources */,
-				D6C3794223F582D9009A11D7 /* ssl_srv.c in Sources */,
-				D6C378EA23F5793D009A11D7 /* aesni.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		D694F9E123F7C0E400D41FD7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				EXECUTABLE_PREFIX = "";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+					MINIHTTP_USE_MBEDTLS,
+				);
+				HEADER_SEARCH_PATHS = (
+					../../../minihttp/mbedtls/include/,
+					../../../minihttp/mbedtls/crypto/include/,
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		D694F9E223F7C0E400D41FD7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				EXECUTABLE_PREFIX = "";
+				GCC_PREPROCESSOR_DEFINITIONS = MINIHTTP_USE_MBEDTLS;
+				HEADER_SEARCH_PATHS = (
+					../../../minihttp/mbedtls/include/,
+					../../../minihttp/mbedtls/crypto/include/,
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
 		D6C378C823F538FE009A11D7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -395,7 +474,6 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
-					MINIHTTP_USE_MBEDTLS,
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -403,10 +481,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					../../../minihttp/mbedtls/include/,
-					../../../minihttp/mbedtls/crypto/include/,
-				);
+				HEADER_SEARCH_PATHS = "";
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -454,17 +529,14 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_PREPROCESSOR_DEFINITIONS = MINIHTTP_USE_MBEDTLS;
+				GCC_PREPROCESSOR_DEFINITIONS = "";
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					../../../minihttp/mbedtls/include/,
-					../../../minihttp/mbedtls/crypto/include/,
-				);
+				HEADER_SEARCH_PATHS = "";
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -495,6 +567,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		D694F9E023F7C0E400D41FD7 /* Build configuration list for PBXNativeTarget "libMiniHttps" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D694F9E123F7C0E400D41FD7 /* Debug */,
+				D694F9E223F7C0E400D41FD7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		D6C378C123F538FE009A11D7 /* Build configuration list for PBXProject "libMiniHttp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
