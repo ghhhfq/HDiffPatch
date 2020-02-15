@@ -178,6 +178,13 @@ hpatch_BOOL hpatch_getPathStat(const char* path_utf8,hpatch_TPathType* out_type,
         return _hpatch_getPathStat_noEndDirSeparator(path,out_type,out_fileSize,0);
     }
 }
+hpatch_inline static
+hpatch_BOOL hpatch_isPathNotExist(const char* pathName){
+    hpatch_TPathType type;
+    if (pathName==0) return hpatch_FALSE;
+    if (!hpatch_getPathStat(pathName,&type,0)) return hpatch_FALSE;
+    return (kPathType_notExist==type);
+}
 
 hpatch_BOOL hpatch_getTempPathName(const char* path_utf8,char* out_tempPath_utf8,char* out_tempPath_end);
 hpatch_BOOL hpatch_renamePath(const char* oldPath_utf8,const char* newPath_utf8);

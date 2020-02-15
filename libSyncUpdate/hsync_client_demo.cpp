@@ -479,7 +479,7 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
                kSyncClient_getSyncDownloadPluginError,"getSyncDownloadPlugin()");
     if (hsyni_file_url){
         if (!isForceOverwrite)
-            _check3(_isPathNotExist(hsyni_file),kSyncClient_overwritePathError,
+            _check3(hpatch_isPathNotExist(hsyni_file),kSyncClient_overwritePathError,
                     "file \"",hsyni_file,"\" already exists, overwrite");
         double dtime0=clock_s();
         printf(    "download .hsyni: \""); hpatch_printPath_utf8(hsyni_file);
@@ -761,7 +761,7 @@ static hpatch_BOOL _dirSyncPatchFinish(IDirSyncPatchListener* listener,hpatch_BO
     }
     {//check remove newTempDir result
         const char* newTempDir=TNewDirOutput_getNewPathRoot(newDirOutput);
-        if (!_isPathNotExist(newTempDir)){
+        if (!hpatch_isPathNotExist(newTempDir)){
             result=hpatch_FALSE;
             fprintf(stderr,"can't delete newTempDir \"");
             hpatch_printStdErrPath_utf8(newTempDir); fprintf(stderr,"\"  ERROR!\n");

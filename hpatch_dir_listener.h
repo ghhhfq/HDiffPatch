@@ -90,15 +90,10 @@ static hpatch_BOOL _dirPatchFinish(IHPatchDirListener* listener,hpatch_BOOL isPa
 static IHPatchDirListener defaultPatchDirlistener={{0,_makeNewDir,_copySameFile,_openNewFile,_closeNewFile},
                                                     0,_dirPatchBegin,_dirPatchFinish};
 
-    static hpatch_BOOL _isPathNotExist(const char* pathName){
-        hpatch_TPathType type;
-        if (pathName==0) return hpatch_FALSE;
-        if (!hpatch_getPathStat(pathName,&type,0)) return hpatch_FALSE;
-        return (kPathType_notExist==type);
-    }
+    
     static hpatch_BOOL _tryRemovePath(const char* pathName){
         if (pathName==0) return hpatch_TRUE;
-        if (_isPathNotExist(pathName)) return hpatch_TRUE;
+        if (hpatch_isPathNotExist(pathName)) return hpatch_TRUE;
         if (hpatch_getIsDirName(pathName))
             return hpatch_removeDir(pathName);
         else
@@ -260,7 +255,7 @@ static hpatch_BOOL _tempDirPatchFinish(IHPatchDirListener* self,hpatch_BOOL isPa
     }
     {//check remove newTempDir result
         const char* newTempDir=TDirPatcher_getNewPathRoot(dirPatcher);
-        if (!_isPathNotExist(newTempDir)){
+        if (!hpatch_isPathNotExist(newTempDir)){
             result=hpatch_FALSE;
             fprintf(stderr,"can't delete newTempDir \"");
             hpatch_printStdErrPath_utf8(newTempDir); fprintf(stderr,"\"  ERROR!\n");

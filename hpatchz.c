@@ -596,7 +596,7 @@ int hpatch_cmd_line(int argc, const char * argv[]){
                               kMaxOpenFileNumber,&checksumSet,&tempDirPatchListener,diffDataOffert,diffDataSize);
             if (result==HPATCH_SUCCESS){
                 printf("all in outNewPath temp directory moved to oldDirectory!\n");
-            }else if(!_isPathNotExist(newTempDir)){
+            }else if(!hpatch_isPathNotExist(newTempDir)){
                 printf("WARNING: not remove temp directory \"");
                 hpatch_printPath_utf8(newTempDir); printf("\"\n");
             }
