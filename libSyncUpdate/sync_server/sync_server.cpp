@@ -169,9 +169,7 @@ void _private_create_sync_data(TNewDataSyncInfo*           newSyncInfo,
     
 #if (_IS_USED_MULTITHREAD)
     if (threadNum>1){
-        const uint32_t kBlockCount=(uint32_t)getSyncBlockCount(createDatas.out_newSyncInfo->newDataSize,
-                                                               kMatchBlockSize);
-        TMt_by_queue   shareDatas((int)threadNum,kBlockCount,true);
+        TMt_by_queue   shareDatas((int)threadNum,true);
         TMt_threadDatas  tdatas;  memset(&tdatas,0,sizeof(tdatas));
         tdatas.shareDatas=&shareDatas;
         tdatas.createDatas=&createDatas;

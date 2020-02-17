@@ -187,8 +187,7 @@ static int writeToNew(_TWriteDatas& writeDatas,int threadNum) {
 
 #if (_IS_USED_MULTITHREAD)
     if (threadNum>1){
-        const uint32_t kBlockCount=(uint32_t)TNewDataSyncInfo_blockCount(writeDatas.newSyncInfo);
-        TMt_by_queue   shareDatas((int)threadNum,kBlockCount,writeDatas.out_newStream!=0,
+        TMt_by_queue   shareDatas((int)threadNum,writeDatas.out_newStream!=0,
                                   writeDatas.needSyncBlockCount);
         TMt_threadDatas  tdatas;
         tdatas.shareDatas=&shareDatas;
@@ -205,10 +204,11 @@ static int writeToNew(_TWriteDatas& writeDatas,int threadNum) {
 
     struct TNeedSyncInfosImport:public TNeedSyncInfos{
         const hpatch_StreamPos_t* newBlockDataInOldPoss;
+        const TNewDataSyncInfo*   newSyncInfo;  // opened .hsyni
     };
 static void _getBlockInfoByIndex(const TNeedSyncInfos* needSyncInfos,uint32_t blockIndex,
                                  hpatch_BOOL* out_isNeedSync,uint32_t* out_syncSize){
-    const TNeedSyncInfosImport* self=(const TNeedSyncInfosImport*)needSyncInfos->needSyncInfosImport;
+    const TNeedSyncInfosImport* self=(const TNeedSyncInfosImport*)needSyncInfos->import;
     assert(blockIndex<self->blockCount);
     *out_isNeedSync=(self->newBlockDataInOldPoss[blockIndex]==kBlockType_needSync);
     *out_syncSize=TNewDataSyncInfo_syncBlockSize(self->newSyncInfo,blockIndex);
@@ -217,12 +217,17 @@ static void _getBlockInfoByIndex(const TNeedSyncInfos* needSyncInfos,uint32_t bl
 static void getNeedSyncInfo(const hpatch_StreamPos_t* newBlockDataInOldPoss,
                             const TNewDataSyncInfo* newSyncInfo,TNeedSyncInfosImport* out_nsi){
     const uint32_t kBlockCount=(uint32_t)TNewDataSyncInfo_blockCount(newSyncInfo);
-    out_nsi->needSyncInfosImport=out_nsi; //self
     out_nsi->newBlockDataInOldPoss=newBlockDataInOldPoss;
-    
     out_nsi->newSyncInfo=newSyncInfo;
-    out_nsi->getBlockInfoByIndex=_getBlockInfoByIndex;
+    out_nsi->import=out_nsi; //self
+    
+    out_nsi->newDataSize=newSyncInfo->newDataSize;
+    out_nsi->newSyncDataSize=newSyncInfo->newSyncDataSize;
+    out_nsi->newSyncInfoSize=newSyncInfo->newSyncInfoSize;
+    out_nsi->kMatchBlockSize=newSyncInfo->kMatchBlockSize;
     out_nsi->blockCount=kBlockCount;
+    out_nsi->blockCount=kBlockCount;
+    out_nsi->getBlockInfoByIndex=_getBlockInfoByIndex;
     out_nsi->needSyncBlockCount=0;
     out_nsi->needSyncSumSize=0;
     for (uint32_t i=0; i<kBlockCount; ++i){

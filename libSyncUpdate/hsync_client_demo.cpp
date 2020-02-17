@@ -112,11 +112,12 @@ static void printUsage(){
            "    local patch(oldPath+diffFile) to outNewPath;\n"
 #if (_IS_USED_MULTITHREAD)
            "  -p-parallelThreadNumber\n"
+           "    DEFAULT -p-1; \n"
            "    if parallelThreadNumber>1 then open multi-thread Parallel mode;\n"
-           "    DEFAULT -p-4; requires more memory!\n"
            "  -pdl-downloadThreadNumber\n"
-           "    if downloadThreadNumber>1 then open multi-thread download mode;\n"
-           "    DEFAULT -pdl-2; requires more memory!\n"
+           "    DEFAULT -pdl-1;\n"
+           "    if downloadThreadNumber>1 then open multi-thread download mode,\n"
+           "    requires more memory!\n"
 #endif
 #if (_IS_NEED_DIR_DIFF_PATCH)
            "  -n-maxOpenFileNumber\n"
@@ -233,16 +234,15 @@ static hpatch_TChecksum* _findChecksumPlugin(ISyncInfoListener* listener,const c
 }
 
     static void printMatchResult(const TNeedSyncInfos* nsi) {
-        const TNewDataSyncInfo* newi=nsi->newSyncInfo;
         const uint32_t kBlockCount=nsi->blockCount;
         printf("  syncBlockCount: %d, /%d=%.1f%%\n  syncDataSize: %" PRIu64 "\n",
                nsi->needSyncBlockCount,kBlockCount,100.0*nsi->needSyncBlockCount/kBlockCount,nsi->needSyncSumSize);
-        hpatch_StreamPos_t downloadSize=newi->newSyncInfoSize+nsi->needSyncSumSize;
+        hpatch_StreamPos_t downloadSize=nsi->newSyncInfoSize+nsi->needSyncSumSize;
         printf("  downloadSize: %" PRIu64 "+%" PRIu64 "= %" PRIu64 ", /%" PRIu64 "=%.1f%%",
-               newi->newSyncInfoSize,nsi->needSyncSumSize,downloadSize,
-               newi->newDataSize,100.0*downloadSize/newi->newDataSize);
-        if (newi->newSyncDataSize<newi->newDataSize){
-            hpatch_StreamPos_t maxDownloadSize=newi->newSyncInfoSize+newi->newSyncDataSize;
+               nsi->newSyncInfoSize,nsi->needSyncSumSize,downloadSize,
+               nsi->newDataSize,100.0*downloadSize/nsi->newDataSize);
+        if (nsi->newSyncDataSize<nsi->newDataSize){
+            hpatch_StreamPos_t maxDownloadSize=nsi->newSyncInfoSize+nsi->newSyncDataSize;
             printf(" (/%" PRIu64 "=%.1f%%)",maxDownloadSize,100.0*downloadSize/maxDownloadSize);
         }
         printf("\n");
@@ -266,10 +266,9 @@ if (!(value)) { _pferr(errInfo0); _pferr(errInfo1); _pferr(errInfo2); fprintf(st
 
 #define _THREAD_NUMBER_NULL     0
 #define _THREAD_NUMBER_MIN      1
-#define _THREAD_NUMBER_DEFUALT  4
+#define _THREAD_NUMBER_DEFUALT  1
 #define _THREAD_NUMBER_MAX      (1<<8)
-#define _DL_THREAD_NUMBER_DEFUALT   2
-#define _DL_THREAD_NUMBER_MAX       (1<<6)
+#define _DL_THREAD_NUMBER_DEFUALT   1
 
 enum TRunAsType{
     kRunAs_unknown =0,
@@ -398,8 +397,8 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
         threadNum=_THREAD_NUMBER_MAX;
     if (downloadThreadNum==_THREAD_NUMBER_NULL)
         downloadThreadNum=_DL_THREAD_NUMBER_DEFUALT;
-    else if (downloadThreadNum>_DL_THREAD_NUMBER_MAX)
-        downloadThreadNum=_DL_THREAD_NUMBER_MAX;
+    else if (downloadThreadNum>_THREAD_NUMBER_MAX)
+        downloadThreadNum=_THREAD_NUMBER_MAX;
 #else
     threadNum=1;
     downloadThreadNum=1;

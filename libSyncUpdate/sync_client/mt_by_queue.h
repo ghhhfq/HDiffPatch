@@ -37,10 +37,9 @@ namespace sync_private{
     
 struct TMt_by_queue{
     const int    threadNum;
-    const size_t workCount;
-    inline explicit TMt_by_queue(int _threadNum,size_t _workCount,bool _isOutputNeedQueue,
+    inline explicit TMt_by_queue(int _threadNum,bool _isOutputNeedQueue,
                                  size_t _inputQueueCount=0)
-    :threadNum(_threadNum),workCount(_workCount),finishedThreadNum(0),curWorkIndex(0),
+    :threadNum(_threadNum),finishedThreadNum(0),curWorkIndex(0),
     inputQueue(_threadNum,(_inputQueueCount>0),inputWorkIndexs,mtdataLocker),
     outputQueue(_threadNum,_isOutputNeedQueue,outputWorkIndexs,mtdataLocker){
         inputWorkIndexs.resize(threadNum,~(size_t)0);
@@ -69,6 +68,7 @@ struct TMt_by_queue{
         TMt_by_queue* mt;
     };
     
+    inline size_t getCurWorkIndex()const{ return curWorkIndex; }
     bool getWork(int threadIndex,size_t workIndex,size_t inputWorkIndex=~(size_t)0){
         TAutoLocker _auto_locker(this);
         if (workIndex==curWorkIndex){

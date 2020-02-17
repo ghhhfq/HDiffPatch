@@ -87,7 +87,7 @@ static void printUsage(){
 #if (_IS_USED_MULTITHREAD)
            "  -p-parallelThreadNumber\n"
            "    if parallelThreadNumber>1 then open multi-thread Parallel mode;\n"
-           "    DEFAULT -p-4; requires more memory!\n"
+           "    DEFAULT -p-4;\n"
 #endif
            "  -c-compressType[-compressLevel]\n"
            "      set out_hsynd_file Compress type & level, DEFAULT uncompress;\n"
@@ -268,7 +268,7 @@ static void printCreateSyncInfo(hpatch_StreamPos_t newDataSize,size_t kMatchBloc
 
 #define _THREAD_NUMBER_NULL     0
 #define _THREAD_NUMBER_MIN      1
-#define _THREAD_NUMBER_DEFUALT  kDefualtCompressThreadNumber
+#define _THREAD_NUMBER_DEFUALT  4
 #define _THREAD_NUMBER_MAX      (1<<8)
 
 int sync_server_cmd_line(int argc, const char * argv[]){

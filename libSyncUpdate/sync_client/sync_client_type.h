@@ -83,12 +83,15 @@ struct TNeedSyncInfos;
 typedef void (*TSync_getBlockInfoByIndex)(const struct TNeedSyncInfos* needSyncInfos,uint32_t blockIndex,
                                           hpatch_BOOL* out_isNeedSync,uint32_t* out_syncSize);
 typedef struct TNeedSyncInfos{
-    const TNewDataSyncInfo*     newSyncInfo;  // opened .hsyni
+    hpatch_StreamPos_t          newDataSize;     // new data size
+    hpatch_StreamPos_t          newSyncDataSize; // new data size or .hsynd file size
+    hpatch_StreamPos_t          newSyncInfoSize; // .hsyni file size
+    uint32_t                    kMatchBlockSize;
     uint32_t                    blockCount;
     uint32_t                    needSyncBlockCount;
-    hpatch_StreamPos_t          needSyncSumSize;
+    hpatch_StreamPos_t          needSyncSumSize; // all need download from new data or .hsynd file
     TSync_getBlockInfoByIndex   getBlockInfoByIndex;
-    void*                       needSyncInfosImport; //private
+    void*                       import; //private
 } TNeedSyncInfos;
 
 typedef struct IReadSyncDataListener{

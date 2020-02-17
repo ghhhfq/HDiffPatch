@@ -330,7 +330,7 @@ static void tm_matchNewDataInOld(_TMatchDatas& matchDatas,int threadNum){
     hpatch_StreamPos_t oldRollEnd=matchDatas.oldStream->streamSize+backZeroLen;
 #if (_IS_USED_MULTITHREAD)
     if (threadNum>1){
-        TMt_by_queue   shareDatas((int)threadNum,0,false);
+        TMt_by_queue   shareDatas((int)threadNum,false);
         TMt_threadDatas  tdatas;  memset(&tdatas,0,sizeof(tdatas));
         tdatas.shareDatas=&shareDatas;
         tdatas.matchDatas=&matchDatas;
