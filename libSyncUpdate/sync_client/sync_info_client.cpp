@@ -56,14 +56,13 @@ inline static bool _clip_unpackToUInt32(uint32_t* out_v,TStreamCacheClip* clip){
         return toUInt32(out_v,v);
     return false;
 }
-#if (_IS_NEED_DIR_DIFF_PATCH)
+
 inline static bool _clip_unpackToSize_t(size_t* out_v,TStreamCacheClip* clip){
     if (sizeof(size_t)==sizeof(hpatch_StreamPos_t))
         return _clip_unpackUIntTo((hpatch_StreamPos_t*)out_v,clip)!=0;
     else
         return _clip_unpackToUInt32((uint32_t*)out_v,clip);
 }
-#endif
 
 
 struct TChecksumInputStream:public hpatch_TStreamInput {

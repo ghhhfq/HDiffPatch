@@ -74,15 +74,13 @@ else
 endif
 ifeq ($(LZMA),0)
 else
-  DEF_FLAGS += -D_CompressPlugin_lzma -I'../lzma/C'
+  DEF_FLAGS += -D_CompressPlugin_lzma -I'../lzma/C' -D_7ZIP_ST
 endif
 ifeq ($(MT),0)
   DEF_FLAGS += \
-    -D_7ZIP_ST \
     -D_IS_USED_MULTITHREAD=0 
 else
   DEF_FLAGS += \
-    -D_7ZIP_ST \
     -D_IS_USED_MULTITHREAD=1 \
     -D_IS_USED_PTHREAD=1
 endif

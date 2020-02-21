@@ -9,7 +9,7 @@ LZMA  := 1
 ifeq ($(LZMA),0)
   Lzma_Files :=
 else
-  # http://www.7-zip.org/sdk.html  https://github.com/sisong/lzma
+  # https://github.com/sisong/lzma
   LZMA_PATH  := $(LOCAL_PATH)/../../../lzma/C/
   Lzma_Files := $(LZMA_PATH)/LzmaDec.c  \
                 $(LZMA_PATH)/Lzma2Dec.c

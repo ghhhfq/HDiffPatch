@@ -2,9 +2,13 @@
 
 full changelog at: https://github.com/sisong/HDiffPatch/commits   
 
+## [v4.0](https://github.com/sisong/HDiffPatch/tree/v4.0) - 2020-02-17
+### Added
+* support update old to new by sync patch, old data can any version or modified version;
+
 ## [v3.0.8](https://github.com/sisong/HDiffPatch/tree/v3.0.8) - 2020-01-01
 ### Added
-* patch demo for Android, out lib file libhpatchz.so; 
+* patch demo for Android, out lib file libhpatchz.so;
 
 ## [v3.0.7](https://github.com/sisong/HDiffPatch/tree/v3.0.7) - 2019-12-19
 ### Fixed
