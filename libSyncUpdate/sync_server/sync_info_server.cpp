@@ -103,15 +103,15 @@ namespace sync_private{
     }
     
     static void savePartStrongChecksums(const hpatch_TStreamOutput *out_stream,hpatch_StreamPos_t &outPos,
-                                        uint32_t kBlockCount,const TByte* partChecksums,
+                                        uint32_t kBlockCount,const TByte* partChecksums,size_t partChecksumSize,
                                         const TSameNewBlockPair* samePairList,uint32_t samePairCount,
                                         CChecksum &checksumInfo) {
         std::vector<TByte> buf;
         uint32_t curPair=0;
-        for (size_t i=0; i<kBlockCount; ++i,partChecksums+=kPartStrongChecksumByteSize){
+        for (size_t i=0; i<kBlockCount; ++i,partChecksums+=partChecksumSize){
             if ((curPair<samePairCount)&&(i==samePairList[curPair].curIndex))
                 { ++curPair; continue; }
-            pushBack(buf,partChecksums,kPartStrongChecksumByteSize);
+            pushBack(buf,partChecksums,partChecksumSize);
             if (buf.size()>=hpatch_kFileIOBufBetterSize)
                 _flushV(buf);
         }
@@ -165,6 +165,7 @@ void TNewDataSyncInfo_saveTo(TNewDataSyncInfo* self,const hpatch_TStreamOutput* 
     {//head
         pushTypes(head,kVersionType,compressPlugin,strongChecksumPlugin);
         packUInt(head,self->kStrongChecksumByteSize);
+        packUInt(head,self->savedStrongChecksumByteSize);
         packUInt(head,self->kMatchBlockSize);
         packUInt(head,self->samePairCount);
         pushUInt(head,self->isDirSyncInfo);
@@ -188,7 +189,7 @@ void TNewDataSyncInfo_saveTo(TNewDataSyncInfo* self,const hpatch_TStreamOutput* 
         {//newSyncInfoSize
             self->newSyncInfoSize = head.size() + sizeof(self->newSyncInfoSize)
                                     + privateExternDataSize + externDataSize + buf.size();
-            self->newSyncInfoSize +=(rollHashSize(self)+kPartStrongChecksumByteSize)
+            self->newSyncInfoSize +=(rollHashSize(self)+self->savedStrongChecksumByteSize)
                                     *(TNewDataSyncInfo_blockCount(self)-self->samePairCount);
             self->newSyncInfoSize += self->kStrongChecksumByteSize+self->kStrongChecksumByteSize;
         }
@@ -210,7 +211,7 @@ void TNewDataSyncInfo_saveTo(TNewDataSyncInfo* self,const hpatch_TStreamOutput* 
     
     saveRollHashs(out_stream,outPos,(uint32_t)kBlockCount,self->rollHashs,self->is32Bit_rollHash,
                   self->samePairList,self->samePairCount,checksumInfo);
-    savePartStrongChecksums(out_stream,outPos,(uint32_t)kBlockCount,self->partChecksums,
+    savePartStrongChecksums(out_stream,outPos,(uint32_t)kBlockCount,self->partChecksums,self->savedStrongChecksumByteSize,
                             self->samePairList,self->samePairCount,checksumInfo);
     
     {// out infoFullChecksum
@@ -235,11 +236,11 @@ CNewDataSyncInfo::CNewDataSyncInfo(hpatch_TChecksum* strongChecksumPlugin,const 
     this->kStrongChecksumByteSize=(uint32_t)strongChecksumPlugin->checksumByteSize();
     this->kMatchBlockSize=kMatchBlockSize;
     this->newDataSize=newDataSize;
-    this->is32Bit_rollHash=isCanUse32bitRollHash(newDataSize,kMatchBlockSize);
+    this->is32Bit_rollHash=false;
     //mem
     const size_t kBlockCount=this->blockCount();
     hpatch_StreamPos_t memSize=kBlockCount*( (hpatch_StreamPos_t)0
-                                            +sizeof(TSameNewBlockPair)+kPartStrongChecksumByteSize
+                                            +sizeof(TSameNewBlockPair)+this->savedStrongChecksumByteSize
                                             +(this->is32Bit_rollHash?sizeof(uint32_t):sizeof(uint64_t))
                                             +(compressPlugin?sizeof(uint32_t):0));
     memSize+=this->kStrongChecksumByteSize+checkChecksumBufByteSize(this->kStrongChecksumByteSize);
@@ -249,7 +250,7 @@ CNewDataSyncInfo::CNewDataSyncInfo(hpatch_TChecksum* strongChecksumPlugin,const 
     
     this->infoFullChecksum=curMem; curMem+=this->kStrongChecksumByteSize;
     this->newDataCheckChecksum=curMem; curMem+=checkChecksumBufByteSize(this->kStrongChecksumByteSize);
-    this->partChecksums=curMem; curMem+=kBlockCount*kPartStrongChecksumByteSize;
+    this->partChecksums=curMem; curMem+=kBlockCount*this->savedStrongChecksumByteSize;
     this->samePairCount=0;
     this->samePairList=(TSameNewBlockPair*)curMem; curMem+=kBlockCount*sizeof(TSameNewBlockPair);
     this->rollHashs=curMem; curMem+=kBlockCount*(this->is32Bit_rollHash?sizeof(uint32_t):sizeof(uint64_t));

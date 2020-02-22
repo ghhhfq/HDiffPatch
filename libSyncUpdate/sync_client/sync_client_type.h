@@ -52,6 +52,7 @@ typedef struct TNewDataSyncInfo{
     const char*             compressType;
     const char*             strongChecksumType;
     uint32_t                kStrongChecksumByteSize;
+    uint32_t                savedStrongChecksumByteSize;
     uint32_t                kMatchBlockSize;
     uint32_t                samePairCount;
     uint8_t                 isDirSyncInfo;

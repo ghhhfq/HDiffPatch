@@ -52,8 +52,8 @@ static void mt_create_sync_data(_TCreateDatas& cd,void* _mt=0,int threadIndex=0)
     std::vector<TByte> cmbuf(compressPlugin?((size_t)compressPlugin->maxCompressedSize(kMatchBlockSize)):0);
     const size_t checksumByteSize=strongChecksumPlugin->checksumByteSize();
     checkv((checksumByteSize==(uint32_t)checksumByteSize)
-          &&(checksumByteSize>=kPartStrongChecksumByteSize)
-          &&(checksumByteSize%kPartStrongChecksumByteSize==0));
+          &&(checksumByteSize>=kStrongChecksumByteSize_min)
+          &&(checksumByteSize%sizeof(uint32_t)==0));
     CChecksum checksumBlockData(strongChecksumPlugin,false);
 #if (_IS_USED_MULTITHREAD)
     TMt_by_queue* mt=(TMt_by_queue*)_mt;
@@ -109,10 +109,10 @@ static void mt_create_sync_data(_TCreateDatas& cd,void* _mt=0,int threadIndex=0)
             
             checkChecksumAppendData(cd.out_newSyncInfo->newDataCheckChecksum,i,
                                     checksumBlockData.checksum.data(),checksumByteSize);
-            toSyncPartChecksum(checksumBlockData.checksum.data(),
-                               checksumBlockData.checksum.data(),checksumByteSize);
-            memcpy(out_newSyncInfo->partChecksums+i*(size_t)kPartStrongChecksumByteSize,
-                   checksumBlockData.checksum.data(),kPartStrongChecksumByteSize);
+            toPartChecksum(checksumBlockData.checksum.data(),out_newSyncInfo->savedStrongChecksumByteSize,
+                           checksumBlockData.checksum.data(),checksumByteSize);
+            memcpy(out_newSyncInfo->partChecksums+i*out_newSyncInfo->savedStrongChecksumByteSize,
+                   checksumBlockData.checksum.data(),out_newSyncInfo->savedStrongChecksumByteSize);
             if (compressPlugin){
                 if (compressedSize>0)
                     out_newSyncInfo->savedSizes[i]=(uint32_t)compressedSize;

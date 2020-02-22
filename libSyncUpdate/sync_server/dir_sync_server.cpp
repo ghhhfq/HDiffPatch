@@ -91,11 +91,11 @@ void create_dir_sync_data(IDirSyncListener*         listener,
     const size_t kAlignSize=kMatchBlockSize;
     newRefStream.open(resLimit.limit.streamList,newList.size(),kAlignSize);
     
-    int hashClashBit=estimateHashClashBit(newRefStream.stream->streamSize,kMatchBlockSize);
-    bool isMatchBlockSizeWarning=hashClashBit>kAllowMaxHashClashBit;
+    bool isSafeHashClash=getStrongForHashClash(newRefStream.stream->streamSize,kMatchBlockSize,
+                                               strongChecksumPlugin->checksumByteSize());
     listener->syncRefInfo(newManifest.rootPath.c_str(),newList.size(),newRefStream.stream->streamSize,
-                          kMatchBlockSize,isMatchBlockSizeWarning);
-    checkv(!isMatchBlockSizeWarning); //warning as error
+                          kMatchBlockSize,isSafeHashClash);
+    checkv(isSafeHashClash); //warning as error
 
     CNewDataSyncInfo  newDataSyncInfo(strongChecksumPlugin,compressPlugin,
                                       newRefStream.stream->streamSize,kMatchBlockSize);

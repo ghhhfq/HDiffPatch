@@ -464,8 +464,9 @@ int create_sync_files_for_file(const char* newDataFile,const char* out_hsyni_fil
     hpatch_StreamPos_t newDataSize=0;
     _return_check(printFileInfo(newDataFile,"\nin new file",&newDataSize),
                   SYNC_SERVER_NEWPATH_ERROR,"run printFileInfo(%s,)",newDataFile);
-    int hashClashBit=estimateHashClashBit(newDataSize,(uint32_t)kMatchBlockSize);
-    _return_check(hashClashBit<=kAllowMaxHashClashBit,SYNC_SERVER_BLOCKSIZE_ERROR,
+    bool isSafeHashClash=getStrongForHashClash(newDataSize,(uint32_t)kMatchBlockSize,
+                                               strongChecksumPlugin->checksumByteSize());
+    _return_check(isSafeHashClash,SYNC_SERVER_BLOCKSIZE_ERROR,
                   "hash clash warning! must increase matchBlockSize(%d)",(uint32_t)kMatchBlockSize);
     printCreateSyncInfo(newDataSize,kMatchBlockSize,(compressPlugin!=0));
     
@@ -492,9 +493,9 @@ struct DirPathIgnoreListener:public CDirPathIgnore,IDirPathIgnore{
 
 struct DirSyncListener:public IDirSyncListener{
     explicit DirSyncListener(bool isUsedCompress=true)
-    :_isUsedCompress(isUsedCompress),isMatchBlockSizeWarning(false){ }
+    :_isUsedCompress(isUsedCompress),_isSafeHashClash(true){ }
     const bool  _isUsedCompress;
-    bool        isMatchBlockSizeWarning;
+    bool        _isSafeHashClash;
     
     //IDirSyncListener
     virtual bool isExecuteFile(const std::string& fileName) {
@@ -506,8 +507,8 @@ struct DirSyncListener:public IDirSyncListener{
         return result;
     }
     virtual void syncRefInfo(const char* rootDirPath,size_t pathCount,hpatch_StreamPos_t refFileSize,
-                             uint32_t kMatchBlockSize,bool _isMatchBlockSizeWarning){
-        isMatchBlockSizeWarning=_isMatchBlockSizeWarning;
+                             uint32_t kMatchBlockSize,bool isSafeHashClash){
+        _isSafeHashClash=isSafeHashClash;
         printf("  path count : %" PRIu64 "\n",(hpatch_StreamPos_t)pathCount);
         printf("  files size : %" PRIu64 "\n",(hpatch_StreamPos_t)refFileSize);
         printCreateSyncInfo(refFileSize,kMatchBlockSize,_isUsedCompress);
@@ -535,7 +536,7 @@ int create_sync_files_for_dir(const char* newDataDir,const char* out_hsyni_file,
         create_dir_sync_data(&listener,newManifest,out_hsyni_file,out_hsynd_file,
                              compressPlugin,strongChecksumPlugin,kMaxOpenFileNumber,kMatchBlockSize,threadNum);
     } catch (const std::exception& e){
-        if (listener.isMatchBlockSizeWarning){
+        if (!listener._isSafeHashClash){
             _return_check(false,SYNC_SERVER_BLOCKSIZE_ERROR,
                           "hash clash warning! must increase matchBlockSize(%d)",(uint32_t)kMatchBlockSize);
         }else{

@@ -72,6 +72,12 @@ void pushUInt(std::vector<unsigned char>& out_buf,TUInt v){
     }
     pushBack(out_buf,buf,sizeof(TUInt));
 }
+
+inline static
+void pushUInt(std::vector<unsigned char>& out_buf,unsigned char v){
+    out_buf.insert(out_buf.end(),v);
+}
+
     
 inline static void pushCStr(std::vector<unsigned char>& out_buf,const char* cstr){
     const unsigned char* data=(const unsigned char*)cstr;

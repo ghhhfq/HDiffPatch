@@ -56,13 +56,15 @@ struct _TWriteDatas {
         memset(dataBuf+newDataSize,0,kMatchBlockSize-newDataSize);  \
     strongChecksumPlugin->begin(checksumSync);  \
     strongChecksumPlugin->append(checksumSync,dataBuf,dataBuf+kMatchBlockSize); \
-    strongChecksumPlugin->end(checksumSync,checksumSync_buf+kPartStrongChecksumByteSize,    \
-                              checksumSync_buf+kPartStrongChecksumByteSize+newSyncInfo->kStrongChecksumByteSize);\
-    toSyncPartChecksum(checksumSync_buf,checksumSync_buf+kPartStrongChecksumByteSize,   \
-                       newSyncInfo->kStrongChecksumByteSize);   \
+    strongChecksumPlugin->end(checksumSync,checksumSync_buf+newSyncInfo->savedStrongChecksumByteSize,    \
+                              checksumSync_buf+newSyncInfo->savedStrongChecksumByteSize \
+                                  +newSyncInfo->kStrongChecksumByteSize);\
+    toPartChecksum(checksumSync_buf,newSyncInfo->savedStrongChecksumByteSize, \
+                   checksumSync_buf+newSyncInfo->savedStrongChecksumByteSize, \
+                   newSyncInfo->kStrongChecksumByteSize);   \
     check(0==memcmp(checksumSync_buf,   \
-                    newSyncInfo->partChecksums+i*(size_t)kPartStrongChecksumByteSize,   \
-                    kPartStrongChecksumByteSize),kSyncClient_checksumSyncDataError);    \
+                    newSyncInfo->partChecksums+i*newSyncInfo->savedStrongChecksumByteSize,   \
+                    newSyncInfo->savedStrongChecksumByteSize),kSyncClient_checksumSyncDataError);    \
 }
 
 static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
@@ -143,7 +145,7 @@ static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
 #endif
             if (isNeedSync||(wd.syncDataListener->localPatch_openOldPoss))
                 checkChecksumAppendData(newSyncInfo->newDataCheckChecksum, i,
-                                        checksumSync_buf+kPartStrongChecksumByteSize,
+                                        checksumSync_buf+wd.newSyncInfo->savedStrongChecksumByteSize,
                                         newSyncInfo->kStrongChecksumByteSize);
             check(wd.out_newStream->write(wd.out_newStream,outNewDataPos,dataBuf,
                                           dataBuf+newDataSize), kSyncClient_writeNewDataError);

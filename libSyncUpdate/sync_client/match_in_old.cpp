@@ -73,7 +73,7 @@ struct TOldDataCache_base {
         m_checksumHandle=strongChecksumPlugin->open(strongChecksumPlugin);
         checkv(m_checksumHandle!=0);
         m_checksumByteSize=(uint32_t)m_strongChecksumPlugin->checksumByteSize();
-        m_cache.realloc(cacheSize+m_checksumByteSize+kPartStrongChecksumByteSize);
+        m_cache.realloc(cacheSize+m_checksumByteSize+m_checksumByteSize);
         m_cache.reduceSize(cacheSize);
         m_strongChecksum_buf=m_cache.data_end();
         _initCache();
@@ -130,10 +130,10 @@ struct TOldDataCache_base {
     }
 
     inline bool isEnd()const{ return m_cur==0; }
-    inline const TByte* calcPartStrongChecksum(){
-        return _calcPartStrongChecksum(m_cur,m_kMatchBlockSize); }
+    inline const TByte* calcPartStrongChecksum(size_t outPartSize){
+        return _calcPartStrongChecksum(m_cur,m_kMatchBlockSize,outPartSize); }
     inline const TByte* strongChecksum()const{//must after do calcPartStrongChecksum()
-        return m_strongChecksum_buf+kPartStrongChecksumByteSize; }
+        return m_strongChecksum_buf+m_checksumByteSize; }
     inline size_t strongChecksumByteSize()const{ return m_checksumByteSize; }
     inline hpatch_StreamPos_t curOldPos()const{ return m_readedPos-(m_cache.data_end()-m_cur); }
 protected:
@@ -149,12 +149,12 @@ protected:
     hpatch_checksumHandle   m_checksumHandle;
     void*                   m_mt;
 
-    inline const TByte* _calcPartStrongChecksum(const TByte* buf,size_t bufSize){
-        TByte* strongChecksum=m_strongChecksum_buf+kPartStrongChecksumByteSize;
+    inline const TByte* _calcPartStrongChecksum(const TByte* buf,size_t bufSize,size_t outPartSize){
+        TByte* strongChecksum=m_strongChecksum_buf+m_checksumByteSize;
         m_strongChecksumPlugin->begin(m_checksumHandle);
         m_strongChecksumPlugin->append(m_checksumHandle,buf,buf+bufSize);
         m_strongChecksumPlugin->end(m_checksumHandle,strongChecksum,strongChecksum+m_checksumByteSize);
-        toSyncPartChecksum(m_strongChecksum_buf,strongChecksum,m_checksumByteSize);
+        toPartChecksum(m_strongChecksum_buf,outPartSize,strongChecksum,m_checksumByteSize);
         return m_strongChecksum_buf;
     }
 };
@@ -196,15 +196,15 @@ inline static size_t getBackZeroLen(hpatch_StreamPos_t newDataSize,uint32_t kMat
 
 static void matchRange(hpatch_StreamPos_t* out_newBlockDataInOldPoss,
                        const uint32_t* range_begin,const uint32_t* range_end,TOldDataCache_base& oldData,
-                       const TByte* partChecksums,TByte* newDataCheckChecksum,void* _mt=0){
+                       const TByte* partChecksums,size_t outPartChecksumSize,TByte* newDataCheckChecksum,void* _mt=0){
     const TByte* oldPartStrongChecksum=0;
     do {
         uint32_t newBlockIndex=*range_begin;
         if (out_newBlockDataInOldPoss[newBlockIndex]==kBlockType_needSync){
             if (oldPartStrongChecksum==0)
-                oldPartStrongChecksum=oldData.calcPartStrongChecksum();
-            const TByte* newPairStrongChecksum=partChecksums+newBlockIndex*(size_t)kPartStrongChecksumByteSize;
-            if (0==memcmp(oldPartStrongChecksum,newPairStrongChecksum,kPartStrongChecksumByteSize)){
+                oldPartStrongChecksum=oldData.calcPartStrongChecksum(outPartChecksumSize);
+            const TByte* newPairStrongChecksum=partChecksums+newBlockIndex*outPartChecksumSize;
+            if (0==memcmp(oldPartStrongChecksum,newPairStrongChecksum,outPartChecksumSize)){
                 hpatch_StreamPos_t curPos=oldData.curOldPos();
 #if (_IS_USED_MULTITHREAD)
                 TMt_by_queue::TAutoLocker _autoLocker((TMt_by_queue*)_mt);
@@ -260,7 +260,8 @@ static void _rollMatch(_TMatchDatas& rd,hpatch_StreamPos_t oldRollBegin,
                                rd.sorted_newIndexs+ti_pos[1],digest_value,icomp);
         if (range.first!=range.second){
             matchRange(rd.out_newBlockDataInOldPoss,range.first,range.second,oldData,
-                       rd.newSyncInfo->partChecksums,rd.newSyncInfo->newDataCheckChecksum,_mt);
+                       rd.newSyncInfo->partChecksums,rd.newSyncInfo->savedStrongChecksumByteSize,
+                       rd.newSyncInfo->newDataCheckChecksum,_mt);
         }
     }
 }

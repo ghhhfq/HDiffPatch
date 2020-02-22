@@ -101,7 +101,7 @@ void tm_matchNewDataInNew(TNewDataSyncInfo* newSyncInfo){
     TIndex_comp<tm_roll_uint> dcomp((tm_roll_uint*)newSyncInfo->rollHashs);
     uint32_t matchedCount=0;
     const unsigned char* curChecksum=partChecksums;
-    for (uint32_t i=0; i<kBlockCount; ++i,curChecksum+=kPartStrongChecksumByteSize){
+    for (uint32_t i=0; i<kBlockCount; ++i,curChecksum+=newSyncInfo->savedStrongChecksumByteSize){
         tm_roll_uint digest=((tm_roll_uint*)newSyncInfo->rollHashs)[i];
         typename TIndex_comp<tm_roll_uint>::TDigest digest_value(digest,i);
         const uint32_t* ti_pos=&sorted_newIndexs_table[digest>>kTableHashShlBit];
@@ -112,8 +112,8 @@ void tm_matchNewDataInNew(TNewDataSyncInfo* newSyncInfo){
         for (;range.first!=range.second; ++range.first) {
             uint32_t newBlockIndex=*range.first;
             assert(newBlockIndex<i);
-            const unsigned char* newChecksum=partChecksums+newBlockIndex*(size_t)kPartStrongChecksumByteSize;
-            if (0==memcmp(newChecksum,curChecksum,kPartStrongChecksumByteSize)){
+            const unsigned char* newChecksum=partChecksums+newBlockIndex*newSyncInfo->savedStrongChecksumByteSize;
+            if (0==memcmp(newChecksum,curChecksum,newSyncInfo->savedStrongChecksumByteSize)){
                 samePairList[matchedCount].curIndex=i;
                 samePairList[matchedCount].sameIndex=newBlockIndex;
                 ++matchedCount;
