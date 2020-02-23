@@ -58,16 +58,11 @@ uint32_t TNewDataSyncInfo_syncBlockSize(const TNewDataSyncInfo* self,uint32_t bl
     
 inline static uint64_t roll_hash_start(uint64_t*,const adler_data_t* pdata,size_t n){
                                         return fast_adler64_start(pdata,n); }
-inline static uint32_t roll_hash_start(uint32_t*,const adler_data_t* pdata,size_t n){
-                                        return fast_adler32_start(pdata,n); }
 inline static uint64_t roll_hash_roll(uint64_t adler,size_t blockSize,
                                       adler_data_t out_data,adler_data_t in_data){
                                         return fast_adler64_roll(adler,blockSize,out_data,in_data); }
-inline static uint32_t roll_hash_roll(uint32_t adler,size_t blockSize,
-                                      adler_data_t out_data,adler_data_t in_data){
-                                        return fast_adler32_roll(adler,blockSize,out_data,in_data); }
     
-#define kStrongChecksumByteSize_min     8
+#define kStrongChecksumByteSize_min     4
     
 hpatch_inline static
 void toPartChecksum(unsigned char* out_partChecksum,size_t outPartSize,
@@ -124,6 +119,73 @@ void checkChecksumEndTo(unsigned char* dst,
 static hpatch_inline
 void checkChecksumEnd(unsigned char* checkChecksumBuf,size_t kStrongChecksumByteSize){
     return checkChecksumEndTo(checkChecksumBuf,checkChecksumBuf,kStrongChecksumByteSize); }
+
+    
+static hpatch_inline
+void writeRollHash(uint8_t* out_part,uint64_t partRollHash,size_t savedRollHashByteSize){
+    switch (savedRollHashByteSize) {
+        case 8: *out_part++=(uint8_t)(partRollHash>>56);
+        case 7: *out_part++=(uint8_t)(partRollHash>>48);
+        case 6: *out_part++=(uint8_t)(partRollHash>>40);
+        case 5: *out_part++=(uint8_t)(partRollHash>>32);
+        case 4: *out_part++=(uint8_t)(partRollHash>>24);
+        case 3: *out_part++=(uint8_t)(partRollHash>>16);
+        case 2: *out_part++=(uint8_t)(partRollHash>> 8);
+        case 1: *out_part=(uint8_t)(partRollHash);
+            return;
+        default:
+            assert(false);
+            return;
+    }
+}
+  
+static hpatch_inline
+uint64_t readRollHash(const uint8_t* part,size_t savedRollHashByteSize){
+    uint64_t partRollHash=0;
+    switch (savedRollHashByteSize) {
+        case 8: partRollHash|=((uint64_t)*part++)<<56;
+        case 7: partRollHash|=((uint64_t)*part++)<<48;
+        case 6: partRollHash|=((uint64_t)*part++)<<40;
+        case 5: partRollHash|=((uint64_t)*part++)<<32;
+        case 4: partRollHash|=((uint64_t)*part++)<<24;
+        case 3: partRollHash|=((uint64_t)*part++)<<16;
+        case 2: partRollHash|=((uint64_t)*part++)<< 8;
+        case 1: partRollHash|=((uint64_t)*part);
+            return partRollHash;
+        default:
+            assert(false);
+            return partRollHash;
+    }
+}
+    
+template<int byte,uint64_t kLowMask=(1<<(byte*4))-1,int kHighShl=32-byte*4,
+         uint64_t kHighMask=(kLowMask<<32)> static hpatch_inline
+uint64_t _tm_toSavedPartRollHash(uint64_t rollHash){
+    return ((rollHash&kHighMask)>>kHighShl) | (rollHash & kLowMask);
+}
+
+static hpatch_inline
+uint64_t toSavedPartRollHash(uint64_t rollHash,size_t savedRollHashByteSize){
+    switch (savedRollHashByteSize) {
+        case 8: return rollHash;
+        case 7: return _tm_toSavedPartRollHash<7>(rollHash);
+        case 6: return _tm_toSavedPartRollHash<6>(rollHash);
+        case 5: return _tm_toSavedPartRollHash<5>(rollHash);
+        case 4: return _tm_toSavedPartRollHash<4>(rollHash);
+        case 3: return _tm_toSavedPartRollHash<3>(rollHash);
+        case 2: return _tm_toSavedPartRollHash<2>(rollHash);
+        case 1: return _tm_toSavedPartRollHash<1>(rollHash);
+        default:
+            assert(false);
+            return 0;
+    }
+}
+
+static hpatch_inline
+void toSavedPartRollHash(uint8_t* save_rollHash,uint64_t rollHash,size_t savedRollHashByteSize){
+    uint64_t partHash=toSavedPartRollHash(rollHash,savedRollHashByteSize);
+    writeRollHash(save_rollHash,partHash,savedRollHashByteSize);
+}
 
 
 hpatch_inline static unsigned int upper_ilog2(long double v){

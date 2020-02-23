@@ -48,7 +48,9 @@ void create_dir_sync_data(IDirSyncListener*         listener,
                           const hdiff_TCompress*    compressPlugin,
                           hpatch_TChecksum*         strongChecksumPlugin,
                           size_t                    kMaxOpenFileNumber,
-                          uint32_t kMatchBlockSize=kMatchBlockSize_default,size_t threadNum=1);
+                          uint32_t kMatchBlockSize=kMatchBlockSize_default,
+                          size_t kSafeHashClashBit=kSafeHashClashBit_default,
+                          size_t threadNum=1);
 
 #endif
 #endif // dir_sync_server_h

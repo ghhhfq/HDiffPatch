@@ -31,13 +31,12 @@
 #include "../sync_client/sync_client_type.h"
 #include "../sync_client/sync_client_type_private.h"
 
+static const size_t kSafeHashClashBit_min     = 20;
+static const size_t kSafeHashClashBit_default = 32;
 
 namespace sync_private{
-    const size_t kSafeHashClashBit = 48; //allow clash probability: 1/2^48
     const size_t _kNeedMinRollHashByte  = 1;
     const size_t _kMaxRollHashByte      = sizeof(uint64_t);
-    const size_t _kNeedMinStrongHashByte=(kSafeHashClashBit+7)/8;
-    const size_t _kNeedMinHashByte=_kNeedMinRollHashByte+_kNeedMinStrongHashByte;
     
     hpatch_inline static
     size_t _estimateCompareCountBit(hpatch_StreamPos_t newDataSize,uint32_t kMatchBlockSize){
@@ -46,19 +45,21 @@ namespace sync_private{
     }
     
     hpatch_inline static
-    size_t getNeedHashByte(hpatch_StreamPos_t newDataSize,uint32_t kMatchBlockSize){
+    size_t getNeedHashByte(size_t kSafeHashClashBit,hpatch_StreamPos_t newDataSize,uint32_t kMatchBlockSize){
+        const size_t _kNeedMinStrongHashByte=(kSafeHashClashBit+7)/8;
+        const size_t _kNeedMinHashByte=_kNeedMinRollHashByte+_kNeedMinStrongHashByte;
         size_t compareCountBit=_estimateCompareCountBit(newDataSize,kMatchBlockSize);
         size_t result=(compareCountBit+kSafeHashClashBit+7)/8;
         return (result>=_kNeedMinHashByte)?result:_kNeedMinHashByte;
     }
     hpatch_inline static
-    size_t getNeedHashByte(hpatch_StreamPos_t newDataSize,uint32_t kMatchBlockSize,size_t kStrongHashByte,
-                           size_t* out_partRollHashByte,size_t* out_partStrongHashByte){
-        const size_t result=getNeedHashByte(newDataSize,kMatchBlockSize);
+    size_t getNeedHashByte(size_t kSafeHashClashBit,hpatch_StreamPos_t newDataSize,uint32_t kMatchBlockSize,
+                           size_t kStrongHashByte,size_t* out_partRollHashByte,size_t* out_partStrongHashByte){
+        const size_t result=getNeedHashByte(kSafeHashClashBit,newDataSize,kMatchBlockSize);
         assert(kStrongHashByte>=kStrongChecksumByteSize_min);
-        assert(kStrongHashByte*8>=kSafeHashClashBit);
         size_t compareCountBit=_estimateCompareCountBit(newDataSize,kMatchBlockSize);
-        size_t rollHashByte=(compareCountBit+7-4)/8; // compare allow some clash
+        size_t rollHashByte=compareCountBit/8;
+        if (rollHashByte>2) --rollHashByte;
         if (rollHashByte<_kNeedMinRollHashByte) rollHashByte=_kNeedMinRollHashByte;
         else if (rollHashByte>_kMaxRollHashByte) rollHashByte=_kMaxRollHashByte;
         assert(rollHashByte<=result);
@@ -69,31 +70,30 @@ namespace sync_private{
         if (strongHashByte>kStrongHashByte){
             strongHashByte=kStrongHashByte;
             rollHashByte=result-kStrongHashByte;
-            assert((strongHashByte>=1)&(strongHashByte<=_kMaxRollHashByte));
+            assert((strongHashByte>=_kNeedMinRollHashByte)&(strongHashByte<=_kMaxRollHashByte));
         }
         *out_partRollHashByte=rollHashByte;
         *out_partStrongHashByte=strongHashByte;
         return result;
     }
-    
 }//namespace sync_private
 
 
 hpatch_inline static //check strongChecksumByteSize is strong enough?
-bool getStrongForHashClash(hpatch_StreamPos_t newDataSize,uint32_t kMatchBlockSize,
+bool getStrongForHashClash(size_t kSafeHashClashBit,hpatch_StreamPos_t newDataSize,uint32_t kMatchBlockSize,
                            size_t strongChecksumByteSize){
     if (strongChecksumByteSize<kStrongChecksumByteSize_min)
         return false;
-    size_t needHashByte=sync_private::getNeedHashByte(newDataSize,kMatchBlockSize);
+    size_t needHashByte=sync_private::getNeedHashByte(kSafeHashClashBit,newDataSize,kMatchBlockSize);
     return sync_private::_kMaxRollHashByte+strongChecksumByteSize>=needHashByte;
 }
 
 hpatch_inline static
-hpatch_StreamPos_t estimatePatchMemSize(hpatch_StreamPos_t newDataSize,
+hpatch_StreamPos_t estimatePatchMemSize(size_t kSafeHashClashBit,hpatch_StreamPos_t newDataSize,
                                         uint32_t kMatchBlockSize,bool isUsedCompress){
     hpatch_StreamPos_t blockCount=getSyncBlockCount(newDataSize,kMatchBlockSize);
     hpatch_StreamPos_t bet=24;
-    bet+= sync_private::getNeedHashByte(newDataSize,kMatchBlockSize);
+    bet+= sync_private::getNeedHashByte(kSafeHashClashBit,newDataSize,kMatchBlockSize);
     bet+=isUsedCompress?4:0;
     return bet*blockCount + 2*(hpatch_StreamPos_t)kMatchBlockSize;
 }

@@ -79,6 +79,7 @@ hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin);
 #if (_IS_NEED_DEFAULT_ChecksumPlugin)
 //===== select needs checksum plugins or change to your plugin=====
 #   define _ChecksumPlugin_md5
+#   define _ChecksumPlugin_crc32
 #endif
 #include "../checksum_plugin_demo.h"
 
@@ -218,11 +219,15 @@ static hpatch_TDecompress* _findDecompressPlugin(ISyncInfoListener* listener,con
 }
 //ISyncInfoListener::findChecksumPlugin
 static hpatch_TChecksum* _findChecksumPlugin(ISyncInfoListener* listener,const char* strongChecksumType){
-    if (strongChecksumType==0) return 0; //ok
+    assert((strongChecksumType!=0)&&(strlen(strongChecksumType)>0));
     hpatch_TChecksum* strongChecksumPlugin=0;
 #ifdef  _ChecksumPlugin_md5
     if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,md5ChecksumPlugin.checksumType())))
         strongChecksumPlugin=&md5ChecksumPlugin;
+#endif
+#ifdef  _ChecksumPlugin_crc32
+    if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,crc32ChecksumPlugin.checksumType())))
+        strongChecksumPlugin=&crc32ChecksumPlugin;
 #endif
     if (strongChecksumPlugin==0){
         printf("  sync_patch can't found checksum type: \"%s\"\n",strongChecksumType);

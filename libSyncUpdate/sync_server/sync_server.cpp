@@ -76,12 +76,7 @@ static void mt_create_sync_data(_TCreateDatas& cd,void* _mt=0,int threadIndex=0)
         if (backZeroLen>0)
             memset(buf.data()+dataLen,0,backZeroLen);
         
-        uint64_t rollHash;
-        //roll hash
-        if (out_newSyncInfo->is32Bit_rollHash)
-            rollHash=roll_hash_start((uint32_t*)0,buf.data(),kMatchBlockSize);
-        else
-            rollHash=roll_hash_start((uint64_t*)0,buf.data(),kMatchBlockSize);
+        uint64_t rollHash=roll_hash_start((uint64_t*)0,buf.data(),kMatchBlockSize);
         //strong hash
         checksumBlockData.appendBegin();
         checksumBlockData.append(buf.data(),buf.data()+kMatchBlockSize);
@@ -102,11 +97,8 @@ static void mt_create_sync_data(_TCreateDatas& cd,void* _mt=0,int threadIndex=0)
             TMt_by_queue::TAutoQueueLocker _autoLocker(mt?&mt->outputQueue:0,threadIndex,i);
             checkv(_autoLocker.isWaitOk);
 #endif
-            if (out_newSyncInfo->is32Bit_rollHash)
-                ((uint32_t*)out_newSyncInfo->rollHashs)[i]=(uint32_t)rollHash;
-            else
-                ((uint64_t*)out_newSyncInfo->rollHashs)[i]=rollHash;
-            
+            toSavedPartRollHash(out_newSyncInfo->rollHashs+i*out_newSyncInfo->savedRollHashByteSize,
+                           rollHash,out_newSyncInfo->savedRollHashByteSize);
             checkChecksumAppendData(cd.out_newSyncInfo->newDataCheckChecksum,i,
                                     checksumBlockData.checksum.data(),checksumByteSize);
             toPartChecksum(checksumBlockData.checksum.data(),out_newSyncInfo->savedStrongChecksumByteSize,
@@ -191,11 +183,11 @@ void create_sync_data(const hpatch_TStreamInput*  newData,
                       const hpatch_TStreamOutput* out_newSyncData,
                       const hdiff_TCompress* compressPlugin,
                       hpatch_TChecksum*      strongChecksumPlugin,
-                      uint32_t kMatchBlockSize,size_t threadNum,
+                      uint32_t kMatchBlockSize,size_t kSafeHashClashBit,size_t threadNum,
                       const unsigned char* externData_begin,const unsigned char* externData_end){
     assert(externData_begin<=externData_end);
     CNewDataSyncInfo newSyncInfo(strongChecksumPlugin,compressPlugin,
-                                 newData->streamSize,kMatchBlockSize);
+                                 newData->streamSize,kMatchBlockSize,kSafeHashClashBit);
     newSyncInfo.externData_begin=externData_begin;
     newSyncInfo.externData_end=externData_end;
     _private_create_sync_data(&newSyncInfo,newData,out_newSyncInfo,out_newSyncData,compressPlugin,threadNum);
@@ -206,7 +198,7 @@ void create_sync_data_by_file(const char* newDataFile,
                               const char* out_hsynd_file,
                               const hdiff_TCompress* compressPlugin,
                               hpatch_TChecksum*      strongChecksumPlugin,
-                              uint32_t kMatchBlockSize,size_t threadNum,
+                              uint32_t kMatchBlockSize,size_t kSafeHashClashBit,size_t threadNum,
                               const unsigned char* externData_begin,const unsigned char* externData_end){
     CFileStreamInput  newData(newDataFile);
     CFileStreamOutput out_newSyncInfo(out_hsyni_file,~(hpatch_StreamPos_t)0);
@@ -218,23 +210,24 @@ void create_sync_data_by_file(const char* newDataFile,
     }
     
     create_sync_data(&newData.base,&out_newSyncInfo.base,newDataStream,compressPlugin,
-                     strongChecksumPlugin,kMatchBlockSize,threadNum,externData_begin,externData_end);
+                     strongChecksumPlugin,kMatchBlockSize,kSafeHashClashBit,
+                     threadNum,externData_begin,externData_end);
 }
 
 void create_sync_data_by_file(const char* newDataFile,
                               const char* out_hsyni_file,
                               hpatch_TChecksum*      strongChecksumPlugin,
-                              uint32_t kMatchBlockSize,size_t threadNum,
+                              uint32_t kMatchBlockSize,size_t kSafeHashClashBit,size_t threadNum,
                               const unsigned char* externData_begin,const unsigned char* externData_end){
     create_sync_data_by_file(newDataFile,out_hsyni_file,0,0, strongChecksumPlugin,
-                             kMatchBlockSize,threadNum,externData_begin,externData_end);
+                             kMatchBlockSize,kSafeHashClashBit,threadNum,externData_begin,externData_end);
 }
 
 void create_sync_data(const hpatch_TStreamInput*  newData,
                       const hpatch_TStreamOutput* out_newSyncInfo, //newSyncData same as newData
                       hpatch_TChecksum*      strongChecksumPlugin,
-                      uint32_t kMatchBlockSize,size_t threadNum,
+                      uint32_t kMatchBlockSize,size_t kSafeHashClashBit,size_t threadNum,
                       const unsigned char* externData_begin,const unsigned char* externData_end){
     create_sync_data(newData,out_newSyncInfo,0,0, strongChecksumPlugin,
-                     kMatchBlockSize,threadNum,externData_begin,externData_end);
+                     kMatchBlockSize,kSafeHashClashBit,threadNum,externData_begin,externData_end);
 }

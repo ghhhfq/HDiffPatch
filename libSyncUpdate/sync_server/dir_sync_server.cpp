@@ -56,7 +56,7 @@ void create_dir_sync_data(IDirSyncListener*         listener,
                           const hdiff_TCompress*    compressPlugin,
                           hpatch_TChecksum*         strongChecksumPlugin,
                           size_t                    kMaxOpenFileNumber,
-                          uint32_t kMatchBlockSize,size_t threadNum){
+                          uint32_t kMatchBlockSize,size_t kSafeHashClashBit,size_t threadNum){
     assert(listener!=0);
     assert((out_hsynd_file!=0)&&(strlen(out_hsynd_file)>0));
     assert(kMaxOpenFileNumber>=kMaxOpenFileNumber_limit_min);
@@ -91,14 +91,14 @@ void create_dir_sync_data(IDirSyncListener*         listener,
     const size_t kAlignSize=kMatchBlockSize;
     newRefStream.open(resLimit.limit.streamList,newList.size(),kAlignSize);
     
-    bool isSafeHashClash=getStrongForHashClash(newRefStream.stream->streamSize,kMatchBlockSize,
+    bool isSafeHashClash=getStrongForHashClash(kSafeHashClashBit,newRefStream.stream->streamSize,kMatchBlockSize,
                                                strongChecksumPlugin->checksumByteSize());
     listener->syncRefInfo(newManifest.rootPath.c_str(),newList.size(),newRefStream.stream->streamSize,
                           kMatchBlockSize,isSafeHashClash);
     checkv(isSafeHashClash); //warning as error
 
     CNewDataSyncInfo  newDataSyncInfo(strongChecksumPlugin,compressPlugin,
-                                      newRefStream.stream->streamSize,kMatchBlockSize);
+                                      newRefStream.stream->streamSize,kMatchBlockSize,kSafeHashClashBit);
     newDataSyncInfo.isDirSyncInfo=hpatch_TRUE;
     newDataSyncInfo.dir_newPathCount=newList.size();
     newDataSyncInfo.dir_newNameList_isCString=hpatch_FALSE;

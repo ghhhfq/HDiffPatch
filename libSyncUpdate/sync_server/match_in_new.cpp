@@ -34,42 +34,54 @@
 using namespace hdiff_private;
 namespace sync_private{
 
-template<class tm_roll_uint>
+typedef uint64_t tm_roll_uint;
+
 struct TIndex_comp{
-    inline explicit TIndex_comp(const tm_roll_uint* _blocks):blocks(_blocks){ }
+    inline explicit TIndex_comp(const uint8_t* _blocks,size_t _byteSize)
+    :blocks(_blocks),byteSize(_byteSize){ }
+    typedef uint32_t TIndex;
     struct TDigest{
-        tm_roll_uint value;
-        uint32_t     index;
-        inline explicit TDigest(tm_roll_uint _value,uint32_t _index)
-            :value(_value),index(_index){}
+        const uint8_t*  blocks;
+        TIndex          index;
+        inline explicit TDigest(const uint8_t* _blocks,TIndex _index)
+        :blocks(_blocks),index(_index){}
     };
-    template<class TIndex> inline
-    bool operator()(const TIndex& x,const TDigest& y)const {
-        tm_roll_uint hx=blocks[x];
-        if (hx!=y.value)
-            return hx<y.value;
+    inline bool operator()(const TIndex x,const TDigest& y)const { //for equal_range
+        int cmp=_cmp(blocks+x*byteSize,y.blocks+y.index*byteSize,byteSize);
+        if (cmp!=0)
+            return cmp<0; //value
         else
-            return (x>=y.index); //for: assert(newBlockIndex<i);
+            return y.index<=x; //for: assert(newBlockIndex<i);
     }
-    template<class TIndex> inline
-    bool operator()(const TDigest& x,const TIndex& y)const {
-        return x.value<blocks[y];
+    bool operator()(const TDigest& x,const TIndex y)const { //for equal_range
+        int cmp=_cmp(x.blocks+x.index*byteSize,blocks+y*byteSize,byteSize);
+        if (cmp!=0)
+            return cmp<0; //value
+        else
+            return x.index<=y; //for: assert(newBlockIndex<i);
     }
-    template<class TIndex> inline
-    bool operator()(const TIndex& x, const TIndex& y)const {//for sort
-        tm_roll_uint hx=blocks[x];
-        tm_roll_uint hy=blocks[y];
-        if (hx!=hy)
-            return hx<hy; //value sort
+    
+    inline bool operator()(const TIndex x, const TIndex y)const {//for sort
+        int cmp=_cmp(blocks+x*byteSize,blocks+y*byteSize,byteSize);
+        if (cmp!=0)
+            return cmp<0; //value sort
         else
             return x>y; //index sort
     }
 protected:
-    const tm_roll_uint* blocks;
+    const uint8_t*  blocks;
+    size_t          byteSize;
+    inline static int _cmp(const uint8_t* px,const uint8_t* py,size_t byteSize){
+        const uint8_t* px_end=px+byteSize;
+        for (;px!=px_end;++px,++py){
+            int sub=(int)(*px)-(*py);
+            if (sub!=0) return sub; //value sort
+        }
+        return 0;
+    }
 };
 
-template<class tm_roll_uint> static
-void tm_matchNewDataInNew(TNewDataSyncInfo* newSyncInfo){
+void matchNewDataInNew(TNewDataSyncInfo* newSyncInfo){
     uint32_t kBlockCount=(uint32_t)TNewDataSyncInfo_blockCount(newSyncInfo);
     const unsigned char* partChecksums=newSyncInfo->partChecksums;
     TSameNewBlockPair* samePairList=newSyncInfo->samePairList;
@@ -79,31 +91,36 @@ void tm_matchNewDataInNew(TNewDataSyncInfo* newSyncInfo){
     for (uint32_t i=0; i<kBlockCount; ++i){
         sorted_newIndexs[i]=i;
     }
-    TIndex_comp<tm_roll_uint> icomp((tm_roll_uint*)newSyncInfo->rollHashs);
+    TIndex_comp icomp(newSyncInfo->rollHashs,newSyncInfo->savedRollHashByteSize);
     std::sort(sorted_newIndexs,sorted_newIndexs+kBlockCount,icomp);
     
     //optimize for std::equal_range
-    const unsigned int kTableBit =getBetterCacheBlockTableBit(kBlockCount);
-    const unsigned int kTableHashShlBit=(sizeof(tm_roll_uint)*8-kTableBit);
+    const size_t savedRollHashByteSize=newSyncInfo->savedRollHashByteSize;
+    unsigned int kTableBit =getBetterCacheBlockTableBit(kBlockCount);
+    if (kTableBit>savedRollHashByteSize*8) kTableBit=(unsigned int)savedRollHashByteSize*8;
+    const unsigned int kTableHashShlBit=(unsigned int)(savedRollHashByteSize*8-kTableBit);
     TAutoMem _mem_table((size_t)sizeof(uint32_t)*((1<<kTableBit)+1));
     uint32_t* sorted_newIndexs_table=(uint32_t*)_mem_table.data();
     {
         uint32_t* pos=sorted_newIndexs;
+        uint8_t part[sizeof(tm_roll_uint)]={0};
         for (uint32_t i=0; i<((uint32_t)1<<kTableBit); ++i) {
             tm_roll_uint digest=((tm_roll_uint)i)<<kTableHashShlBit;
-            typename TIndex_comp<tm_roll_uint>::TDigest digest_value(digest,0);
+            writeRollHash(part,digest,savedRollHashByteSize);
+            typename TIndex_comp::TDigest digest_value(part,0);
             pos=std::lower_bound(pos,sorted_newIndexs+kBlockCount,digest_value,icomp);
             sorted_newIndexs_table[i]=(uint32_t)(pos-sorted_newIndexs);
         }
         sorted_newIndexs_table[((size_t)1<<kTableBit)]=kBlockCount;
     }
 
-    TIndex_comp<tm_roll_uint> dcomp((tm_roll_uint*)newSyncInfo->rollHashs);
+    TIndex_comp dcomp(newSyncInfo->rollHashs,newSyncInfo->savedRollHashByteSize);
     uint32_t matchedCount=0;
     const unsigned char* curChecksum=partChecksums;
     for (uint32_t i=0; i<kBlockCount; ++i,curChecksum+=newSyncInfo->savedStrongChecksumByteSize){
-        tm_roll_uint digest=((tm_roll_uint*)newSyncInfo->rollHashs)[i];
-        typename TIndex_comp<tm_roll_uint>::TDigest digest_value(digest,i);
+        typename TIndex_comp::TDigest digest_value(newSyncInfo->rollHashs,i);
+        tm_roll_uint digest=readRollHash(newSyncInfo->rollHashs+i*newSyncInfo->savedRollHashByteSize,
+                                             newSyncInfo->savedRollHashByteSize);
         const uint32_t* ti_pos=&sorted_newIndexs_table[digest>>kTableHashShlBit];
         std::pair<const uint32_t*,const uint32_t*>
             //range=std::equal_range(sorted_newIndexs,sorted_newIndexs+kBlockCount,digest_value,dcomp);
@@ -123,14 +140,6 @@ void tm_matchNewDataInNew(TNewDataSyncInfo* newSyncInfo){
     }
     //printf("matchedCount: %d\n",matchedCount);
     newSyncInfo->samePairCount=matchedCount;
-}
-
-
-void matchNewDataInNew(TNewDataSyncInfo* newSyncInfo){
-    if (newSyncInfo->is32Bit_rollHash)
-        tm_matchNewDataInNew<uint32_t>(newSyncInfo);
-    else
-        tm_matchNewDataInNew<uint64_t>(newSyncInfo);
 }
 
 }//namespace sync_private

@@ -66,6 +66,7 @@
 #if (_IS_NEED_DEFAULT_ChecksumPlugin)
 //===== select needs checksum plugins or change to your plugin=====
 #   define _ChecksumPlugin_md5
+#   define _ChecksumPlugin_crc32
 #endif
 
 #include "../checksum_plugin_demo.h"
@@ -84,10 +85,13 @@ static void printUsage(){
            "options:\n"
            "  -s-matchBlockSize\n"
            "      matchBlockSize can like 4096 or 4k or 128k or 1m etc..., DEFAULT 2048\n"
+           "  -b-safeHashClashBit\n"
+           "      set allow patch fail clash probability: 1/2^safeHashClashBit;\n"
+           "      safeHashClashBit>=20, DEFAULT -b-32, recommended 24,40,48,64...\n"
 #if (_IS_USED_MULTITHREAD)
            "  -p-parallelThreadNumber\n"
+           "    DEFAULT -p-1;\n"
            "    if parallelThreadNumber>1 then open multi-thread Parallel mode;\n"
-           "    DEFAULT -p-4;\n"
 #endif
            "  -c-compressType[-compressLevel]\n"
            "      set out_hsynd_file Compress type & level, DEFAULT uncompress;\n"
@@ -99,6 +103,24 @@ static void printUsage(){
 #ifdef _CompressPlugin_lzma
            "        -c-lzma[-{0..9}[-dictSize]]     DEFAULT level 7\n"
            "            dictSize can like 4096 or 4k or 4m or 64m etc..., DEFAULT 2m\n"
+#endif
+           "  -C-checksumType\n"
+           "      set strong Checksum type for block data, DEFAULT "
+#ifdef _ChecksumPlugin_md5
+           "-C-md5;\n"
+#else
+#   ifdef _ChecksumPlugin_crc32
+           "-C-crc32;\n"
+#   else
+#           error Need a strong Checksum!
+#   endif
+#endif
+           "      support checksum type:\n"
+#ifdef _ChecksumPlugin_md5
+           "        -C-md5\n"
+#endif
+#ifdef _ChecksumPlugin_crc32
+           "        -C-crc32\n"
 #endif
 #if (_IS_NEED_DIR_DIFF_PATCH)
            "  -n-maxOpenFileNumber\n"
@@ -137,13 +159,14 @@ int sync_server_cmd_line(int argc, const char * argv[]);
 
 int create_sync_files_for_file(const char* newDataFile,const char* out_hsyni_file,
                                const char* out_hsynd_file,const hdiff_TCompress* compressPlugin,
-                               hpatch_TChecksum* strongChecksumPlugin,uint32_t kMatchBlockSize,size_t threadNum);
+                               hpatch_TChecksum* strongChecksumPlugin,uint32_t kMatchBlockSize,
+                               size_t kSafeHashClashBit,size_t threadNum);
 #if (_IS_NEED_DIR_DIFF_PATCH)
 int create_sync_files_for_dir(const char* newDataDir,const char* out_hsyni_file,
                               const char* out_hsynd_file,const hdiff_TCompress* compressPlugin,
                               hpatch_TChecksum* strongChecksumPlugin,size_t kMaxOpenFileNumber,
                               const std::vector<std::string>& ignoreNewPathList,
-                              uint32_t kMatchBlockSize,size_t threadNum);
+                              uint32_t kMatchBlockSize,size_t kSafeHashClashBit,size_t threadNum);
 #endif
 
 #if (_IS_NEED_MAIN)
@@ -237,6 +260,34 @@ static int _checkSetCompress(hdiff_TCompress** out_compressPlugin,
     return SYNC_SERVER_SUCCESS;
 }
 
+static void _trySetChecksum(hpatch_TChecksum** out_checksumPlugin,const char* checksumType,
+                            hpatch_TChecksum* testChecksumPlugin){
+    if ((*out_checksumPlugin)!=0) return;
+    if (0==strcmp(checksumType,testChecksumPlugin->checksumType()))
+        *out_checksumPlugin=testChecksumPlugin;
+}
+static hpatch_BOOL findChecksum(hpatch_TChecksum** out_checksumPlugin,const char* checksumType){
+    *out_checksumPlugin=0;
+    if (strlen(checksumType)==0) return hpatch_TRUE;
+#ifdef _ChecksumPlugin_md5
+    _trySetChecksum(out_checksumPlugin,checksumType,&md5ChecksumPlugin);
+#endif
+#ifdef _ChecksumPlugin_crc32
+    _trySetChecksum(out_checksumPlugin,checksumType,&crc32ChecksumPlugin);
+#endif
+    return (0!=*out_checksumPlugin);
+}
+
+static hpatch_TChecksum* getDefaultStrongChecksum(){
+#ifdef _ChecksumPlugin_md5
+    return &md5ChecksumPlugin;
+#endif
+#ifdef _ChecksumPlugin_crc32
+    return &crc32ChecksumPlugin;
+#endif
+    return 0; //error
+}
+
 hpatch_inline static
 bool getFileSize(const char *path_utf8,hpatch_StreamPos_t* out_fileSize){
     hpatch_TPathType out_type;
@@ -252,11 +303,13 @@ static bool printFileInfo(const char *path_utf8,const char *tag,hpatch_StreamPos
     return true;
 }
 
-static void printCreateSyncInfo(hpatch_StreamPos_t newDataSize,size_t kMatchBlockSize,bool isUsedCompress){
+static void printCreateSyncInfo(size_t kSafeHashClashBit,hpatch_StreamPos_t newDataSize,
+                                size_t kMatchBlockSize,bool isUsedCompress){
     printf("  block size : %d\n",(uint32_t)kMatchBlockSize);
     hpatch_StreamPos_t blockCount=getSyncBlockCount(newDataSize,(uint32_t)kMatchBlockSize);
     printf("  block count: %" PRIu64 "\n",blockCount);
-    double patchMemSize=(double)estimatePatchMemSize(newDataSize,(uint32_t)kMatchBlockSize,isUsedCompress);
+    double patchMemSize=(double)estimatePatchMemSize(kSafeHashClashBit,newDataSize,
+                                                     (uint32_t)kMatchBlockSize,isUsedCompress);
     if (patchMemSize>=(1<<20))
         printf("  sync_patch memory size: ~ %.1f MB\n",patchMemSize/(1<<20));
     else
@@ -268,7 +321,7 @@ static void printCreateSyncInfo(hpatch_StreamPos_t newDataSize,size_t kMatchBloc
 
 #define _THREAD_NUMBER_NULL     0
 #define _THREAD_NUMBER_MIN      1
-#define _THREAD_NUMBER_DEFUALT  4
+#define _THREAD_NUMBER_DEFUALT  1
 #define _THREAD_NUMBER_MAX      (1<<8)
 
 int sync_server_cmd_line(int argc, const char * argv[]){
@@ -276,7 +329,9 @@ int sync_server_cmd_line(int argc, const char * argv[]){
     hpatch_BOOL isOutputHelp=_kNULL_VALUE;
     hpatch_BOOL isOutputVersion=_kNULL_VALUE;
     size_t      kMatchBlockSize=_kNULL_SIZE;
-    hdiff_TCompress* compressPlugin=0;
+    size_t      kSafeHashClashBit=_kNULL_SIZE;
+    hdiff_TCompress*  compressPlugin=0;
+    hpatch_TChecksum* strongChecksumPlugin=0;
     size_t      threadNum = _THREAD_NUMBER_NULL;
     std::vector<const char *> arg_values;
 #if (_IS_NEED_DIR_DIFF_PATCH)
@@ -311,6 +366,12 @@ int sync_server_cmd_line(int argc, const char * argv[]){
                 _options_check(kMatchBlockSize==(uint32_t)kMatchBlockSize,"-s-?");
                 _options_check(kMatchBlockSize>=kMatchBlockSize_min,"-s-?");
             } break;
+            case 'b':{
+                _options_check((kSafeHashClashBit==_kNULL_SIZE)&&(op[2]=='-'),"-b");
+                const char* pnum=op+3;
+                _options_check(kmg_to_size(pnum,strlen(pnum),&kSafeHashClashBit),"-b-?");
+                _options_check(kSafeHashClashBit>=kSafeHashClashBit_min,"-b-?");
+            } break;
 #if (_IS_USED_MULTITHREAD)
             case 'p':{
                 _options_check((threadNum==_THREAD_NUMBER_NULL)&&(op[2]=='-'),"-p-?");
@@ -326,6 +387,11 @@ int sync_server_cmd_line(int argc, const char * argv[]){
                 int result=_checkSetCompress(&compressPlugin,ptype,ptypeEnd);
                 if (SYNC_SERVER_SUCCESS!=result)
                     return result;
+            } break;
+            case 'C':{
+                _options_check((strongChecksumPlugin==0)&&(op[2]=='-'),"-C");
+                const char* ptype=op+3;
+                _options_check(findChecksum(&strongChecksumPlugin,ptype),"-C-?");
             } break;
 #if (_IS_NEED_DIR_DIFF_PATCH)
             case 'n':{
@@ -356,6 +422,11 @@ int sync_server_cmd_line(int argc, const char * argv[]){
         isForceOverwrite=hpatch_FALSE;
     if (kMatchBlockSize==_kNULL_SIZE)
         kMatchBlockSize=kMatchBlockSize_default;
+    if (kSafeHashClashBit==_kNULL_SIZE)
+        kSafeHashClashBit=kSafeHashClashBit_default;
+    if (strongChecksumPlugin==0)
+        strongChecksumPlugin=getDefaultStrongChecksum();
+    _options_check(strongChecksumPlugin!=0,"-C-?");
 #if (_IS_USED_MULTITHREAD)
     if (threadNum==_THREAD_NUMBER_NULL)
         threadNum=_THREAD_NUMBER_DEFUALT;
@@ -378,7 +449,7 @@ int sync_server_cmd_line(int argc, const char * argv[]){
         if (arg_values.empty())
             return SYNC_SERVER_SUCCESS; //ok
     }
-    
+
     _options_check((arg_values.size()==2)||(arg_values.size()==3),"input count");
     const char* newDataPath       =arg_values[0];
     const char* out_hsyni_file=arg_values[1]; // .hsyni
@@ -427,7 +498,6 @@ int sync_server_cmd_line(int argc, const char * argv[]){
     else
         printf("muti-thread parallel: closed\n");
 
-    hpatch_TChecksum* strongChecksumPlugin=&md5ChecksumPlugin;
     printf("create%s_sync_data run with strongChecksum plugin: \"%s\"\n",
            isUseDirSyncUpdate?"_dir":"",strongChecksumPlugin->checksumType());
     if (compressPlugin)
@@ -439,11 +509,11 @@ int sync_server_cmd_line(int argc, const char * argv[]){
         if (isUseDirSyncUpdate)
             result=create_sync_files_for_dir(newDataPath,out_hsyni_file,out_hsynd_file,compressPlugin,
                                              strongChecksumPlugin,kMaxOpenFileNumber,ignoreNewPathList,
-                                             (uint32_t)kMatchBlockSize,threadNum);
+                                             (uint32_t)kMatchBlockSize,kSafeHashClashBit,threadNum);
         else
 #endif
             result=create_sync_files_for_file(newDataPath,out_hsyni_file,out_hsynd_file,compressPlugin,
-                                              strongChecksumPlugin,(uint32_t)kMatchBlockSize,threadNum);
+                                              strongChecksumPlugin,(uint32_t)kMatchBlockSize,kSafeHashClashBit,threadNum);
     double time1=clock_s();
     if (result==SYNC_SERVER_SUCCESS){
         _return_check(printFileInfo(out_hsyni_file,"out .hsyni"),
@@ -460,19 +530,21 @@ int sync_server_cmd_line(int argc, const char * argv[]){
 
 int create_sync_files_for_file(const char* newDataFile,const char* out_hsyni_file,
                                const char* out_hsynd_file,const hdiff_TCompress* compressPlugin,
-                               hpatch_TChecksum* strongChecksumPlugin,uint32_t kMatchBlockSize,size_t threadNum){
+                               hpatch_TChecksum* strongChecksumPlugin,uint32_t kMatchBlockSize,
+                               size_t kSafeHashClashBit,size_t threadNum){
     hpatch_StreamPos_t newDataSize=0;
     _return_check(printFileInfo(newDataFile,"\nin new file",&newDataSize),
                   SYNC_SERVER_NEWPATH_ERROR,"run printFileInfo(%s,)",newDataFile);
-    bool isSafeHashClash=getStrongForHashClash(newDataSize,(uint32_t)kMatchBlockSize,
+    bool isSafeHashClash=getStrongForHashClash(kSafeHashClashBit,newDataSize,(uint32_t)kMatchBlockSize,
                                                strongChecksumPlugin->checksumByteSize());
     _return_check(isSafeHashClash,SYNC_SERVER_BLOCKSIZE_ERROR,
-                  "hash clash warning! must increase matchBlockSize(%d)",(uint32_t)kMatchBlockSize);
-    printCreateSyncInfo(newDataSize,kMatchBlockSize,(compressPlugin!=0));
+                  "hash clash warning! must increase matchBlockSize(%d) or decrease safeHashClashBit",kMatchBlockSize);
+    printCreateSyncInfo(kSafeHashClashBit,newDataSize,kMatchBlockSize,(compressPlugin!=0));
     
     try {
         create_sync_data_by_file(newDataFile,out_hsyni_file,out_hsynd_file,
-                                 compressPlugin,strongChecksumPlugin,(uint32_t)kMatchBlockSize,threadNum);
+                                 compressPlugin,strongChecksumPlugin,(uint32_t)kMatchBlockSize,
+                                 kSafeHashClashBit,threadNum);
     } catch (const std::exception& e){
         _return_check(false,SYNC_SERVER_CREATE_SYNC_DATA_ERROR,
                       "run create_sync_data with \"%s\"",e.what());
@@ -507,11 +579,11 @@ struct DirSyncListener:public IDirSyncListener{
         return result;
     }
     virtual void syncRefInfo(const char* rootDirPath,size_t pathCount,hpatch_StreamPos_t refFileSize,
-                             uint32_t kMatchBlockSize,bool isSafeHashClash){
+                             uint32_t kMatchBlockSize,size_t kSafeHashClashBit,bool isSafeHashClash){
         _isSafeHashClash=isSafeHashClash;
         printf("  path count : %" PRIu64 "\n",(hpatch_StreamPos_t)pathCount);
         printf("  files size : %" PRIu64 "\n",(hpatch_StreamPos_t)refFileSize);
-        printCreateSyncInfo(refFileSize,kMatchBlockSize,_isUsedCompress);
+        printCreateSyncInfo(refFileSize,kMatchBlockSize,kSafeHashClashBit,_isUsedCompress);
     }
 };
 
@@ -519,7 +591,7 @@ int create_sync_files_for_dir(const char* newDataDir,const char* out_hsyni_file,
                               const char* out_hsynd_file,const hdiff_TCompress* compressPlugin,
                               hpatch_TChecksum* strongChecksumPlugin,size_t kMaxOpenFileNumber,
                               const std::vector<std::string>& ignoreNewPathList,
-                              uint32_t kMatchBlockSize,size_t threadNum){
+                              uint32_t kMatchBlockSize,size_t kSafeHashClashBit,size_t threadNum){
     std::string newDir(newDataDir);
     assignDirTag(newDir);
     printf("\nin new dir: \""); hpatch_printPath_utf8(newDir.c_str()); printf("\"\n");
@@ -534,11 +606,12 @@ int create_sync_files_for_dir(const char* newDataDir,const char* out_hsyni_file,
     }
     try {
         create_dir_sync_data(&listener,newManifest,out_hsyni_file,out_hsynd_file,
-                             compressPlugin,strongChecksumPlugin,kMaxOpenFileNumber,kMatchBlockSize,threadNum);
+                             compressPlugin,strongChecksumPlugin,kMaxOpenFileNumber,
+                             kMatchBlockSize,kSafeHashClashBit,threadNum);
     } catch (const std::exception& e){
         if (!listener._isSafeHashClash){
             _return_check(false,SYNC_SERVER_BLOCKSIZE_ERROR,
-                          "hash clash warning! must increase matchBlockSize(%d)",(uint32_t)kMatchBlockSize);
+                          "hash clash warning! must increase matchBlockSize(%d) or decrease safeHashClashBit",kMatchBlockSize);
         }else{
             _return_check(false,SYNC_SERVER_CREATE_DIR_SYNC_DATA_ERROR,
                           "run create_dir_sync_data with \"%s\"",e.what());

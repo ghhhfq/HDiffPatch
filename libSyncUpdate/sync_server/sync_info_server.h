@@ -46,7 +46,7 @@ public:
         checkv(result==(uint32_t)result);
         return (uint32_t)result; }
     CNewDataSyncInfo(hpatch_TChecksum* strongChecksumPlugin,const hdiff_TCompress* compressPlugin,
-                     hpatch_StreamPos_t newDataSize,uint32_t kMatchBlockSize);
+                     hpatch_StreamPos_t newDataSize,uint32_t kMatchBlockSize,size_t kSafeHashClashBit);
     ~CNewDataSyncInfo(){}
 private:
     std::string                 _compressType;

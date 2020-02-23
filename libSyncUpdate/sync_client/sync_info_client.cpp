@@ -131,7 +131,6 @@ hpatch_BOOL _clip_readUIntTo(TUInt* result,TStreamCacheClip* sclip){
     if (rt) *result=(TUInt)v;
     return rt;
 }
-#define rollHashSize(self) (self->is32Bit_rollHash?sizeof(uint32_t):sizeof(uint64_t))
 
 } //namespace sync_private
 using namespace sync_private;
@@ -215,42 +214,17 @@ static bool readSavedSizesTo(TStreamCacheClip* codeClip,TNewDataSyncInfo* self){
     return true;
 }
 
-static bool readRollHashsTo(TStreamCacheClip* clip,void* rollHashs,uint8_t is32Bit_rollHash,
-                            TSameNewBlockPair* samePairList,size_t samePairCount,uint32_t kBlockCount){
+static bool readPartHashTo(TStreamCacheClip* clip,TByte* partHash,size_t partSize,
+                           TSameNewBlockPair* samePairList,size_t samePairCount,uint32_t kBlockCount){
     uint32_t curPair=0;
-    uint32_t* rhashs32=((uint32_t*)rollHashs);
-    uint64_t* rhashs64=(uint64_t*)rollHashs;
-    for (size_t i=0; i<kBlockCount; ++i){
-        if ((curPair<samePairCount)&&(i==samePairList[curPair].curIndex)){
-            uint32_t sameIndex=samePairList[curPair].sameIndex;
-            if (is32Bit_rollHash)
-                rhashs32[i]=rhashs32[sameIndex];
-                else
-                    rhashs64[i]=rhashs64[sameIndex];
-                    ++curPair;
-        }else{
-            if (is32Bit_rollHash){
-                if (!_clip_readUIntTo(&rhashs32[i],clip)) return false;
-            }else{
-                if (!_clip_readUIntTo(&rhashs64[i],clip)) return false;
-            }
-        }
-    }
-    if (curPair!=samePairCount) return false;
-    return true;
-}
-
-static bool readPartStrongChecksumsTo(TStreamCacheClip* clip,TByte* partChecksums,size_t partChecksumSize,
-                                      TSameNewBlockPair* samePairList,size_t samePairCount,uint32_t kBlockCount){
-    uint32_t curPair=0;
-    TByte* curPartChecksum=partChecksums;
-    for (size_t i=0; i<kBlockCount; ++i,curPartChecksum+=partChecksumSize){
+    TByte* curPartChecksum=partHash;
+    for (size_t i=0; i<kBlockCount; ++i,curPartChecksum+=partSize){
         if ((curPair<samePairCount)&&(i==samePairList[curPair].curIndex)){
             size_t sameIndex=samePairList[curPair].sameIndex;
-            memcpy(curPartChecksum,partChecksums+sameIndex*partChecksumSize,partChecksumSize);
+            memcpy(curPartChecksum,partHash+sameIndex*partSize,partSize);
             ++curPair;
         }else{
-            if (!_TStreamCacheClip_readDataTo(clip,curPartChecksum,curPartChecksum+partChecksumSize))
+            if (!_TStreamCacheClip_readDataTo(clip,curPartChecksum,curPartChecksum+partSize))
                 return false;
         }
     }
@@ -315,17 +289,17 @@ static int _TNewDataSyncInfo_open(TNewDataSyncInfo* self,const hpatch_TStreamInp
             self->_strongChecksumPlugin=strongChecksumPlugin;
         }
         
-        check(_clip_unpackToUInt32(&self->kStrongChecksumByteSize,&clip),kSyncClient_newSyncInfoDataError);
+        check(_clip_unpackToSize_t(&self->kStrongChecksumByteSize,&clip),kSyncClient_newSyncInfoDataError);
         check(strongChecksumPlugin->checksumByteSize()==self->kStrongChecksumByteSize,
               kSyncClient_strongChecksumByteSizeError);
-        check(_clip_unpackToUInt32(&self->savedStrongChecksumByteSize,&clip),kSyncClient_newSyncInfoDataError);
+        check(_clip_unpackToSize_t(&self->savedStrongChecksumByteSize,&clip),kSyncClient_newSyncInfoDataError);
         check((self->savedStrongChecksumByteSize<=self->kStrongChecksumByteSize),
               kSyncClient_strongChecksumByteSizeError);
+        check(_clip_unpackToSize_t(&self->savedRollHashByteSize,&clip),kSyncClient_newSyncInfoDataError);
         check(_clip_unpackToUInt32(&self->kMatchBlockSize,&clip),kSyncClient_newSyncInfoDataError);
         check(_clip_unpackToUInt32(&self->samePairCount,&clip),kSyncClient_newSyncInfoDataError);
         check(_clip_readUIntTo(&self->isDirSyncInfo,&clip),kSyncClient_newSyncInfoDataError);
         check(newIsDir_byType==self->isDirSyncInfo, kSyncClient_newSyncInfoTypeError);
-        check(_clip_readUIntTo(&self->is32Bit_rollHash,&clip),kSyncClient_newSyncInfoDataError);
         check(_clip_readUIntTo(&isSavedSizes,&clip),kSyncClient_newSyncInfoDataError);
         check(_clip_unpackUIntTo(&self->newDataSize,&clip),kSyncClient_newSyncInfoDataError);
         check(_clip_unpackUIntTo(&self->newSyncDataSize,&clip),kSyncClient_newSyncInfoDataError);
@@ -353,7 +327,7 @@ static int _TNewDataSyncInfo_open(TNewDataSyncInfo* self,const hpatch_TStreamInp
         TByte* curMem=0;
         hpatch_StreamPos_t memSize=strlen(compressType)+1+strlen(checksumType)+1 + externDataSize
                         +self->kStrongChecksumByteSize+checkChecksumBufByteSize(self->kStrongChecksumByteSize);
-        memSize+=(rollHashSize(self)+self->savedStrongChecksumByteSize)*(hpatch_StreamPos_t)kBlockCount;
+        memSize+=(self->savedRollHashByteSize+self->savedStrongChecksumByteSize)*(hpatch_StreamPos_t)kBlockCount;
         memSize+=self->samePairCount*sizeof(TSameNewBlockPair);
         if (decompressPlugin)
             memSize+=sizeof(uint32_t)*(hpatch_StreamPos_t)kBlockCount;
@@ -389,7 +363,7 @@ static int _TNewDataSyncInfo_open(TNewDataSyncInfo* self,const hpatch_TStreamInp
         }
 #endif
         self->rollHashs=curMem;
-        curMem+=rollHashSize(self)*(size_t)kBlockCount;
+        curMem+=self->savedRollHashByteSize*(size_t)kBlockCount;
         if (isSavedSizes){
             self->savedSizes=(uint32_t*)curMem;
             curMem+=sizeof(uint32_t)*(size_t)kBlockCount;
@@ -496,12 +470,12 @@ static int _TNewDataSyncInfo_open(TNewDataSyncInfo* self,const hpatch_TStreamInp
         }
     }
     //rollHashs
-    check(readRollHashsTo(&clip,self->rollHashs,self->is32Bit_rollHash, self->samePairList,
-                          self->samePairCount,kBlockCount), kSyncClient_newSyncInfoDataError);
+    check(readPartHashTo(&clip,self->rollHashs,self->savedRollHashByteSize,self->samePairList,
+                         self->samePairCount,kBlockCount), kSyncClient_newSyncInfoDataError);
     //partStrongChecksums
-    check(readPartStrongChecksumsTo(&clip,self->partChecksums,self->savedStrongChecksumByteSize,
-                                    self->samePairList,self->samePairCount,
-                                    kBlockCount), kSyncClient_newSyncInfoDataError);
+    check(readPartHashTo(&clip,self->partChecksums,self->savedStrongChecksumByteSize,
+                         self->samePairList,self->samePairCount,
+                         kBlockCount), kSyncClient_newSyncInfoDataError);
 
     if (isChecksumNewSyncInfo){ //infoFullChecksum
         const hpatch_StreamPos_t infoChecksumPos=_TStreamCacheClip_readPosOfSrcStream(&clip);
