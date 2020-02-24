@@ -2,12 +2,12 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="hsync_client_http" />
+		<Option title="hsync_http" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/hsync_client_http" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Debug/hsync_http" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -19,7 +19,7 @@
 				</Linker>
 			</Target>
 			<Target title="Release">
-				<Option output="bin/Release/hsync_client_http" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Release/hsync_http" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -37,7 +37,7 @@
 				</Linker>
 			</Target>
 			<Target title="Release_x86">
-				<Option output="bin/Release_x86/hsync_client_http" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Release_x86/hsync_http" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release_x86/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -58,7 +58,7 @@
 				</Linker>
 			</Target>
 			<Target title="Debug_https">
-				<Option output="bin/Debug/hsync_client_https" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Debug/hsync_https" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -71,7 +71,7 @@
 				</Linker>
 			</Target>
 			<Target title="Release_https">
-				<Option output="bin/Release/hsync_client_https" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Release/hsync_https" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -90,7 +90,7 @@
 				</Linker>
 			</Target>
 			<Target title="Release_https_x86">
-				<Option output="bin/Release_x86/hsync_client_https" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Release_x86/hsync_https" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release_x86/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -453,7 +453,7 @@
 		</Unit>
 		<Unit filename="../../../minihttp/minihttp.cpp" />
 		<Unit filename="../../libSyncUpdate/client_download_http.cpp" />
-		<Unit filename="../../libSyncUpdate/hsync_client_http.cpp" />
+		<Unit filename="../../libSyncUpdate/hsync_http.cpp" />
 		<Extensions>
 			<envvars />
 			<code_completion />

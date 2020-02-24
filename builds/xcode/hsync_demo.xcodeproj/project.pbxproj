@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D684E20F23CAB3F6004C6EB9 /* hsync_client_demo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D684E20E23CAB3F6004C6EB9 /* hsync_client_demo.cpp */; };
+		D684E20F23CAB3F6004C6EB9 /* hsync_demo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D684E20E23CAB3F6004C6EB9 /* hsync_demo.cpp */; };
 		D688CAD923E1D1C4006427D4 /* libHSyncClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D688CAD823E1D1C4006427D4 /* libHSyncClient.a */; };
 		D688CB6123E1D589006427D4 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = D688CB6023E1D589006427D4 /* libz.tbd */; };
 		D694F99823F62DBA00D41FD7 /* client_download_emulation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D694F99723F62DBA00D41FD7 /* client_download_emulation.cpp */; };
@@ -26,8 +26,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		D65892F82331D169003BB2F4 /* hsync_client_demo */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = hsync_client_demo; sourceTree = BUILT_PRODUCTS_DIR; };
-		D684E20E23CAB3F6004C6EB9 /* hsync_client_demo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hsync_client_demo.cpp; path = ../../libSyncUpdate/hsync_client_demo.cpp; sourceTree = "<group>"; };
+		D65892F82331D169003BB2F4 /* hsync_demo */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = hsync_demo; sourceTree = BUILT_PRODUCTS_DIR; };
+		D684E20E23CAB3F6004C6EB9 /* hsync_demo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hsync_demo.cpp; path = ../../libSyncUpdate/hsync_demo.cpp; sourceTree = "<group>"; };
 		D688CAD823E1D1C4006427D4 /* libHSyncClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libHSyncClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		D688CB6023E1D589006427D4 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		D694F99623F62DBA00D41FD7 /* client_download_emulation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = client_download_emulation.h; path = ../../libSyncUpdate/client_download_emulation.h; sourceTree = "<group>"; };
@@ -50,7 +50,7 @@
 		D65892EF2331D169003BB2F4 = {
 			isa = PBXGroup;
 			children = (
-				D684E20E23CAB3F6004C6EB9 /* hsync_client_demo.cpp */,
+				D684E20E23CAB3F6004C6EB9 /* hsync_demo.cpp */,
 				D694F99723F62DBA00D41FD7 /* client_download_emulation.cpp */,
 				D694F99623F62DBA00D41FD7 /* client_download_emulation.h */,
 				D65892F92331D169003BB2F4 /* Products */,
@@ -61,7 +61,7 @@
 		D65892F92331D169003BB2F4 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				D65892F82331D169003BB2F4 /* hsync_client_demo */,
+				D65892F82331D169003BB2F4 /* hsync_demo */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -78,9 +78,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		D65892F72331D169003BB2F4 /* hsync_client_demo */ = {
+		D65892F72331D169003BB2F4 /* hsync_demo */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = D65892FF2331D169003BB2F4 /* Build configuration list for PBXNativeTarget "hsync_client_demo" */;
+			buildConfigurationList = D65892FF2331D169003BB2F4 /* Build configuration list for PBXNativeTarget "hsync_demo" */;
 			buildPhases = (
 				D65892F42331D169003BB2F4 /* Sources */,
 				D65892F52331D169003BB2F4 /* Frameworks */,
@@ -90,9 +90,9 @@
 			);
 			dependencies = (
 			);
-			name = hsync_client_demo;
+			name = hsync_demo;
 			productName = sync_client;
-			productReference = D65892F82331D169003BB2F4 /* hsync_client_demo */;
+			productReference = D65892F82331D169003BB2F4 /* hsync_demo */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -109,7 +109,7 @@
 					};
 				};
 			};
-			buildConfigurationList = D65892F32331D169003BB2F4 /* Build configuration list for PBXProject "hsync_client_demo" */;
+			buildConfigurationList = D65892F32331D169003BB2F4 /* Build configuration list for PBXProject "hsync_demo" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -121,7 +121,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				D65892F72331D169003BB2F4 /* hsync_client_demo */,
+				D65892F72331D169003BB2F4 /* hsync_demo */,
 			);
 		};
 /* End PBXProject section */
@@ -131,7 +131,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D684E20F23CAB3F6004C6EB9 /* hsync_client_demo.cpp in Sources */,
+				D684E20F23CAB3F6004C6EB9 /* hsync_demo.cpp in Sources */,
 				D694F99823F62DBA00D41FD7 /* client_download_emulation.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -283,7 +283,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		D65892F32331D169003BB2F4 /* Build configuration list for PBXProject "hsync_client_demo" */ = {
+		D65892F32331D169003BB2F4 /* Build configuration list for PBXProject "hsync_demo" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D65892FD2331D169003BB2F4 /* Debug */,
@@ -292,7 +292,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		D65892FF2331D169003BB2F4 /* Build configuration list for PBXNativeTarget "hsync_client_demo" */ = {
+		D65892FF2331D169003BB2F4 /* Build configuration list for PBXNativeTarget "hsync_demo" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D65893002331D169003BB2F4 /* Debug */,

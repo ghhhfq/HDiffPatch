@@ -266,7 +266,7 @@ static void _rollMatch(_TMatchDatas& rd,hpatch_StreamPos_t oldRollBegin,
         
         const uint32_t* ti_pos=&rd.sorted_newIndexs_table[digest>>rd.kTableHashShlBit];
         writeRollHash(part,digest,savedRollHashByteSize);
-        typename TIndex_comp::TDigest digest_value(part);
+        TIndex_comp::TDigest digest_value(part);
         std::pair<const uint32_t*,const uint32_t*>
         //range=std::equal_range(sorted_newIndexs,sorted_newIndexs+sortedBlockCount,digest_value,icomp);
         range=std::equal_range(rd.sorted_newIndexs+ti_pos[0],
@@ -330,7 +330,7 @@ static void matchNewDataInOld(_TMatchDatas& matchDatas,int threadNum){
         for (uint32_t i=0; i<((uint32_t)1<<kTableBit); ++i) {
             tm_roll_uint digest=((tm_roll_uint)i)<<kTableHashShlBit;
             writeRollHash(part,digest,savedRollHashByteSize);
-            typename TIndex_comp::TDigest digest_value(part);
+            TIndex_comp::TDigest digest_value(part);
             pos=std::lower_bound(pos,sorted_newIndexs+kBlockCount,digest_value,icomp);
             sorted_newIndexs_table[i]=(uint32_t)(pos-sorted_newIndexs);
         }

@@ -7,11 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D688CB6523E1DB6F006427D4 /* hsync_client_http.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D688CB6423E1DB6F006427D4 /* hsync_client_http.cpp */; };
+		D688CB6523E1DB6F006427D4 /* hsync_http.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D688CB6423E1DB6F006427D4 /* hsync_http.cpp */; };
 		D688CB6A23E1DBB2006427D4 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = D688CB6923E1DBB2006427D4 /* libz.tbd */; };
 		D694F99E23F633AD00D41FD7 /* client_download_http.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D694F99C23F633AD00D41FD7 /* client_download_http.cpp */; };
 		D694F9E623F7C1D600D41FD7 /* client_download_http.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D694F99C23F633AD00D41FD7 /* client_download_http.cpp */; };
-		D694F9E723F7C1D600D41FD7 /* hsync_client_http.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D688CB6423E1DB6F006427D4 /* hsync_client_http.cpp */; };
+		D694F9E723F7C1D600D41FD7 /* hsync_http.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D688CB6423E1DB6F006427D4 /* hsync_http.cpp */; };
 		D694F9E923F7C1D600D41FD7 /* libHSyncClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D688CB6723E1DBAB006427D4 /* libHSyncClient.a */; };
 		D694F9EB23F7C1D600D41FD7 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = D688CB6923E1DBB2006427D4 /* libz.tbd */; };
 		D694F9F523F7C1E700D41FD7 /* libMiniHttps.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D694F9F423F7C1D600D41FD7 /* libMiniHttps.a */; };
@@ -58,13 +58,13 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		D688CAB323E1C962006427D4 /* hsync_client_http */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = hsync_client_http; sourceTree = BUILT_PRODUCTS_DIR; };
-		D688CB6423E1DB6F006427D4 /* hsync_client_http.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hsync_client_http.cpp; path = ../../libSyncUpdate/hsync_client_http.cpp; sourceTree = "<group>"; };
+		D688CAB323E1C962006427D4 /* hsync_http */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = hsync_http; sourceTree = BUILT_PRODUCTS_DIR; };
+		D688CB6423E1DB6F006427D4 /* hsync_http.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hsync_http.cpp; path = ../../libSyncUpdate/hsync_http.cpp; sourceTree = "<group>"; };
 		D688CB6723E1DBAB006427D4 /* libHSyncClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libHSyncClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		D688CB6923E1DBB2006427D4 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		D694F99C23F633AD00D41FD7 /* client_download_http.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = client_download_http.cpp; path = ../../libSyncUpdate/client_download_http.cpp; sourceTree = "<group>"; };
 		D694F99D23F633AD00D41FD7 /* client_download_http.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = client_download_http.h; path = ../../libSyncUpdate/client_download_http.h; sourceTree = "<group>"; };
-		D694F9F023F7C1D600D41FD7 /* hsync_client_https */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = hsync_client_https; sourceTree = BUILT_PRODUCTS_DIR; };
+		D694F9F023F7C1D600D41FD7 /* hsync_https */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = hsync_https; sourceTree = BUILT_PRODUCTS_DIR; };
 		D6C378CD23F539D7009A11D7 /* libMiniHttp.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = libMiniHttp.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -95,7 +95,7 @@
 		D688CAAA23E1C962006427D4 = {
 			isa = PBXGroup;
 			children = (
-				D688CB6423E1DB6F006427D4 /* hsync_client_http.cpp */,
+				D688CB6423E1DB6F006427D4 /* hsync_http.cpp */,
 				D694F99C23F633AD00D41FD7 /* client_download_http.cpp */,
 				D694F99D23F633AD00D41FD7 /* client_download_http.h */,
 				D6C378CD23F539D7009A11D7 /* libMiniHttp.xcodeproj */,
@@ -107,8 +107,8 @@
 		D688CAB423E1C962006427D4 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				D688CAB323E1C962006427D4 /* hsync_client_http */,
-				D694F9F023F7C1D600D41FD7 /* hsync_client_https */,
+				D688CAB323E1C962006427D4 /* hsync_http */,
+				D694F9F023F7C1D600D41FD7 /* hsync_https */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -134,9 +134,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		D688CAB223E1C962006427D4 /* hsync_client_http */ = {
+		D688CAB223E1C962006427D4 /* hsync_http */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = D688CABA23E1C962006427D4 /* Build configuration list for PBXNativeTarget "hsync_client_http" */;
+			buildConfigurationList = D688CABA23E1C962006427D4 /* Build configuration list for PBXNativeTarget "hsync_http" */;
 			buildPhases = (
 				D688CAAF23E1C962006427D4 /* Sources */,
 				D688CAB023E1C962006427D4 /* Frameworks */,
@@ -146,14 +146,14 @@
 			);
 			dependencies = (
 			);
-			name = hsync_client_http;
+			name = hsync_http;
 			productName = hsync_client_http;
-			productReference = D688CAB323E1C962006427D4 /* hsync_client_http */;
+			productReference = D688CAB323E1C962006427D4 /* hsync_http */;
 			productType = "com.apple.product-type.tool";
 		};
-		D694F9E423F7C1D600D41FD7 /* hsync_client_https */ = {
+		D694F9E423F7C1D600D41FD7 /* hsync_https */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = D694F9ED23F7C1D600D41FD7 /* Build configuration list for PBXNativeTarget "hsync_client_https" */;
+			buildConfigurationList = D694F9ED23F7C1D600D41FD7 /* Build configuration list for PBXNativeTarget "hsync_https" */;
 			buildPhases = (
 				D694F9E523F7C1D600D41FD7 /* Sources */,
 				D694F9E823F7C1D600D41FD7 /* Frameworks */,
@@ -163,9 +163,9 @@
 			);
 			dependencies = (
 			);
-			name = hsync_client_https;
+			name = hsync_https;
 			productName = hsync_client_http;
-			productReference = D694F9F023F7C1D600D41FD7 /* hsync_client_https */;
+			productReference = D694F9F023F7C1D600D41FD7 /* hsync_https */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -182,7 +182,7 @@
 					};
 				};
 			};
-			buildConfigurationList = D688CAAE23E1C962006427D4 /* Build configuration list for PBXProject "hsync_client_http" */;
+			buildConfigurationList = D688CAAE23E1C962006427D4 /* Build configuration list for PBXProject "hsync_http" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -200,8 +200,8 @@
 			);
 			projectRoot = "";
 			targets = (
-				D688CAB223E1C962006427D4 /* hsync_client_http */,
-				D694F9E423F7C1D600D41FD7 /* hsync_client_https */,
+				D688CAB223E1C962006427D4 /* hsync_http */,
+				D694F9E423F7C1D600D41FD7 /* hsync_https */,
 			);
 		};
 /* End PBXProject section */
@@ -229,7 +229,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D694F99E23F633AD00D41FD7 /* client_download_http.cpp in Sources */,
-				D688CB6523E1DB6F006427D4 /* hsync_client_http.cpp in Sources */,
+				D688CB6523E1DB6F006427D4 /* hsync_http.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -238,7 +238,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D694F9E623F7C1D600D41FD7 /* client_download_http.cpp in Sources */,
-				D694F9E723F7C1D600D41FD7 /* hsync_client_http.cpp in Sources */,
+				D694F9E723F7C1D600D41FD7 /* hsync_http.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -393,7 +393,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		D688CAAE23E1C962006427D4 /* Build configuration list for PBXProject "hsync_client_http" */ = {
+		D688CAAE23E1C962006427D4 /* Build configuration list for PBXProject "hsync_http" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D688CAB823E1C962006427D4 /* Debug */,
@@ -402,7 +402,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		D688CABA23E1C962006427D4 /* Build configuration list for PBXNativeTarget "hsync_client_http" */ = {
+		D688CABA23E1C962006427D4 /* Build configuration list for PBXNativeTarget "hsync_http" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D688CABB23E1C962006427D4 /* Debug */,
@@ -411,7 +411,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		D694F9ED23F7C1D600D41FD7 /* Build configuration list for PBXNativeTarget "hsync_client_https" */ = {
+		D694F9ED23F7C1D600D41FD7 /* Build configuration list for PBXNativeTarget "hsync_https" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D694F9EE23F7C1D600D41FD7 /* Debug */,

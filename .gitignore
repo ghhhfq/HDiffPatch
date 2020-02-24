@@ -4,6 +4,7 @@ Debug
 Release
 Release_x86
 ReleaseSFX
+Release_https
 *.suo
 *.dcu
 *.~*
@@ -21,8 +22,7 @@ builds/android_ndk_jni_mk/obj
 *.dSYM
 hdiffz
 hpatchz
-hsync_client_demo
-hsync_client_http
-hsync_server
-hsync_client_https
-builds/vc/Release_https
+hsync_make
+hsync_demo
+hsync_http
+hsync_https

@@ -6,19 +6,19 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hpatchz", "hpatchz.vcxproj"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "unitTest", "unitTest.vcxproj", "{EF32F56D-E3CF-4D51-BCCC-9184E13ED0AD}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hsync_server", "hsync_server.vcxproj", "{96EB12E1-3577-4E9F-8C78-FDB403F07288}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hsync_make", "hsync_make.vcxproj", "{96EB12E1-3577-4E9F-8C78-FDB403F07288}"
 	ProjectSection(ProjectDependencies) = postProject
 		{EF87AAC9-545B-4AF6-A695-D7FC9D1670C2} = {EF87AAC9-545B-4AF6-A695-D7FC9D1670C2}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hsync_client_demo", "hsync_client_demo.vcxproj", "{8141E9CE-8FBA-47F7-8768-1EC549DB5A3B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hsync_demo", "hsync_demo.vcxproj", "{8141E9CE-8FBA-47F7-8768-1EC549DB5A3B}"
 	ProjectSection(ProjectDependencies) = postProject
 		{EF87AAC9-545B-4AF6-A695-D7FC9D1670C2} = {EF87AAC9-545B-4AF6-A695-D7FC9D1670C2}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHSyncClient", "libHSyncClient.vcxproj", "{EF87AAC9-545B-4AF6-A695-D7FC9D1670C2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hsync_client_http", "hsync_client_http.vcxproj", "{B90EFB06-38CF-6F56-6FE0-7D04E4CF0E0E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hsync_http", "hsync_http.vcxproj", "{B90EFB06-38CF-6F56-6FE0-7D04E4CF0E0E}"
 	ProjectSection(ProjectDependencies) = postProject
 		{C42DF744-5AF5-3049-5D78-C073D5A745C2} = {C42DF744-5AF5-3049-5D78-C073D5A745C2}
 	EndProjectSection

@@ -1,5 +1,5 @@
-//  hsync_client_http.cpp
-//  hsync_client_http: client for sync patch by http(s)
+//  hsync_http.cpp
+//  hsync_http: client for sync patch by http(s)
 //  Created by housisong on 2020-01-29.
 /*
  The MIT License (MIT)
@@ -29,9 +29,9 @@
 #define  _IS_NEED_MAIN 1
 #define  _IS_SYNC_PATCH_DEMO 0
 #define _NOTE_TEXT_URL  "url"
-#define _NOTE_TEXT_APP  "HDiffPatch::hsync_client_http"
+#define _NOTE_TEXT_APP  "HDiffPatch::hsync_http"
 
-#include "hsync_client_demo.cpp" //main()
+#include "hsync_demo.cpp" //main()
 #include "client_download_http.h"
 
 hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin){

@@ -107,7 +107,7 @@ void matchNewDataInNew(TNewDataSyncInfo* newSyncInfo){
         for (uint32_t i=0; i<((uint32_t)1<<kTableBit); ++i) {
             tm_roll_uint digest=((tm_roll_uint)i)<<kTableHashShlBit;
             writeRollHash(part,digest,savedRollHashByteSize);
-            typename TIndex_comp::TDigest digest_value(part,0);
+            TIndex_comp::TDigest digest_value(part,0);
             pos=std::lower_bound(pos,sorted_newIndexs+kBlockCount,digest_value,icomp);
             sorted_newIndexs_table[i]=(uint32_t)(pos-sorted_newIndexs);
         }
@@ -118,7 +118,7 @@ void matchNewDataInNew(TNewDataSyncInfo* newSyncInfo){
     uint32_t matchedCount=0;
     const unsigned char* curChecksum=partChecksums;
     for (uint32_t i=0; i<kBlockCount; ++i,curChecksum+=newSyncInfo->savedStrongChecksumByteSize){
-        typename TIndex_comp::TDigest digest_value(newSyncInfo->rollHashs,i);
+        TIndex_comp::TDigest digest_value(newSyncInfo->rollHashs,i);
         tm_roll_uint digest=readRollHash(newSyncInfo->rollHashs+i*newSyncInfo->savedRollHashByteSize,
                                              newSyncInfo->savedRollHashByteSize);
         const uint32_t* ti_pos=&sorted_newIndexs_table[digest>>kTableHashShlBit];

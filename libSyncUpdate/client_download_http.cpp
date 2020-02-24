@@ -1,5 +1,5 @@
 //  client_download_http.cpp
-//  hsync_client_http: download by http(s) demo
+//  hsync_http: download by http(s) demo
 //  Created by housisong on 2020-01-29.
 /*
  The MIT License (MIT)
@@ -205,7 +205,7 @@ private:
         inline _T_mt(int threadNum):owner(0),isError(hpatch_FALSE),queue(threadNum,true){}
     };
     _T_mt  _mt;
-    friend _T_mt;
+    friend struct _T_mt;
     inline bool isMt()const { return _hds.size()>1; }
 #endif
     hpatch_BOOL readFromCache(uint32_t syncDataSize,unsigned char* out_syncDataBuf){
@@ -291,7 +291,7 @@ private:
             hpatch_StreamPos_t posInNewSyncData_back=posInNewSyncData;
             setRanges(hd.Ranges(),blockIndex,posInNewSyncData,cache->bufSize);
             readedSize=0;
-            cache->savedSize=posInNewSyncData-posInNewSyncData_back;
+            cache->savedSize=(size_t)(posInNewSyncData-posInNewSyncData_back);
             mem_as_hStreamOutput(&out_stream,cache->buf,cache->buf+cache->savedSize);
         }
         hd.setWork(&out_stream);

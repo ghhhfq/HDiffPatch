@@ -1,5 +1,5 @@
 //  client_download_http.h
-//  hsync_client_http: download by http(s) demo
+//  hsync_http: download by http(s) demo
 //  Created by housisong on 2020-01-29.
 /*
  The MIT License (MIT)

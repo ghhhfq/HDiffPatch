@@ -1,5 +1,6 @@
-//  hsync_client.cpp
-//  hsync_client: client for sync patch
+//  hsync_demo.cpp
+//  client for sync patch
+//      like zsync : http://zsync.moria.org.uk/
 //  Created by housisong on 2019-09-18.
 /*
  The MIT License (MIT)
@@ -85,7 +86,7 @@ hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin);
 
 #if (_IS_SYNC_PATCH_DEMO)
 #   define _NOTE_TEXT_URL  "test"
-#   define _NOTE_TEXT_APP  "HDiffPatch::hsync_client_demo"
+#   define _NOTE_TEXT_APP  "HDiffPatch::hsync_demo"
 #endif
 
 

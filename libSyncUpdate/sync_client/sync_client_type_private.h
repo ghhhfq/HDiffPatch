@@ -158,9 +158,11 @@ uint64_t readRollHash(const uint8_t* part,size_t savedRollHashByteSize){
     }
 }
     
-template<int byte,uint64_t kLowMask=(1<<(byte*4))-1,int kHighShl=32-byte*4,
-         uint64_t kHighMask=(kLowMask<<32)> static hpatch_inline
+template<int byte> static hpatch_inline
 uint64_t _tm_toSavedPartRollHash(uint64_t rollHash){
+    const uint64_t kLowMask=(1<<(byte*4))-1;
+    const uint64_t kHighMask=(kLowMask<<32);
+    const int kHighShl=32-byte*4;
     return ((rollHash&kHighMask)>>kHighShl) | (rollHash & kLowMask);
 }
 

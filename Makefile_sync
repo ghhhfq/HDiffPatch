@@ -109,7 +109,7 @@ CXXFLAGS += $(DEF_FLAGS)
 .PHONY: all clean
 
 all: md5Lib lzmaLib httpLib httpsLib httpsLib_mini httpsLib_md5 libsyncupdate.a \
-	hsync_server hsync_client_demo hsync_client_http hsync_client_https
+	hsync_make hsync_demo hsync_http hsync_https
 
 MD5_OBJ     := 'md5.o'
 md5Lib      : # https://sourceforge.net/projects/libmd5-rfc  https://github.com/sisong/libmd5
@@ -191,28 +191,28 @@ endif
 libsyncupdate.a: $(SERVER_OBJ)
 	$(AR) rcs $@ $^
 
-hsync_server: 
-	$(CXX)	libSyncUpdate/hsync_server.cpp \
-		$(SERVER_OBJ) $(MD5_OBJ) $(LZMA_OBJ) $(CXXFLAGS) $(SYNC_LINK) -o hsync_server
-hsync_client_demo: 
-	$(CXX)	libSyncUpdate/hsync_client_demo.cpp libSyncUpdate/client_download_emulation.cpp \
-		$(CLIENT_OBJ) $(MD5_OBJ) $(LZMA_DEC_OBJ) $(CXXFLAGS) $(SYNC_LINK) -o hsync_client_demo
+hsync_make: 
+	$(CXX)	libSyncUpdate/hsync_make.cpp \
+		$(SERVER_OBJ) $(MD5_OBJ) $(LZMA_OBJ) $(CXXFLAGS) $(SYNC_LINK) -o hsync_make
+hsync_demo: 
+	$(CXX)	libSyncUpdate/hsync_demo.cpp libSyncUpdate/client_download_emulation.cpp \
+		$(CLIENT_OBJ) $(MD5_OBJ) $(LZMA_DEC_OBJ) $(CXXFLAGS) $(SYNC_LINK) -o hsync_demo
 ifeq ($(_HTTP),0)
-  hsync_client_http: 
+  hsync_http: 
 else
-  hsync_client_http: 
-	$(CXX)	libSyncUpdate/hsync_client_http.cpp libSyncUpdate/client_download_http.cpp $(HTTP_OBJ) \
-		$(CLIENT_OBJ) $(MD5_OBJ) $(LZMA_DEC_OBJ) $(CXXFLAGS) $(SYNC_LINK) -o hsync_client_http
+  hsync_http: 
+	$(CXX)	libSyncUpdate/hsync_http.cpp libSyncUpdate/client_download_http.cpp $(HTTP_OBJ) \
+		$(CLIENT_OBJ) $(MD5_OBJ) $(LZMA_DEC_OBJ) $(CXXFLAGS) $(SYNC_LINK) -o hsync_http
 endif
 ifeq ($(HTTPS),0)
-  hsync_client_https: 
+  hsync_https: 
 else
-  hsync_client_https: 
-	$(CXX)	libSyncUpdate/hsync_client_http.cpp libSyncUpdate/client_download_http.cpp $(HTTPS_OBJ) \
-		$(CLIENT_OBJ) $(MD5_OBJ) $(LZMA_DEC_OBJ) $(CXXFLAGS) $(SYNC_LINK) -o hsync_client_https
+  hsync_https: 
+	$(CXX)	libSyncUpdate/hsync_http.cpp libSyncUpdate/client_download_http.cpp $(HTTPS_OBJ) \
+		$(CLIENT_OBJ) $(MD5_OBJ) $(LZMA_DEC_OBJ) $(CXXFLAGS) $(SYNC_LINK) -o hsync_https
 endif
 
 RM := rm -f
 clean:
-	$(RM)	libsyncupdate.a hsync_server hsync_client_demo hsync_client_http hsync_client_https \
+	$(RM)	libsyncupdate.a hsync_make hsync_demo hsync_http hsync_https \
 		$(SERVER_OBJ) $(MD5_OBJ) $(LZMA_OBJ) $(HTTPS_OBJ)

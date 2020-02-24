@@ -1,5 +1,5 @@
-//  hsync_server.cpp
-//  hsync_server:  create sync files
+//  hsync_make.cpp
+//  hsync_make:  create sync files
 //      like zsync : http://zsync.moria.org.uk/
 //  Created by housisong on 2019-09-17.
 /*
@@ -72,12 +72,12 @@
 #include "../checksum_plugin_demo.h"
 
 static void printVersion(){
-    printf("HDiffPatch::hsync_server v" HDIFFPATCH_VERSION_STRING "\n\n");
+    printf("HDiffPatch::hsync_make v" HDIFFPATCH_VERSION_STRING "\n\n");
 }
 
 static void printUsage(){
     printVersion();
-    printf("hsync_server: [options] newDataPath out_hsyni_file [out_hsynd_file]\n"
+    printf("hsync_make: [options] newDataPath out_hsyni_file [out_hsynd_file]\n"
 #if (_IS_NEED_DIR_DIFF_PATCH)
            " ( newDataPath can be file or directory(folder); )\n"
 #endif
@@ -304,12 +304,12 @@ static bool printFileInfo(const char *path_utf8,const char *tag,hpatch_StreamPos
 }
 
 static void printCreateSyncInfo(size_t kSafeHashClashBit,hpatch_StreamPos_t newDataSize,
-                                size_t kMatchBlockSize,bool isUsedCompress){
-    printf("  block size : %d\n",(uint32_t)kMatchBlockSize);
-    hpatch_StreamPos_t blockCount=getSyncBlockCount(newDataSize,(uint32_t)kMatchBlockSize);
+                                uint32_t kMatchBlockSize,bool isUsedCompress){
+    printf("  block size : %d\n",kMatchBlockSize);
+    hpatch_StreamPos_t blockCount=getSyncBlockCount(newDataSize,kMatchBlockSize);
     printf("  block count: %" PRIu64 "\n",blockCount);
     double patchMemSize=(double)estimatePatchMemSize(kSafeHashClashBit,newDataSize,
-                                                     (uint32_t)kMatchBlockSize,isUsedCompress);
+                                                     kMatchBlockSize,isUsedCompress);
     if (patchMemSize>=(1<<20))
         printf("  sync_patch memory size: ~ %.1f MB\n",patchMemSize/(1<<20));
     else
@@ -583,7 +583,7 @@ struct DirSyncListener:public IDirSyncListener{
         _isSafeHashClash=isSafeHashClash;
         printf("  path count : %" PRIu64 "\n",(hpatch_StreamPos_t)pathCount);
         printf("  files size : %" PRIu64 "\n",(hpatch_StreamPos_t)refFileSize);
-        printCreateSyncInfo(refFileSize,kMatchBlockSize,kSafeHashClashBit,_isUsedCompress);
+        printCreateSyncInfo(kSafeHashClashBit,refFileSize,kMatchBlockSize,_isUsedCompress);
     }
 };
 
