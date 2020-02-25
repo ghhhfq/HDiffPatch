@@ -22,8 +22,8 @@ Hdp_Files := $(HDP_PATH)/file_for_patch.c \
 Src_Files := $(LOCAL_PATH)/hpatch_jni.c \
              $(LOCAL_PATH)/hpatch.c
 
-DEF_LIBS  :=  -lz
-DEF_FLAGS :=  -D_CompressPlugin_zlib
+DEF_LIBS  := -lz
+DEF_FLAGS := -Os -D_CompressPlugin_zlib
 ifeq ($(LZMA),0)
 else
   DEF_FLAGS += -D_7ZIP_ST -D_CompressPlugin_lzma -D_CompressPlugin_lzma2 \

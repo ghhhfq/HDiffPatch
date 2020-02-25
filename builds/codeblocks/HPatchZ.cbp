@@ -22,7 +22,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
-					<Add option="-O3" />
+					<Add option="-Os" />
 					<Add option="-Wno-error=format-security" />
 					<Add option="-fvisibility=hidden -fvisibility-inlines-hidden" />
 					<Add option="-ffunction-sections -fdata-sections" />
@@ -38,9 +38,8 @@
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
-					<Add option="-march=i386" />
 					<Add option="-fomit-frame-pointer" />
-					<Add option="-O3" />
+					<Add option="-Os" />
 					<Add option="-m32" />
 					<Add option="-Wno-error=format-security" />
 					<Add option="-fvisibility=hidden -fvisibility-inlines-hidden" />
