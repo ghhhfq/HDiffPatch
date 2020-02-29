@@ -69,7 +69,7 @@ bool doInitNetwork(){
 }
 
 const size_t kBestBufSize=64*(1<<10);
-const size_t kStepMaxCacheSize=kBestBufSize*8;
+const size_t kStepMaxCacheSize=kBestBufSize*4;
 const size_t kStepMaxRangCount=64;
 const int    kKeepAliveTime_s=5;
 const char*  kHttpUserAgent="hsync" HDIFFPATCH_VERSION_STRING;
@@ -157,7 +157,7 @@ struct THttpRangeDownload{
         threadNum=1;
 #endif
     }
-    virtual ~THttpRangeDownload(){ _clear();  }
+    virtual ~THttpRangeDownload(){ _clearAll();  }
     static hpatch_BOOL readSyncDataBegin(IReadSyncDataListener* listener,
                                          const TNeedSyncInfos* needSyncInfo){
             THttpRangeDownload* self=(THttpRangeDownload*)listener->readSyncDataImport;
@@ -197,6 +197,7 @@ private:
     struct _T_mt{
         THttpRangeDownload* owner;
         hpatch_StreamPos_t  posInNewSyncData;
+        hpatch_StreamPos_t  newSyncDataSize;
         hpatch_BOOL         isError;
         uint32_t            blockIndex;
         size_t              bufSize;
@@ -226,15 +227,15 @@ private:
             return hpatch_FALSE;
         }
     }
-    void setRanges(std::vector<TRange>& out_ranges,uint32_t& blockIndex,
-                   hpatch_StreamPos_t& posInNewSyncData,size_t bufSize){
+    size_t setRanges(std::vector<TRange>& out_ranges,uint32_t& blockIndex,
+                     hpatch_StreamPos_t& posInNewSyncData,size_t bufSize){
         out_ranges.clear();
         size_t sumSize=0;
         for (uint32_t i=blockIndex;i<nsi->blockCount;++i){
             hpatch_BOOL isNeedSync;
             uint32_t    syncSize;
             nsi->getBlockInfoByIndex(nsi,i,&isNeedSync,&syncSize);
-            if (!isNeedSync){ posInNewSyncData+=syncSize; continue; }
+            if (!isNeedSync){ posInNewSyncData+=syncSize; ++blockIndex; continue; }
             if (sumSize+syncSize>bufSize)
                 break; //finish
             if ((!out_ranges.empty())&&(out_ranges.back().second+1==posInNewSyncData))
@@ -247,8 +248,19 @@ private:
             ++blockIndex;
             posInNewSyncData+=syncSize;
         }
+        return sumSize;
     }
-    inline void _clear(){
+    inline void _clearAll(){
+        _closeAll();
+#if (_IS_USED_MULTITHREAD)
+        if (isMt()){
+            for (size_t i=1;i<_hds.size();++i){
+                if (_hds[i]) { delete _hds[i]; _hds[i]=0; }
+            }
+        }
+#endif
+    }
+    inline void _closeAll(){
 #if (_IS_USED_MULTITHREAD)
         if (isMt()){
             _mt.queue.stop();
@@ -257,18 +269,18 @@ private:
             while(0!=_channelData.accept(false)){}
             while(0!=_channelMem.accept(false)){}
             for (size_t i=1;i<_hds.size();++i){
-                if (_hds[i]) {delete _hds[i]; _hds[i]=0; }
+                if (_hds[i]) _hds[i]->close();
             }
-            _hd.close();
         }
 #endif
+        _hd.close();
     }
 #if (_IS_USED_MULTITHREAD)
     void _mt_error(){
         CAutoLocker _autoLocker(_mt.locker.locker);
         if (_mt.isError) return;
         _mt.isError=hpatch_TRUE;
-        _clear();
+        _closeAll();
     }
     inline bool _mt_getData(){
         assert(cache==0);
@@ -288,10 +300,9 @@ private:
             mem_as_hStreamOutput(&out_stream,out_syncDataBuf,out_syncDataBuf+syncDataSize);
         }else{
             assert(readedSize==cache->savedSize);
-            hpatch_StreamPos_t posInNewSyncData_back=posInNewSyncData;
-            setRanges(hd.Ranges(),blockIndex,posInNewSyncData,cache->bufSize);
+            cache->savedSize=setRanges(hd.Ranges(),blockIndex,
+                                       posInNewSyncData,cache->bufSize);
             readedSize=0;
-            cache->savedSize=(size_t)(posInNewSyncData-posInNewSyncData_back);
             mem_as_hStreamOutput(&out_stream,cache->buf,cache->buf+cache->savedSize);
         }
         hd.setWork(&out_stream);
@@ -325,9 +336,9 @@ private:
             { //get work range
                 CAutoLocker _autoLocker(_mt->locker.locker);
                 if (_mt->isError) break;
-                hpatch_StreamPos_t posInNewSyncData_back=_mt->posInNewSyncData;
-                self->setRanges(hd.Ranges(),_mt->blockIndex,_mt->posInNewSyncData,_mt->bufSize);
-                savedSize=(size_t)(_mt->posInNewSyncData-posInNewSyncData_back);
+                savedSize=self->setRanges(hd.Ranges(),_mt->blockIndex,
+                                          _mt->posInNewSyncData,_mt->bufSize);
+                assert(_mt->posInNewSyncData<=_mt->newSyncDataSize);
                 if (savedSize==0)
                     break; //finish
                 workIndex=_mt->queue.getCurWorkIndex();
@@ -409,6 +420,7 @@ private:
             _mt.blockIndex=0;
             _mt.posInNewSyncData=0;
             _mt.bufSize=bufSize;
+            _mt.newSyncDataSize=nsi->newSyncDataSize;
             thread_parallel((int)_hds.size(),_mt_thread_download,&_mt,hpatch_FALSE,0);
         }
 #endif
@@ -447,8 +459,10 @@ static hpatch_BOOL _download(const char* file_url,const hpatch_TStreamOutput* ou
     if (!doInitNetwork()){ throw std::runtime_error("InitNetwork error!"); }
     assert(continueDownloadPos<=endPos);
     THttpDownload hd(out_stream,continueDownloadPos);
-    if ((continueDownloadPos>0)||(endPos!=kEmptyEndPos))
-        hd.Ranges().push_back(TRange(continueDownloadPos,endPos));
+    if ((continueDownloadPos>0)||(endPos!=kEmptyEndPos)){
+        hpatch_StreamPos_t rangEnd=(endPos==kEmptyEndPos)?kEmptyEndPos:(endPos-1);
+        hd.Ranges().push_back(TRange(continueDownloadPos,rangEnd));
+    }
     if (!hd.doDownload(file_url))
         return hpatch_FALSE;
     if (hd.Ranges().empty())
@@ -460,16 +474,18 @@ static hpatch_BOOL _download(const char* file_url,const hpatch_TStreamOutput* ou
 
 #if (_IS_USED_MULTITHREAD)
     struct TNeedSyncInfosImport:public TNeedSyncInfos{
+        uint32_t  outBlockIndex;
     };
     static void _getBlockInfoByIndex(const TNeedSyncInfos* needSyncInfos,uint32_t blockIndex,
                                      hpatch_BOOL* out_isNeedSync,uint32_t* out_syncSize){
         const TNeedSyncInfosImport* self=(const TNeedSyncInfosImport*)needSyncInfos->import;
         assert(blockIndex<self->blockCount);
-        *out_isNeedSync=hpatch_TRUE;
-        if (blockIndex+1<self->blockCount)
+        *out_isNeedSync=(blockIndex>=self->outBlockIndex)?hpatch_TRUE:hpatch_FALSE;
+        if (blockIndex+1<self->blockCount){
             *out_syncSize=self->kMatchBlockSize;
-        else
-            *out_syncSize=(uint32_t)(self->needSyncSumSize % self->kMatchBlockSize);
+        }else{
+            *out_syncSize=(uint32_t)(self->newSyncDataSize-self->kMatchBlockSize*(self->blockCount-1));
+        }
     }
 
 static hpatch_BOOL _mt_download(const char* file_url,const hpatch_TStreamOutput* out_stream,
@@ -503,11 +519,12 @@ static hpatch_BOOL _mt_download(const char* file_url,const hpatch_TStreamOutput*
         nsi.blockCount=(uint32_t)_blockCount;
         nsi.needSyncBlockCount=nsi.blockCount-outBlockIndex;
         nsi.needSyncSumSize=endPos-outPos;
+        nsi.outBlockIndex=outBlockIndex;
         nsi.getBlockInfoByIndex=_getBlockInfoByIndex;
         if (!listener.readSyncDataBegin(&listener,&nsi)) return hpatch_FALSE;
     }
     hpatch_BOOL result=hpatch_TRUE;
-    for (uint32_t i=outBlockIndex;i<(size_t)_blockCount; ++i) {
+    for (uint32_t i=outBlockIndex;i<(uint32_t)_blockCount; ++i) {
         uint32_t readSize=blockSize;
         if (readSize+outPos>endPos)
             readSize=(uint32_t)(endPos-outPos);
@@ -518,6 +535,8 @@ static hpatch_BOOL _mt_download(const char* file_url,const hpatch_TStreamOutput*
         outPos+=readSize;
     }
     free(_buf);
+    if (result)
+        assert(outPos==endPos);
     if (listener.readSyncDataEnd)
         listener.readSyncDataEnd(&listener);
     if (!download_part_by_http_close(&listener))
@@ -537,7 +556,7 @@ hpatch_BOOL download_file_by_http(const char* file_url,const hpatch_TStreamOutpu
     if (isNeedGetEndPos){
         hpatch_TStreamOutput temp_stream; unsigned char tempBuf[1];
         mem_as_hStreamOutput(&temp_stream,tempBuf,tempBuf+1);
-        endPos=0;
+        endPos=1;
         if (!_download(file_url,&temp_stream,0,endPos)) return hpatch_FALSE;//not request "HEAD" to get contentLen
         if (continueDownloadPos>endPos) return hpatch_FALSE;
         if (continueDownloadPos==endPos) return hpatch_TRUE;

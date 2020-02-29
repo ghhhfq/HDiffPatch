@@ -185,7 +185,14 @@ hpatch_BOOL hpatch_isPathNotExist(const char* pathName){
     if (!hpatch_getPathStat(pathName,&type,0)) return hpatch_FALSE;
     return (kPathType_notExist==type);
 }
-
+hpatch_inline static
+hpatch_BOOL hpatch_isPathExist(const char* pathName){
+    hpatch_TPathType type;
+    if (pathName==0) return hpatch_FALSE;
+    if (!hpatch_getPathStat(pathName,&type,0)) return hpatch_FALSE;
+    return (kPathType_notExist!=type);
+}
+    
 hpatch_BOOL hpatch_getTempPathName(const char* path_utf8,char* out_tempPath_utf8,char* out_tempPath_end);
 hpatch_BOOL hpatch_renamePath(const char* oldPath_utf8,const char* newPath_utf8);
 hpatch_BOOL hpatch_removeFile(const char* fileName_utf8);
@@ -242,6 +249,10 @@ void hpatch_TFileStreamOutput_setRandomOut(hpatch_TFileStreamOutput* self,hpatch
 hpatch_BOOL hpatch_TFileStreamOutput_flush(hpatch_TFileStreamOutput* self);
 hpatch_BOOL hpatch_TFileStreamOutput_close(hpatch_TFileStreamOutput* self);
 
+hpatch_BOOL hpatch_TFileStreamOutput_reopen(hpatch_TFileStreamOutput* self,const char* fileName_utf8,
+                                            hpatch_StreamPos_t max_file_length);
+
+    
 #ifdef __cplusplus
 }
 #endif

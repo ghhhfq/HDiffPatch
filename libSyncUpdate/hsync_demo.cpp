@@ -112,6 +112,9 @@ static void printUsage(){
            "    create diffFile from part of hsynd_file_" _NOTE_TEXT_URL " befor local patch;\n"
            "  -patch#diffFile\n"
            "    local patch(oldPath+diffFile) to outNewPath;\n"
+           "  -cdl\n"
+           "    continue download data from breakpoint;\n"
+           "    DEFAULT continue mode is off;\n"
 #if (_IS_USED_MULTITHREAD)
            "  -p-parallelThreadNumber\n"
            "    DEFAULT -p-1; \n"
@@ -120,6 +123,7 @@ static void printUsage(){
            "    DEFAULT -pdl-1;\n"
            "    if downloadThreadNumber>1 then open multi-thread download mode,\n"
            "    requires more memory!\n"
+           "    used when single-threaded download speed by limited too small(slowly);\n"
 #endif
 #if (_IS_NEED_DIR_DIFF_PATCH)
            "  -n-maxOpenFileNumber\n"
@@ -176,8 +180,8 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
                      size_t kMaxOpenFileNumber,int threadNum,int downloadThreadNum);
 #endif
 
-static int downloadNewSyncInfoFile(const TSyncDownloadPlugin* downloadPlugin,
-                                   const char* hsyni_file_url,const char* out_hsyni_file,int threadNum);
+static int downloadNewSyncInfoFile(const TSyncDownloadPlugin* downloadPlugin,const char* hsyni_file_url,
+                                   const char* out_hsyni_file,bool isUsedDownloadContinue,int threadNum);
 
 
 #if (_IS_NEED_MAIN)
@@ -292,6 +296,7 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     hpatch_BOOL isOutputHelp=_kNULL_VALUE;
     hpatch_BOOL isOutputVersion=_kNULL_VALUE;
     hpatch_BOOL isOldPathInputEmpty=_kNULL_VALUE;
+    hpatch_BOOL isUsedDownloadContinue=_kNULL_VALUE;
     const char* hsyni_file_url=0;
     const char* diff_to_diff_file=0;
     const char* patch_by_diff_file=0;
@@ -341,6 +346,17 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
 #else
                     _options_check(false,"-patch#?");
 #endif
+                }
+            } break;
+            case 'c':{
+                if ((strcmp(op,"-cdl")==0)||(strcmp(op,"-cdl-on")==0)){
+                    _options_check(isUsedDownloadContinue==_kNULL_VALUE,"-cdl?");
+                    isUsedDownloadContinue=hpatch_TRUE;
+                }else if (strcmp(op,"-cdl-off")==0){
+                    _options_check(isUsedDownloadContinue==_kNULL_VALUE,"-cdl?");
+                    isUsedDownloadContinue=hpatch_FALSE;
+                }else{
+                    _options_check(false,"-cdl?");
                 }
             } break;
             case 'd':{
@@ -418,6 +434,8 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
 #endif
     if (isOldPathInputEmpty==_kNULL_VALUE)
         isOldPathInputEmpty=hpatch_FALSE;
+    if (isUsedDownloadContinue==_kNULL_VALUE)
+        isUsedDownloadContinue=hpatch_FALSE;
     
     if (isOutputHelp||isOutputVersion){
         if (isOutputHelp)
@@ -490,7 +508,8 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
         printf(    "download .hsyni: \""); hpatch_printPath_utf8(hsyni_file);
         printf("\"\n       from URL: \""); hpatch_printPath_utf8(hsyni_file_url);
         printf("\"\n");
-        int result=downloadNewSyncInfoFile(&downloadPlugin,hsyni_file_url,hsyni_file,(int)downloadThreadNum);
+        int result=downloadNewSyncInfoFile(&downloadPlugin,hsyni_file_url,hsyni_file,
+                                           isUsedDownloadContinue!=0,(int)downloadThreadNum);
         _check3(result==kSyncClient_ok,result,"download from url: \"",hsyni_file_url,"\"");
         double dtime1=clock_s();
         printf(    "  download time: %.3f s\n\n",(dtime1-dtime0));
@@ -835,16 +854,20 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
 #endif
 
 
-static int downloadNewSyncInfoFile(const TSyncDownloadPlugin* downloadPlugin,
-                                   const char* hsyni_file_url,const char* out_hsyni_file,int threadNum){
+static int downloadNewSyncInfoFile(const TSyncDownloadPlugin* downloadPlugin,const char* hsyni_file_url,
+                                   const char* out_hsyni_file,bool isUsedDownloadContinue,int threadNum){
     int result=kSyncClient_ok;
     hpatch_TFileStreamOutput out_stream;
     hpatch_TFileStreamOutput_init(&out_stream);
-    if (!hpatch_TFileStreamOutput_open(&out_stream,out_hsyni_file,(hpatch_StreamPos_t)(-1)))
-        return kSyncClient_newSyncInfoCreateError;
-    hpatch_TFileStreamOutput_setRandomOut(&out_stream,hpatch_TRUE);
-    //todo: hpatch_TFileStreamOutput_reopen & set continueDownloadPos=out_stream.out_length
-    hpatch_StreamPos_t continueDownloadPos=0;
+    if (isUsedDownloadContinue&&hpatch_isPathExist(out_hsyni_file)){ // download continue
+        if (!hpatch_TFileStreamOutput_reopen(&out_stream,out_hsyni_file,(hpatch_StreamPos_t)(-1)))
+            return kSyncClient_newSyncInfoCreateError;
+    }else{
+        if (!hpatch_TFileStreamOutput_open(&out_stream,out_hsyni_file,(hpatch_StreamPos_t)(-1)))
+            return kSyncClient_newSyncInfoCreateError;
+    }
+    //hpatch_TFileStreamOutput_setRandomOut(&out_stream,hpatch_TRUE);
+    hpatch_StreamPos_t continueDownloadPos=out_stream.out_length;
     if (downloadPlugin->download_file(hsyni_file_url,&out_stream.base,continueDownloadPos,threadNum))
         out_stream.base.streamSize=out_stream.out_length;
     else

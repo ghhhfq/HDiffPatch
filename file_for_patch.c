@@ -279,9 +279,11 @@ hpatch_BOOL _import_fileFlush(hpatch_FileHandle writedFile){
 #if (_IS_USED_WIN32_UTF8_WAPI)
 #   define _kFileReadMode  L"rb"
 #   define _kFileWriteMode L"wb+"
+#   define _kFileReadWriteMode L"rb+"
 #else
 #   define _kFileReadMode  "rb"
 #   define _kFileWriteMode "wb+"
+#   define _kFileReadWriteMode "rb+"
 #endif
 
 #if (_IS_USED_WIN32_UTF8_WAPI)
@@ -338,6 +340,25 @@ hpatch_BOOL _import_fileOpenCreateOrReWrite(const char* fileName_utf8,hpatch_Fil
     *out_fileHandle=file;
     return hpatch_TRUE;
 }
+
+hpatch_BOOL _import_fileReopenWrite(const char* fileName_utf8,hpatch_FileHandle* out_fileHandle,
+                                    hpatch_StreamPos_t* out_curFileWritePos){
+    hpatch_FileHandle file=0;
+    assert(out_fileHandle!=0);
+    if (out_fileHandle==0) _file_error(file);
+    file=_import_fileOpenByMode(fileName_utf8,_kFileReadWriteMode);
+    if (file==0) _file_error(file);
+    if (!_import_fileSeek64(file,0,SEEK_END)) _file_error(file);
+    if (out_curFileWritePos!=0){
+        hpatch_StreamPos_t file_length=0;
+        if (!_import_fileTell64(file,&file_length)) _file_error(file);
+        *out_curFileWritePos=file_length;
+    }
+    *out_fileHandle=file;
+    return hpatch_TRUE;
+}
+
+
 
 #undef _file_error
 
@@ -441,6 +462,31 @@ hpatch_BOOL hpatch_TFileStreamOutput_open(hpatch_TFileStreamOutput* self,const c
     self->out_length=0;
     return hpatch_TRUE;
 }
+hpatch_BOOL hpatch_TFileStreamOutput_reopen(hpatch_TFileStreamOutput* self,const char* fileName_utf8,
+                                            hpatch_StreamPos_t max_file_length){
+    assert(self->m_file==0);
+    hpatch_StreamPos_t curFileWritePos;
+    if (self->m_file) return hpatch_FALSE;
+    if (!_import_fileReopenWrite(fileName_utf8,&self->m_file,&curFileWritePos))
+        return hpatch_FALSE;
+    if (curFileWritePos>max_file_length){
+        //note: now not support reset file length to max_file_length
+        _import_fileClose(&self->m_file);
+        return hpatch_FALSE;
+    }
+    self->base.streamImport=self;
+    self->base.streamSize=max_file_length;
+    self->base.read_writed=_hpatch_TFileStreamOutput_read_file;
+    self->base.write=_TFileStreamOutput_write_file;
+    self->m_fpos=curFileWritePos;
+    self->m_offset=0;
+    self->fileError=hpatch_FALSE;
+    self->is_in_readModel=hpatch_FALSE;
+    self->is_random_out=hpatch_FALSE;
+    self->out_length=curFileWritePos;
+    return hpatch_TRUE;
+}
+
 
 hpatch_BOOL hpatch_TFileStreamOutput_flush(hpatch_TFileStreamOutput* self){
     return _import_fileFlush(self->m_file);
