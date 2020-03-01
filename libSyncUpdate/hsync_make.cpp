@@ -92,6 +92,7 @@ static void printUsage(){
            "  -p-parallelThreadNumber\n"
            "    DEFAULT -p-1;\n"
            "    if parallelThreadNumber>1 then open multi-thread Parallel mode;\n"
+           "    used when compress slow or strong checksum slow;\n"
 #endif
            "  -c-compressType[-compressLevel]\n"
            "      set out_hsynd_file Compress type & level, DEFAULT uncompress;\n"
@@ -495,8 +496,6 @@ int sync_server_cmd_line(int argc, const char * argv[]){
     
     if (threadNum>1)
         printf("muti-thread parallel: opened, threadNum: %d\n",(uint32_t)threadNum);
-    else
-        printf("muti-thread parallel: closed\n");
 
     printf("create%s_sync_data run with strongChecksum plugin: \"%s\"\n",
            isUseDirSyncUpdate?"_dir":"",strongChecksumPlugin->checksumType());

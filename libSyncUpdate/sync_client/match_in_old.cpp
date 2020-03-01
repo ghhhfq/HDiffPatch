@@ -42,25 +42,27 @@ namespace sync_private{
 
 typedef unsigned char TByte;
 typedef uint64_t tm_roll_uint;
+const size_t kBestClipSize=128*1024;
 
-struct TIndex_comp{
-    inline explicit TIndex_comp(const uint8_t* _blocks,size_t _byteSize)
-    :blocks(_blocks),byteSize(_byteSize){ }
+struct TIndex_comp0{
+    inline explicit TIndex_comp0(const uint8_t* _hashs,size_t _byteSize)
+    :hashs(_hashs),byteSize(_byteSize){ }
     typedef uint32_t TIndex;
     struct TDigest{
         const uint8_t*  digests;
         inline explicit TDigest(const uint8_t* _digests):digests(_digests){}
     };
     inline bool operator()(const TIndex x,const TDigest& y)const { //for equal_range
-        return _cmp(blocks+x*byteSize,y.digests,byteSize)<0; }
+        return _cmp(hashs+x*byteSize,y.digests,byteSize)<0; }
     bool operator()(const TDigest& x,const TIndex y)const { //for equal_range
-        return _cmp(x.digests,blocks+y*byteSize,byteSize)<0; }
+        return _cmp(x.digests,hashs+y*byteSize,byteSize)<0; }
     
     inline bool operator()(const TIndex x, const TIndex y)const {//for sort
-        return _cmp(blocks+x*byteSize,blocks+y*byteSize,byteSize)<0; }
+        return _cmp(hashs+x*byteSize,hashs+y*byteSize,byteSize)<0; }
 protected:
-    const uint8_t*  blocks;
+    const uint8_t*  hashs;
     size_t          byteSize;
+public:
     inline static int _cmp(const uint8_t* px,const uint8_t* py,size_t byteSize){
         const uint8_t* px_end=px+byteSize;
         for (;px!=px_end;++px,++py){
@@ -70,6 +72,26 @@ protected:
         return 0;
     }
 };
+
+struct TIndex_comp01{
+    inline explicit TIndex_comp01(const uint8_t* _hashs0,size_t _byteSize0,
+                                  const uint8_t* _hashs1,size_t _byteSize1)
+    :hashs0(_hashs0),hashs1(_hashs1),byteSize0(_byteSize0),byteSize1(_byteSize1){ }
+    typedef uint32_t TIndex;
+    inline bool operator()(const TIndex x, const TIndex y)const {//for sort
+        int cmp0=TIndex_comp0::_cmp(hashs0+x*byteSize0,hashs0+y*byteSize0,byteSize0);
+        if (cmp0!=0)
+            return cmp0<0;
+        else
+            return TIndex_comp0::_cmp(hashs1+x*byteSize1,hashs1+y*byteSize1,byteSize1)<0;
+    }
+protected:
+    const uint8_t*  hashs0;
+    const uint8_t*  hashs1;
+    size_t          byteSize0;
+    size_t          byteSize1;
+};
+
 
 struct TOldDataCache_base {
     TOldDataCache_base(const hpatch_TStreamInput* oldStream,hpatch_StreamPos_t oldRollBegin,
@@ -81,6 +103,8 @@ struct TOldDataCache_base {
         size_t cacheSize=(size_t)kMatchBlockSize*2;
         check((cacheSize>>1)==kMatchBlockSize,"TOldDataCache mem error!");
         cacheSize=(cacheSize>=hpatch_kFileIOBufBetterSize)?cacheSize:hpatch_kFileIOBufBetterSize;
+        hpatch_StreamPos_t maxDataSize=oldRollPosEnd()-oldRollBegin;
+        if (cacheSize>maxDataSize) cacheSize=(size_t)maxDataSize;
 
         m_checksumHandle=strongChecksumPlugin->open(strongChecksumPlugin);
         checkv(m_checksumHandle!=0);
@@ -88,21 +112,14 @@ struct TOldDataCache_base {
         m_cache.realloc(cacheSize+m_checksumByteSize+m_checksumByteSize);
         m_cache.reduceSize(cacheSize);
         m_strongChecksum_buf=m_cache.data_end();
-        _initCache();
+        m_cur=m_cache.data_end();
+        _cache();
     }
     ~TOldDataCache_base(){
         if (m_checksumHandle)
             m_strongChecksumPlugin->close(m_strongChecksumPlugin,m_checksumHandle);
     }
-    void _initCache(){
-        hpatch_StreamPos_t dataSize=m_oldRollEnd-m_readedPos;
-        if (dataSize<m_kMatchBlockSize){ m_cur=0; return; } //end
-
-        if (m_cache.size()>dataSize)
-            m_cache.reduceSize((size_t)dataSize);
-        m_cur=m_cache.data_end();
-        _cache();
-    }
+    inline hpatch_StreamPos_t oldRollPosEnd()const{ return m_oldRollEnd+m_kMatchBlockSize-1; }
     // all:[          oldDataSize         +     backZeroLen    ]
     //                 ^                         ^
     //            oldRollBegin               oldRollEnd
@@ -113,24 +130,25 @@ struct TOldDataCache_base {
     //                           ^
     //                          cur
     void _cache(){
-        if (m_readedPos >= m_oldRollEnd){ m_cur=0; return; } //end
+        if (m_readedPos >= m_oldRollEnd){ m_cur=0; return; } //set end tag
 
         size_t needLen=m_cur-m_cache.data();
-        if (m_readedPos+needLen>m_oldRollEnd)
-            needLen=(size_t)(m_oldRollEnd-m_readedPos);
+        const hpatch_StreamPos_t rollPosEnd=oldRollPosEnd();
+        if (m_readedPos+needLen>rollPosEnd)
+            needLen=(size_t)(rollPosEnd-m_readedPos);
         memmove(m_cur-needLen,m_cur,m_cache.data_end()-m_cur);
         size_t readLen=needLen;
         if (m_readedPos+readLen>m_oldStream->streamSize){
-            if (m_readedPos<=m_oldStream->streamSize)
+            if (m_readedPos<m_oldStream->streamSize)
                 readLen=(size_t)(m_oldStream->streamSize-m_readedPos);
             else
                 readLen=0;
         }
         if (readLen>0){
+            TByte* buf=m_cache.data_end()-needLen;
 #if (_IS_USED_MULTITHREAD)
             TMt_by_queue::TAutoInputLocker _autoLocker((TMt_by_queue*)m_mt);
 #endif
-            TByte* buf=m_cache.data_end()-needLen;
             check(m_oldStream->read(m_oldStream,m_readedPos,buf,buf+readLen),
                   "TOldDataCache read oldData error!");
         }
@@ -209,6 +227,7 @@ static void matchRange(hpatch_StreamPos_t* out_newBlockDataInOldPoss,
                        const uint32_t* range_begin,const uint32_t* range_end,TOldDataCache_base& oldData,
                        const TByte* partChecksums,size_t outPartChecksumSize,TByte* newDataCheckChecksum,void* _mt=0){
     const TByte* oldPartStrongChecksum=0;
+    bool isMatched=false;
     do {
         uint32_t newBlockIndex=*range_begin;
         if (out_newBlockDataInOldPoss[newBlockIndex]==kBlockType_needSync){
@@ -216,23 +235,20 @@ static void matchRange(hpatch_StreamPos_t* out_newBlockDataInOldPoss,
                 oldPartStrongChecksum=oldData.calcPartStrongChecksum(outPartChecksumSize);
             const TByte* newPairStrongChecksum=partChecksums+newBlockIndex*outPartChecksumSize;
             if (0==memcmp(oldPartStrongChecksum,newPairStrongChecksum,outPartChecksumSize)){
+                isMatched=true;
                 hpatch_StreamPos_t curPos=oldData.curOldPos();
 #if (_IS_USED_MULTITHREAD)
                 TMt_by_queue::TAutoLocker _autoLocker((TMt_by_queue*)_mt);
                 hpatch_StreamPos_t old=out_newBlockDataInOldPoss[newBlockIndex];
-                if (old==kBlockType_needSync){
-                    checkChecksumAppendData(newDataCheckChecksum,newBlockIndex,
-                                            oldData.strongChecksum(),oldData.strongChecksumByteSize());
-                    out_newBlockDataInOldPoss[newBlockIndex]=curPos;
-                }else if (curPos<old){
-                    out_newBlockDataInOldPoss[newBlockIndex]=curPos;
-                }
-#else
+                if (old!=kBlockType_needSync) return;
+#endif
                 checkChecksumAppendData(newDataCheckChecksum,newBlockIndex,
                                         oldData.strongChecksum(),oldData.strongChecksumByteSize());
                 out_newBlockDataInOldPoss[newBlockIndex]=curPos;
-#endif
-                // continue;
+                //continue;
+            }else{
+                if (isMatched)
+                    return;
             }
         }
         ++range_begin;
@@ -253,7 +269,7 @@ struct _TMatchDatas{
 
 static void _rollMatch(_TMatchDatas& rd,hpatch_StreamPos_t oldRollBegin,
                        hpatch_StreamPos_t oldRollEnd,void* _mt=0){
-    TIndex_comp icomp(rd.newSyncInfo->rollHashs,rd.newSyncInfo->savedRollHashByteSize);
+    TIndex_comp0 icomp0(rd.newSyncInfo->rollHashs,rd.newSyncInfo->savedRollHashByteSize);
     TOldDataCache oldData(rd.oldStream,oldRollBegin,oldRollEnd,
                           rd.newSyncInfo->kMatchBlockSize,rd.strongChecksumPlugin,_mt);
     uint8_t part[sizeof(tm_roll_uint)]={0};
@@ -266,11 +282,11 @@ static void _rollMatch(_TMatchDatas& rd,hpatch_StreamPos_t oldRollBegin,
         
         const uint32_t* ti_pos=&rd.sorted_newIndexs_table[digest>>rd.kTableHashShlBit];
         writeRollHash(part,digest,savedRollHashByteSize);
-        TIndex_comp::TDigest digest_value(part);
+        TIndex_comp0::TDigest digest_value(part);
         std::pair<const uint32_t*,const uint32_t*>
         //range=std::equal_range(sorted_newIndexs,sorted_newIndexs+sortedBlockCount,digest_value,icomp);
         range=std::equal_range(rd.sorted_newIndexs+ti_pos[0],
-                               rd.sorted_newIndexs+ti_pos[1],digest_value,icomp);
+                               rd.sorted_newIndexs+ti_pos[1],digest_value,icomp0);
         if (range.first!=range.second){
             matchRange(rd.out_newBlockDataInOldPoss,range.first,range.second,oldData,
                        rd.newSyncInfo->partChecksums,rd.newSyncInfo->savedStrongChecksumByteSize,
@@ -288,14 +304,26 @@ struct TMt_threadDatas {
 
 static void _mt_threadRunCallBackProc(int threadIndex,void* workData){
     TMt_threadDatas* tdatas=(TMt_threadDatas*)workData;
-    hpatch_StreamPos_t oldClipSize=tdatas->matchDatas->oldStream->streamSize/(uint32_t)tdatas->shareDatas->threadNum;
-    bool isMainThread=(threadIndex==tdatas->shareDatas->threadNum-1);
-    hpatch_StreamPos_t oldPosBegin=oldClipSize*(uint32_t)threadIndex;
-    hpatch_StreamPos_t oldPosEnd = isMainThread ? tdatas->oldRollEnd
-                                :(oldPosBegin+oldClipSize+(tdatas->matchDatas->newSyncInfo->kMatchBlockSize-1));
-    _rollMatch(*tdatas->matchDatas,oldPosBegin,oldPosEnd,tdatas->shareDatas);
-    
+    hpatch_StreamPos_t clipSize=kBestClipSize;
+    hpatch_StreamPos_t _minClipSize=tdatas->matchDatas->newSyncInfo->kMatchBlockSize*(hpatch_StreamPos_t)4;
+    if (clipSize<_minClipSize) clipSize=_minClipSize;
+    uint32_t threadNum=(uint32_t)tdatas->shareDatas->threadNum;
+    hpatch_StreamPos_t oldSize=tdatas->matchDatas->oldStream->streamSize;
+    hpatch_StreamPos_t _maxClipSize=(oldSize+threadNum-1)/threadNum;
+    if (clipSize>_maxClipSize) clipSize=_maxClipSize;
+    size_t workCount=(size_t)((oldSize+clipSize-1)/clipSize);
+    assert(workCount*clipSize>=oldSize);
+    TMt_by_queue* _mt=tdatas->shareDatas;
+    for (size_t i=0;i<workCount;++i) {
+        if (!_mt->getWork(threadIndex,i))
+            continue;
+        hpatch_StreamPos_t oldPosBegin=i*clipSize;
+        hpatch_StreamPos_t oldPosEnd = oldPosBegin+clipSize;
+        if (oldPosEnd>oldSize) oldPosEnd=oldSize;
+        _rollMatch(*tdatas->matchDatas,oldPosBegin,oldPosEnd,_mt);
+    }
     tdatas->shareDatas->finish();
+    bool isMainThread=(threadIndex==(int)threadNum-1);
     if (isMainThread) tdatas->shareDatas->waitAllFinish();
 }
 #endif
@@ -304,7 +332,6 @@ static void matchNewDataInOld(_TMatchDatas& matchDatas,int threadNum){
     const TNewDataSyncInfo* newSyncInfo=matchDatas.newSyncInfo;
     const uint32_t kBlockCount=(uint32_t)TNewDataSyncInfo_blockCount(newSyncInfo);
     const size_t savedRollHashByteSize=newSyncInfo->savedRollHashByteSize;
-    TIndex_comp icomp(newSyncInfo->rollHashs,savedRollHashByteSize);
     
     TAutoMem _mem_sorted(kBlockCount*(size_t)sizeof(uint32_t));
     uint32_t* sorted_newIndexs=(uint32_t*)_mem_sorted.data();
@@ -315,7 +342,9 @@ static void matchNewDataInOld(_TMatchDatas& matchDatas,int threadNum){
             sorted_newIndexs[i]=i;
             filter.insert(readRollHash(partRollHash,savedRollHashByteSize));
         }
-        std::sort(sorted_newIndexs,sorted_newIndexs+kBlockCount,icomp);
+        TIndex_comp01 icomp01(newSyncInfo->rollHashs,savedRollHashByteSize,
+                              newSyncInfo->partChecksums,newSyncInfo->savedStrongChecksumByteSize);
+        std::sort(sorted_newIndexs,sorted_newIndexs+kBlockCount,icomp01);
     }
     
     //optimize for std::equal_range
@@ -325,13 +354,14 @@ static void matchNewDataInOld(_TMatchDatas& matchDatas,int threadNum){
     TAutoMem _mem_table((size_t)sizeof(uint32_t)*((1<<kTableBit)+1));
     uint32_t* sorted_newIndexs_table=(uint32_t*)_mem_table.data();
     {
+        TIndex_comp0  icomp0(newSyncInfo->rollHashs,savedRollHashByteSize);
         uint32_t* pos=sorted_newIndexs;
         uint8_t part[sizeof(tm_roll_uint)]={0};
         for (uint32_t i=0; i<((uint32_t)1<<kTableBit); ++i) {
             tm_roll_uint digest=((tm_roll_uint)i)<<kTableHashShlBit;
             writeRollHash(part,digest,savedRollHashByteSize);
-            TIndex_comp::TDigest digest_value(part);
-            pos=std::lower_bound(pos,sorted_newIndexs+kBlockCount,digest_value,icomp);
+            TIndex_comp0::TDigest digest_value(part);
+            pos=std::lower_bound(pos,sorted_newIndexs+kBlockCount,digest_value,icomp0);
             sorted_newIndexs_table[i]=(uint32_t)(pos-sorted_newIndexs);
         }
         sorted_newIndexs_table[((size_t)1<<kTableBit)]=kBlockCount;

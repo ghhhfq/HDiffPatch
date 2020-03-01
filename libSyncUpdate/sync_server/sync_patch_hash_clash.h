@@ -59,12 +59,11 @@ namespace sync_private{
         assert(kStrongHashByte>=kStrongChecksumByteSize_min);
         size_t compareCountBit=_estimateCompareCountBit(newDataSize,kMatchBlockSize);
         size_t rollHashByte=compareCountBit/8;
-        if (rollHashByte>2) --rollHashByte;
         if (rollHashByte<_kNeedMinRollHashByte) rollHashByte=_kNeedMinRollHashByte;
         else if (rollHashByte>_kMaxRollHashByte) rollHashByte=_kMaxRollHashByte;
         assert(rollHashByte<=result);
         size_t strongHashByte=result-rollHashByte;
-        while ((strongHashByte*8<kSafeHashClashBit)&&(rollHashByte>_kNeedMinRollHashByte)){
+        while ((strongHashByte*8<kSafeHashClashBit_min)&&(rollHashByte>_kNeedMinRollHashByte)){
             ++strongHashByte; --rollHashByte;
         }
         if (strongHashByte>kStrongHashByte){

@@ -37,24 +37,24 @@ namespace sync_private{
 typedef uint64_t tm_roll_uint;
 
 struct TIndex_comp{
-    inline explicit TIndex_comp(const uint8_t* _blocks,size_t _byteSize)
-    :blocks(_blocks),byteSize(_byteSize){ }
+    inline explicit TIndex_comp(const uint8_t* _hashs,size_t _byteSize)
+    :hashs(_hashs),byteSize(_byteSize){ }
     typedef uint32_t TIndex;
     struct TDigest{
-        const uint8_t*  blocks;
+        const uint8_t*  hashs;
         TIndex          index;
-        inline explicit TDigest(const uint8_t* _blocks,TIndex _index)
-        :blocks(_blocks),index(_index){}
+        inline explicit TDigest(const uint8_t* _hashs,TIndex _index)
+        :hashs(_hashs),index(_index){}
     };
     inline bool operator()(const TIndex x,const TDigest& y)const { //for equal_range
-        int cmp=_cmp(blocks+x*byteSize,y.blocks+y.index*byteSize,byteSize);
+        int cmp=_cmp(hashs+x*byteSize,y.hashs+y.index*byteSize,byteSize);
         if (cmp!=0)
             return cmp<0; //value
         else
             return y.index<=x; //for: assert(newBlockIndex<i);
     }
     bool operator()(const TDigest& x,const TIndex y)const { //for equal_range
-        int cmp=_cmp(x.blocks+x.index*byteSize,blocks+y*byteSize,byteSize);
+        int cmp=_cmp(x.hashs+x.index*byteSize,hashs+y*byteSize,byteSize);
         if (cmp!=0)
             return cmp<0; //value
         else
@@ -62,14 +62,14 @@ struct TIndex_comp{
     }
     
     inline bool operator()(const TIndex x, const TIndex y)const {//for sort
-        int cmp=_cmp(blocks+x*byteSize,blocks+y*byteSize,byteSize);
+        int cmp=_cmp(hashs+x*byteSize,hashs+y*byteSize,byteSize);
         if (cmp!=0)
             return cmp<0; //value sort
         else
             return x>y; //index sort
     }
 protected:
-    const uint8_t*  blocks;
+    const uint8_t*  hashs;
     size_t          byteSize;
     inline static int _cmp(const uint8_t* px,const uint8_t* py,size_t byteSize){
         const uint8_t* px_end=px+byteSize;

@@ -123,7 +123,7 @@ static void printUsage(){
            "    DEFAULT -pdl-1;\n"
            "    if downloadThreadNumber>1 then open multi-thread download mode,\n"
            "    requires more memory!\n"
-           "    used when single-threaded download speed by limited too small(slowly);\n"
+           "    used when single-threaded download speed slow by limited;\n"
 #endif
 #if (_IS_NEED_DIR_DIFF_PATCH)
            "  -n-maxOpenFileNumber\n"
@@ -245,10 +245,11 @@ static hpatch_TChecksum* _findChecksumPlugin(ISyncInfoListener* listener,const c
 
     static void printMatchResult(const TNeedSyncInfos* nsi) {
         const uint32_t kBlockCount=nsi->blockCount;
-        printf("  syncBlockCount: %d, /%d=%.1f%%\n  syncDataSize: %" PRIu64 "\n",
-               nsi->needSyncBlockCount,kBlockCount,100.0*nsi->needSyncBlockCount/kBlockCount,nsi->needSyncSumSize);
+        printf("  syncBlockCount: %d, /%d=%.1f%%\n  localDataSize : %" PRIu64 "\n  syncDataSize  : %" PRIu64 "\n",
+               nsi->needSyncBlockCount,kBlockCount,100.0*nsi->needSyncBlockCount/kBlockCount,
+               nsi->newSyncDataSize-nsi->needSyncSumSize,nsi->needSyncSumSize);
         hpatch_StreamPos_t downloadSize=nsi->newSyncInfoSize+nsi->needSyncSumSize;
-        printf("  downloadSize: %" PRIu64 "+%" PRIu64 "= %" PRIu64 ", /%" PRIu64 "=%.1f%%",
+        printf("  downloadSize  : %" PRIu64 "+%" PRIu64 "= %" PRIu64 ", /%" PRIu64 "=%.1f%%",
                nsi->newSyncInfoSize,nsi->needSyncSumSize,downloadSize,
                nsi->newDataSize,100.0*downloadSize/nsi->newDataSize);
         if (nsi->newSyncDataSize<nsi->newDataSize){
@@ -447,12 +448,8 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     }
     if (threadNum>1)
         printf("muti-thread parallel: opened, threadNum: %d\n",(int)threadNum);
-    else
-        printf("muti-thread parallel: closed\n");
     if (downloadThreadNum>1)
         printf("muti-thread download: opened, threadNum: %d\n",(int)downloadThreadNum);
-    else
-        printf("muti-thread download: closed\n");
 
     _options_check((hsyni_file_url?1:0)+(diff_to_diff_file?1:0)+(patch_by_diff_file?1:0)<=1,
                    "-dl,-diff,-patch can't be used at the same time");
@@ -860,8 +857,10 @@ static int downloadNewSyncInfoFile(const TSyncDownloadPlugin* downloadPlugin,con
     hpatch_TFileStreamOutput out_stream;
     hpatch_TFileStreamOutput_init(&out_stream);
     if (isUsedDownloadContinue&&hpatch_isPathExist(out_hsyni_file)){ // download continue
+        printf("  download continue ");
         if (!hpatch_TFileStreamOutput_reopen(&out_stream,out_hsyni_file,(hpatch_StreamPos_t)(-1)))
             return kSyncClient_newSyncInfoCreateError;
+        printf("at file pos: %" PRIu64 "\n",out_stream.out_length);
     }else{
         if (!hpatch_TFileStreamOutput_open(&out_stream,out_hsyni_file,(hpatch_StreamPos_t)(-1)))
             return kSyncClient_newSyncInfoCreateError;

@@ -558,7 +558,11 @@ hpatch_BOOL download_file_by_http(const char* file_url,const hpatch_TStreamOutpu
         mem_as_hStreamOutput(&temp_stream,tempBuf,tempBuf+1);
         endPos=1;
         if (!_download(file_url,&temp_stream,0,endPos)) return hpatch_FALSE;//not request "HEAD" to get contentLen
-        if (continueDownloadPos>endPos) return hpatch_FALSE;
+        if (continueDownloadPos>endPos){
+            fprintf(stderr,"  download continue pos(%" PRIu64 ") > \"content-length\"(%" PRIu64 ") ERROR!\n",
+                    continueDownloadPos,endPos);
+            return hpatch_FALSE;
+        }
         if (continueDownloadPos==endPos) return hpatch_TRUE;
     }
 #if (_IS_USED_MULTITHREAD)
