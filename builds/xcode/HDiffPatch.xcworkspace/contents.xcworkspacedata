@@ -11,13 +11,13 @@
       location = "container:"
       name = "hsync_update">
       <FileRef
-         location = "group:/Users/Shared/HDiffPatch/builds/xcode/hsync_make.xcodeproj">
+         location = "group:hsync_make.xcodeproj">
       </FileRef>
       <FileRef
-         location = "group:/Users/Shared/HDiffPatch/builds/xcode/hsync_http.xcodeproj">
+         location = "group:hsync_http.xcodeproj">
       </FileRef>
       <FileRef
-         location = "group:/Users/Shared/HDiffPatch/builds/xcode/hsync_demo.xcodeproj">
+         location = "group:hsync_demo.xcodeproj">
       </FileRef>
       <FileRef
          location = "group:libHSyncClient.xcodeproj">

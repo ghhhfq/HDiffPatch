@@ -80,7 +80,6 @@ static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
     hpatch_checksumHandle checksumSync=0;
     hpatch_StreamPos_t posInNewSyncData=0;
     hpatch_StreamPos_t outNewDataPos=0;
-    hpatch_StreamPos_t outDiffDataPos=wd.outDiffDataPos;
     const hpatch_StreamPos_t oldDataSize=wd.oldStream->streamSize;
 #if (_IS_USED_MULTITHREAD)
     TMt_by_queue* mt=(TMt_by_queue*)_mt;
@@ -113,13 +112,12 @@ static int mt_writeToNew(_TWriteDatas& wd,void* _mt=0,int threadIndex=0) {
                 TMt_by_queue::TAutoQueueLocker _autoLocker(mt?&mt->inputQueue:0,threadIndex,sync_i);
                 check(_autoLocker.isWaitOk,kSyncClient_readSyncDataError);
 #endif
-                check(syncDataListener->readSyncData(syncDataListener,
-                                                     i,posInNewSyncData,syncSize,buf),
+                check(syncDataListener->readSyncData(syncDataListener,i,posInNewSyncData,syncSize,buf),
                       kSyncClient_readSyncDataError);
                 if (wd.out_diffStream){ //out diff
-                    check(wd.out_diffStream->write(wd.out_diffStream,outDiffDataPos,
+                    check(wd.out_diffStream->write(wd.out_diffStream,wd.outDiffDataPos,
                                                    buf,buf+syncSize),kSyncClient_saveDiffError);
-                    outDiffDataPos+=syncSize;
+                    wd.outDiffDataPos+=syncSize;
                 }
             }
             if (wd.out_newStream&&(syncSize<newDataSize)){// need deccompress?
@@ -195,7 +193,7 @@ static int writeToNew(_TWriteDatas& writeDatas,int threadNum) {
         tdatas.shareDatas=&shareDatas;
         tdatas.writeDatas=&writeDatas;
         tdatas.result=kSyncClient_ok;
-        thread_parallel((int)threadNum,_mt_threadRunCallBackProc,&tdatas,1);
+        thread_parallel((int)threadNum,_mt_threadRunCallBackProc,&tdatas,hpatch_TRUE);
         return tdatas.result;
     }else
 #endif

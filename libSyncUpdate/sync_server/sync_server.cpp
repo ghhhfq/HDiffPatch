@@ -165,7 +165,7 @@ void _private_create_sync_data(TNewDataSyncInfo*           newSyncInfo,
         TMt_threadDatas  tdatas;  memset(&tdatas,0,sizeof(tdatas));
         tdatas.shareDatas=&shareDatas;
         tdatas.createDatas=&createDatas;
-        thread_parallel((int)threadNum,_mt_threadRunCallBackProc,&tdatas,1);
+        thread_parallel((int)threadNum,_mt_threadRunCallBackProc,&tdatas,hpatch_TRUE);
     }else
 #endif
     {

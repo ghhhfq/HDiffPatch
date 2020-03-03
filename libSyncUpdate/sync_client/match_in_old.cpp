@@ -42,7 +42,7 @@ namespace sync_private{
 
 typedef unsigned char TByte;
 typedef uint64_t tm_roll_uint;
-const size_t kBestClipSize=128*1024;
+const size_t kBestClipSize=256*1024;
 
 struct TIndex_comp0{
     inline explicit TIndex_comp0(const uint8_t* _hashs,size_t _byteSize)
@@ -130,10 +130,10 @@ struct TOldDataCache_base {
     //                           ^
     //                          cur
     void _cache(){
-        if (m_readedPos >= m_oldRollEnd){ m_cur=0; return; } //set end tag
+        const hpatch_StreamPos_t rollPosEnd=oldRollPosEnd();
+        if (m_readedPos >=rollPosEnd){ m_cur=0; return; } //set end tag
 
         size_t needLen=m_cur-m_cache.data();
-        const hpatch_StreamPos_t rollPosEnd=oldRollPosEnd();
         if (m_readedPos+needLen>rollPosEnd)
             needLen=(size_t)(rollPosEnd-m_readedPos);
         memmove(m_cur-needLen,m_cur,m_cache.data_end()-m_cur);
@@ -217,12 +217,6 @@ protected:
     tm_roll_uint            m_roolHash;
 };
 
-inline static size_t getBackZeroLen(hpatch_StreamPos_t newDataSize,uint32_t kMatchBlockSize){
-    size_t len=(size_t)(newDataSize % kMatchBlockSize);
-    if (len!=0) len=kMatchBlockSize-len;
-    return len;
-}
-
 static void matchRange(hpatch_StreamPos_t* out_newBlockDataInOldPoss,
                        const uint32_t* range_begin,const uint32_t* range_end,TOldDataCache_base& oldData,
                        const TByte* partChecksums,size_t outPartChecksumSize,TByte* newDataCheckChecksum,void* _mt=0){
@@ -242,9 +236,9 @@ static void matchRange(hpatch_StreamPos_t* out_newBlockDataInOldPoss,
                 hpatch_StreamPos_t old=out_newBlockDataInOldPoss[newBlockIndex];
                 if (old!=kBlockType_needSync) return;
 #endif
+                out_newBlockDataInOldPoss[newBlockIndex]=curPos;
                 checkChecksumAppendData(newDataCheckChecksum,newBlockIndex,
                                         oldData.strongChecksum(),oldData.strongChecksumByteSize());
-                out_newBlockDataInOldPoss[newBlockIndex]=curPos;
                 //continue;
             }else{
                 if (isMatched)
@@ -266,7 +260,7 @@ struct _TMatchDatas{
     const uint32_t*     sorted_newIndexs_table;
     unsigned int        kTableHashShlBit;
 };
-
+    
 static void _rollMatch(_TMatchDatas& rd,hpatch_StreamPos_t oldRollBegin,
                        hpatch_StreamPos_t oldRollEnd,void* _mt=0){
     TIndex_comp0 icomp0(rd.newSyncInfo->rollHashs,rd.newSyncInfo->savedRollHashByteSize);
@@ -298,7 +292,6 @@ static void _rollMatch(_TMatchDatas& rd,hpatch_StreamPos_t oldRollBegin,
 #if (_IS_USED_MULTITHREAD)
 struct TMt_threadDatas {
     _TMatchDatas*       matchDatas;
-    hpatch_StreamPos_t  oldRollEnd;
     TMt_by_queue*       shareDatas;
 };
 
@@ -371,20 +364,17 @@ static void matchNewDataInOld(_TMatchDatas& matchDatas,int threadNum){
     matchDatas.sorted_newIndexs=sorted_newIndexs;
     matchDatas.sorted_newIndexs_table=sorted_newIndexs_table;
     matchDatas.kTableHashShlBit=kTableHashShlBit;
-    size_t backZeroLen=getBackZeroLen(newSyncInfo->newDataSize,newSyncInfo->kMatchBlockSize);
-    hpatch_StreamPos_t oldRollEnd=matchDatas.oldStream->streamSize+backZeroLen;
 #if (_IS_USED_MULTITHREAD)
     if (threadNum>1){
         TMt_by_queue   shareDatas((int)threadNum,false);
         TMt_threadDatas  tdatas;  memset(&tdatas,0,sizeof(tdatas));
         tdatas.shareDatas=&shareDatas;
         tdatas.matchDatas=&matchDatas;
-        tdatas.oldRollEnd=oldRollEnd;
-        thread_parallel((int)threadNum,_mt_threadRunCallBackProc,&tdatas,1);
+        thread_parallel((int)threadNum,_mt_threadRunCallBackProc,&tdatas,hpatch_TRUE);
     }else
 #endif
     {
-        _rollMatch(matchDatas,0,oldRollEnd);
+        _rollMatch(matchDatas,0,matchDatas.oldStream->streamSize);
     }
 }
 
