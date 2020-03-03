@@ -34,7 +34,7 @@ namespace sync_private{
     int _sync_patch(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
                     const hpatch_TStreamInput* oldStream,const TNewDataSyncInfo* newSyncInfo,
                     const hpatch_TStreamOutput* out_newStream,const hpatch_TStreamOutput* out_diffStream,
-                    int threadNum);
+                    const hpatch_StreamPos_t out_diffContinuePos,int threadNum);
 }
 
 

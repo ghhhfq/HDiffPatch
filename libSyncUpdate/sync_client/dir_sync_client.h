@@ -34,18 +34,21 @@
 #include "../../dirDiffPatch/dir_diff/dir_manifest.h"
 #include "../../dirDiffPatch/dir_patch/new_dir_output.h"
 
-//sync patch oldDir to newFile
-//  use get_manifest(dir) to get TManifest
+//sync patch(oldManifest+syncDataListener) to outNewFile
+//  use get_manifest(oldDir) to get oldManifest
 int sync_patch_2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
                      const TManifest& oldManifest,const char* newSyncInfoFile,const char* outNewFile,
                      size_t kMaxOpenFileNumber,int threadNum=1);
 
 //sync_patch can split to two steps: sync_local_diff + sync_local_patch
 
+//download diff data from syncDataListener to outDiffFile
+//  if (isOutDiffContinue) then continue download
 int sync_local_diff_2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
                           const TManifest& oldManifest,const char* newSyncInfoFile,const char* outDiffFile,
-                          size_t kMaxOpenFileNumber,int threadNum=1);
+                          hpatch_BOOL isOutDiffContinue,size_t kMaxOpenFileNumber,int threadNum=1);
 
+//patch(oldManifest+inDiffFile) to outNewFile
 int sync_local_patch_2file(ISyncInfoListener* listener,const char* inDiffFile,
                            const TManifest& oldManifest,const char* newSyncInfoFile,const char* outNewFile,
                            size_t kMaxOpenFileNumber,int threadNum=1);
@@ -58,18 +61,23 @@ struct IDirSyncPatchListener:public ISyncInfoListener{
                                const TNewDataSyncInfo* newSyncInfo,TNewDirOutput* newDirOutput);
 };
 
-//sync patch oldPatch to newDir
+//sync patch(oldManifest+syncDataListener) to outNewDir
 int sync_patch_2dir(IDirPatchListener* patchListener,IDirSyncPatchListener* syncListener,
                     IReadSyncDataListener* syncDataListener,
                     const TManifest& oldManifest,const char* newSyncInfoFile,const char* outNewDir,
                     size_t kMaxOpenFileNumber,int threadNum=1);
+
+//download diff data from syncDataListener to outDiffFile
+//  if (isOutDiffContinue) then continue download
 static hpatch_inline
 int sync_local_diff_2dir(IDirPatchListener*,IDirSyncPatchListener* syncListener,
                          IReadSyncDataListener* syncDataListener,
                          const TManifest& oldManifest,const char* newSyncInfoFile,const char* outDiffFile,
-                         size_t kMaxOpenFileNumber,int threadNum=1){
+                         hpatch_BOOL isOutDiffContinue,size_t kMaxOpenFileNumber,int threadNum=1){
             return sync_local_diff_2file(syncListener,syncDataListener,oldManifest,newSyncInfoFile,outDiffFile,
-                                         kMaxOpenFileNumber,threadNum); }
+                                         isOutDiffContinue,kMaxOpenFileNumber,threadNum); }
+
+//patch(oldManifest+inDiffFile) to outNewDir
 int sync_local_patch_2dir(IDirPatchListener* patchListener,IDirSyncPatchListener* syncListener,
                           const char* inDiffFile,
                           const TManifest& oldManifest,const char* newSyncInfoFile,const char* outNewDir,

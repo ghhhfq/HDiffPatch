@@ -66,7 +66,8 @@ typedef enum TSyncClient_resultType{
     kSyncClient_noDecompressPluginError,
     kSyncClient_decompressError,
     kSyncClient_diffFileCreateError,
-    kSyncClient_diffFileCloseError, // 35
+    kSyncClient_diffFileReopenWriteError, // 35
+    kSyncClient_diffFileCloseError,
     kSyncClient_diffFileOpenError,
     kSyncClient_saveDiffError,
     kSyncClient_loadDiffError,

@@ -30,6 +30,9 @@
 #include "file_for_patch.h"
 #include <sys/stat.h> //stat mkdir
 #include <errno.h>    //errno
+#ifdef _MSC_VER
+#   include <io.h>    //_chsize_s
+#endif
 
 hpatch_BOOL _hpatch_getPathStat_noEndDirSeparator(const char* path_utf8,hpatch_TPathType* out_type,
                                                   hpatch_StreamPos_t* out_fileSize,size_t* out_st_mode){
@@ -276,6 +279,19 @@ hpatch_BOOL _import_fileFlush(hpatch_FileHandle writedFile){
     return (0==fflush(writedFile));
 }
 
+hpatch_BOOL _import_fileTruncate(hpatch_FileHandle file,hpatch_StreamPos_t new_file_length){
+#ifdef _MSC_VER
+    int fno=_fileno(file);
+    if (fno==-1) return hpatch_FALSE;
+    if (_chsize_s(fno,new_file_length)!=0) return hpatch_FALSE;
+#else
+    int fno=fileno(file);
+    if (fno==-1) return hpatch_FALSE;
+    if (ftruncate(fno,new_file_length)!=0) return hpatch_FALSE;
+#endif
+    return hpatch_TRUE;
+}
+
 #if (_IS_USED_WIN32_UTF8_WAPI)
 #   define _kFileReadMode  L"rb"
 #   define _kFileWriteMode L"wb+"
@@ -464,8 +480,8 @@ hpatch_BOOL hpatch_TFileStreamOutput_open(hpatch_TFileStreamOutput* self,const c
 }
 hpatch_BOOL hpatch_TFileStreamOutput_reopen(hpatch_TFileStreamOutput* self,const char* fileName_utf8,
                                             hpatch_StreamPos_t max_file_length){
+    hpatch_StreamPos_t curFileWritePos=0;
     assert(self->m_file==0);
-    hpatch_StreamPos_t curFileWritePos;
     if (self->m_file) return hpatch_FALSE;
     if (!_import_fileReopenWrite(fileName_utf8,&self->m_file,&curFileWritePos))
         return hpatch_FALSE;
@@ -487,6 +503,9 @@ hpatch_BOOL hpatch_TFileStreamOutput_reopen(hpatch_TFileStreamOutput* self,const
     return hpatch_TRUE;
 }
 
+hpatch_BOOL hpatch_TFileStreamOutput_truncate(hpatch_TFileStreamOutput* self,hpatch_StreamPos_t new_file_length){
+    return _import_fileTruncate(self->m_file,new_file_length);
+}
 
 hpatch_BOOL hpatch_TFileStreamOutput_flush(hpatch_TFileStreamOutput* self){
     return _import_fileFlush(self->m_file);

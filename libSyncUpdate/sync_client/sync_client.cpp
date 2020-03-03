@@ -256,7 +256,8 @@ static void getNeedSyncInfo(const hpatch_StreamPos_t* newBlockDataInOldPoss,
     
 int _sync_patch(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
                 const hpatch_TStreamInput* oldStream,const TNewDataSyncInfo* newSyncInfo,
-                const hpatch_TStreamOutput* out_newStream,const hpatch_TStreamOutput* out_diffStream,int threadNum){
+                const hpatch_TStreamOutput* out_newStream,const hpatch_TStreamOutput* out_diffStream,
+                const hpatch_StreamPos_t out_diffContinuePos,int threadNum){
     assert(listener!=0);
     hpatch_TDecompress* decompressPlugin=0;
     hpatch_TChecksum*   strongChecksumPlugin=0;
@@ -352,7 +353,8 @@ clear:
 
 static int _sync_patch_file2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
                                  const char* oldFile,const char* newSyncInfoFile,
-                                 const char* outNewFile,const hpatch_TStreamOutput* out_diffStream,int threadNum){
+                                 const char* outNewFile,const hpatch_TStreamOutput* out_diffStream,
+                                 const hpatch_StreamPos_t out_diffContinuePos,int threadNum){
     int result=kSyncClient_ok;
     int _inClear=0;
     TNewDataSyncInfo         newSyncInfo;
@@ -375,7 +377,7 @@ static int _sync_patch_file2file(ISyncInfoListener* listener,IReadSyncDataListen
               kSyncClient_newFileCreateError);
     
     result=_sync_patch(listener,syncDataListener,oldStream,&newSyncInfo,
-                       outNewFile?&out_newData.base:0,out_diffStream,threadNum);
+                       outNewFile?&out_newData.base:0,out_diffStream,out_diffContinuePos,threadNum);
 clear:
     _inClear=1;
     check(hpatch_TFileStreamOutput_close(&out_newData),kSyncClient_newFileCloseError);
@@ -390,13 +392,13 @@ using namespace  sync_private;
 int sync_patch(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
                const hpatch_TStreamInput* oldStream,const TNewDataSyncInfo* newSyncInfo,
                const hpatch_TStreamOutput* out_newStream,int threadNum){
-    return _sync_patch(listener,syncDataListener,oldStream,newSyncInfo,out_newStream,0,threadNum);
+    return _sync_patch(listener,syncDataListener,oldStream,newSyncInfo,out_newStream,0,0,threadNum);
 }
 
 int sync_local_diff(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
                     const hpatch_TStreamInput* oldStream,const TNewDataSyncInfo* newSyncInfo,
-                    const hpatch_TStreamOutput* out_diffStream,int threadNum){
-    return _sync_patch(listener,syncDataListener,oldStream,newSyncInfo,0,out_diffStream,threadNum);
+                    const hpatch_TStreamOutput* out_diffStream,const hpatch_StreamPos_t out_diffContinuePos,int threadNum){
+    return _sync_patch(listener,syncDataListener,oldStream,newSyncInfo,0,out_diffStream,out_diffContinuePos,threadNum);
 }
 
 
@@ -405,25 +407,39 @@ int sync_local_patch(ISyncInfoListener* listener,const hpatch_TStreamInput* in_d
                      const hpatch_TStreamOutput* out_newStream,int threadNum){
     TSyncDiffData diffData;
     if (!_loadSyncDiffData(&diffData,in_diffStream)) return kSyncClient_loadDiffError;
-    return _sync_patch(listener,&diffData,oldStream,newSyncInfo,out_newStream,0,threadNum);
+    return _sync_patch(listener,&diffData,oldStream,newSyncInfo,out_newStream,0,0,threadNum);
 }
 
 
 int sync_patch_file2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
                          const char* oldFile,const char* newSyncInfoFile,const char* outNewFile,int threadNum){
-    return _sync_patch_file2file(listener,syncDataListener,oldFile,newSyncInfoFile,outNewFile,0,threadNum);
+    return _sync_patch_file2file(listener,syncDataListener,oldFile,newSyncInfoFile,outNewFile,0,0,threadNum);
 }
 
 
 int sync_local_diff_file2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
-                              const char* oldFile,const char* newSyncInfoFile,const char* outDiffFile,int threadNum){
+                              const char* oldFile,const char* newSyncInfoFile,
+                              const char* outDiffFile,hpatch_BOOL isOutDiffContinue,int threadNum){
     int result=kSyncClient_ok;
     int _inClear=0;
+    hpatch_StreamPos_t out_diffContinuePos=0;
     hpatch_TFileStreamOutput out_diffData;
     hpatch_TFileStreamOutput_init(&out_diffData);
-    check(hpatch_TFileStreamOutput_open(&out_diffData,outDiffFile,(hpatch_StreamPos_t)(-1)),
-          kSyncClient_diffFileCreateError);
-    result=_sync_patch_file2file(listener,syncDataListener,oldFile,newSyncInfoFile,0,&out_diffData.base,threadNum);
+    if (isOutDiffContinue){
+        check(hpatch_TFileStreamOutput_reopen(&out_diffData,outDiffFile,(hpatch_StreamPos_t)(-1)),
+              kSyncClient_diffFileReopenWriteError);
+        hpatch_TFileStreamOutput_setRandomOut(&out_diffData,hpatch_TRUE); //can rewrite
+        out_diffContinuePos=out_diffData.out_length;
+    }else{
+        check(hpatch_TFileStreamOutput_open(&out_diffData,outDiffFile,(hpatch_StreamPos_t)(-1)),
+              kSyncClient_diffFileCreateError);
+    }
+    result=_sync_patch_file2file(listener,syncDataListener,oldFile,newSyncInfoFile,0,
+                                 &out_diffData.base,out_diffContinuePos,threadNum);
+    if ((result==kSyncClient_ok)&&isOutDiffContinue&&(out_diffData.out_length<out_diffContinuePos)){
+        check(hpatch_TFileStreamOutput_truncate(&out_diffData,out_diffData.out_length),
+              kSyncClient_diffFileReopenWriteError);
+    }
 clear:
     _inClear=1;
     check(hpatch_TFileStreamOutput_close(&out_diffData),kSyncClient_diffFileCloseError);
@@ -440,7 +456,7 @@ int sync_local_patch_file2file(ISyncInfoListener* listener,const char* inDiffFil
     check(hpatch_TFileStreamInput_open(&in_diffData,inDiffFile),
           kSyncClient_diffFileOpenError);
     check(_loadSyncDiffData(&diffData,&in_diffData.base),kSyncClient_loadDiffError);
-    result=_sync_patch_file2file(listener,&diffData,oldFile,newSyncInfoFile,outNewFile,0,threadNum);
+    result=_sync_patch_file2file(listener,&diffData,oldFile,newSyncInfoFile,outNewFile,0,0,threadNum);
 clear:
     _inClear=1;
     check(hpatch_TFileStreamInput_close(&in_diffData),kSyncClient_diffFileCloseError);

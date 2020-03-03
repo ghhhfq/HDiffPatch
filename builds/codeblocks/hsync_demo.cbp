@@ -25,7 +25,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
-					<Add option="-O3" />
+					<Add option="-O2" />
 					<Add option="-Wno-error=format-security" />
 					<Add option="-fvisibility=hidden -fvisibility-inlines-hidden" />
 					<Add option="-ffunction-sections -fdata-sections" />
@@ -44,7 +44,7 @@
 				<Compiler>
 					<Add option="-march=i386" />
 					<Add option="-fomit-frame-pointer" />
-					<Add option="-O3" />
+					<Add option="-O2" />
 					<Add option="-m32" />
 					<Add option="-Wno-error=format-security" />
 					<Add option="-fvisibility=hidden -fvisibility-inlines-hidden" />
@@ -61,6 +61,7 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
+			<Add option="-D_LARGEFILE_SOURCE" />
 			<Add option="-D_FILE_OFFSET_BITS=64" />
 			<Add option="-D_7ZIP_ST" />
 			<Add option="-D_IS_USED_PTHREAD=1" />

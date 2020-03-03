@@ -36,6 +36,7 @@ int sync_patch(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListen
                const hpatch_TStreamInput* oldStream,const TNewDataSyncInfo* newSyncInfo,
                const hpatch_TStreamOutput* out_newStream,int threadNum=1);
 
+//sync patch(oldFile+syncDataListener) to outNewFile
 int sync_patch_file2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
                          const char* oldFile,const char* newSyncInfoFile,const char* outNewFile,int threadNum=1);
 
@@ -44,16 +45,24 @@ int sync_patch_file2file(ISyncInfoListener* listener,IReadSyncDataListener* sync
 
 
 //download diff data from syncDataListener to out_diffStream
+//  if (out_diffContinuePos>0) then continue download
 int sync_local_diff(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
                     const hpatch_TStreamInput* oldStream,const TNewDataSyncInfo* newSyncInfo,
-                    const hpatch_TStreamOutput* out_diffStream,int threadNum=1);
+                    const hpatch_TStreamOutput* out_diffStream,const hpatch_StreamPos_t out_diffContinuePos,int threadNum=1);
+
 //patch(oldStream+in_diffStream) to out_newStream
 int sync_local_patch(ISyncInfoListener* listener,const hpatch_TStreamInput* in_diffStream,
                      const hpatch_TStreamInput* oldStream,const TNewDataSyncInfo* newSyncInfo,
                      const hpatch_TStreamOutput* out_newStream,int threadNum=1);
 
+
+//download diff data from syncDataListener to outDiffFile
+//  if (isOutDiffContinue) then continue download
 int sync_local_diff_file2file(ISyncInfoListener* listener,IReadSyncDataListener* syncDataListener,
-                              const char* oldFile,const char* newSyncInfoFile,const char* outDiffFile,int threadNum=1);
+                              const char* oldFile,const char* newSyncInfoFile,
+                              const char* outDiffFile,hpatch_BOOL isOutDiffContinue,int threadNum=1);
+
+//patch(oldFile+inDiffFile) to outNewFile
 int sync_local_patch_file2file(ISyncInfoListener* listener,const char* inDiffFile,
                                const char* oldFile,const char* newSyncInfoFile,const char* outNewFile,int threadNum=1);
 

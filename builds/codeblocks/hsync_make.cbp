@@ -61,6 +61,7 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
+			<Add option="-D_LARGEFILE_SOURCE" />
 			<Add option="-D_FILE_OFFSET_BITS=64" />
 			<Add option="-D_7ZIP_ST" />
 			<Add option="-D_IS_USED_PTHREAD=1" />

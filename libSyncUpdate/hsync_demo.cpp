@@ -170,13 +170,13 @@ int sync_client_cmd_line(int argc, const char * argv[]);
 int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* hsyni_file,const char* hsynd_file_url,const char* localDiffFile,
-                     const TSyncDownloadPlugin* downloadPlugin,
+                     hpatch_BOOL isUsedDownloadContinue,const TSyncDownloadPlugin* downloadPlugin,
                      size_t kMaxOpenFileNumber,int threadNum,int downloadThreadNum);
 #if (_IS_NEED_DIR_DIFF_PATCH)
 int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* hsyni_file,const char* hsynd_file_url,const char* localDiffFile,
-                     const TSyncDownloadPlugin* downloadPlugin,
+                     hpatch_BOOL isUsedDownloadContinue,const TSyncDownloadPlugin* downloadPlugin,
                      size_t kMaxOpenFileNumber,int threadNum,int downloadThreadNum);
 #endif
 
@@ -574,14 +574,16 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     }
 #if (_IS_NEED_DIR_DIFF_PATCH)
     if (newIsDir)
-        result=sync_patch_2dir(outNewPath,oldPath,isSamePath,oldIsDir,
-                               ignoreOldPathList,hsyni_file,hsynd_file_url,localDiffFile,
-                               &downloadPlugin,kMaxOpenFileNumber,(int)threadNum,(int)downloadThreadNum);
+        result=sync_patch_2dir(outNewPath,oldPath,isSamePath,oldIsDir,ignoreOldPathList,
+                               hsyni_file,hsynd_file_url,localDiffFile,
+                               isUsedDownloadContinue,&downloadPlugin,
+                               kMaxOpenFileNumber,(int)threadNum,(int)downloadThreadNum);
     else
 #endif
-        result=sync_patch_2file(outNewPath,oldPath,isSamePath,oldIsDir,
-                                ignoreOldPathList,hsyni_file,hsynd_file_url,localDiffFile,
-                                &downloadPlugin,kMaxOpenFileNumber,(int)threadNum,(int)downloadThreadNum);
+        result=sync_patch_2file(outNewPath,oldPath,isSamePath,oldIsDir,ignoreOldPathList,
+                                hsyni_file,hsynd_file_url,localDiffFile,
+                                isUsedDownloadContinue,&downloadPlugin,
+                                kMaxOpenFileNumber,(int)threadNum,(int)downloadThreadNum);
     double time1=clock_s();
     printf("\nsync_patch_%s2%s time: %.3f s\n\n",oldIsDir?"dir":"file",newIsDir?"dir":"file",(time1-time0));
     return result;
@@ -636,7 +638,7 @@ static bool printFileInfo(const char *path_utf8,const char *tag,bool isOutSize=t
 int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* hsyni_file,const char* hsynd_file_url,const char* localDiffFile,
-                     const TSyncDownloadPlugin* downloadPlugin,
+                     hpatch_BOOL isUsedDownloadContinue,const TSyncDownloadPlugin* downloadPlugin,
                      size_t kMaxOpenFileNumber,int threadNum,int downloadThreadNum){
 #if (_IS_NEED_DIR_DIFF_PATCH)
     std::string _oldPath(oldPath); if (oldIsDir) assignDirTag(_oldPath); oldPath=_oldPath.c_str();
@@ -673,7 +675,7 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
                                     kMaxOpenFileNumber,threadNum);
         else if (outNewFile==0) //local diff
             result=sync_local_diff_2file(&listener,&syncDataListener,oldManifest,hsyni_file,localDiffFile,
-                                         kMaxOpenFileNumber,threadNum);
+                                         isUsedDownloadContinue,kMaxOpenFileNumber,threadNum);
         else //local patch
             result=sync_local_patch_2file(&listener,localDiffFile,oldManifest,hsyni_file,outNewFile,
                                           kMaxOpenFileNumber,threadNum);
@@ -684,7 +686,8 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
         if (localDiffFile==0)
             result=sync_patch_file2file(&listener,&syncDataListener,oldPath,hsyni_file,outNewFile,threadNum);
         else if (outNewFile==0) //local diff
-            result=sync_local_diff_file2file(&listener,&syncDataListener,oldPath,hsyni_file,localDiffFile,threadNum);
+            result=sync_local_diff_file2file(&listener,&syncDataListener,oldPath,hsyni_file,
+                                             localDiffFile,isUsedDownloadContinue,threadNum);
         else //local patch
             result=sync_local_patch_file2file(&listener,localDiffFile,oldPath,hsyni_file,outNewFile,threadNum);
     }
@@ -794,7 +797,7 @@ static hpatch_BOOL _dirSyncPatchFinish(IDirSyncPatchListener* listener,hpatch_BO
 int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* hsyni_file,const char* hsynd_file_url,const char* localDiffFile,
-                     const TSyncDownloadPlugin* downloadPlugin,
+                     hpatch_BOOL isUsedDownloadContinue,const TSyncDownloadPlugin* downloadPlugin,
                      size_t kMaxOpenFileNumber,int threadNum,int downloadThreadNum){
     std::string _outNewDir(outNewDir?outNewDir:"");
     if (outNewDir) { assignDirTag(_outNewDir); outNewDir=outNewDir?_outNewDir.c_str():0; }
@@ -837,7 +840,7 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
                                oldManifest,hsyni_file,outNewDir,kMaxOpenFileNumber,threadNum);
     else if (outNewDir==0) //local diff
         result=sync_local_diff_2dir(&defaultPatchDirlistener,&listener,&syncDataListener,
-                                    oldManifest,hsyni_file,localDiffFile,kMaxOpenFileNumber,threadNum);
+                                    oldManifest,hsyni_file,localDiffFile,isUsedDownloadContinue,kMaxOpenFileNumber,threadNum);
     else //local patch
         result=sync_local_patch_2dir(&defaultPatchDirlistener,&listener,localDiffFile,
                                      oldManifest,hsyni_file,outNewDir,kMaxOpenFileNumber,threadNum);
